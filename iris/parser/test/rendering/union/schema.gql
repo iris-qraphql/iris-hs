@@ -1,0 +1,41 @@
+directive @Turbo(name: String?) on FIELD | QUERY
+
+directive @Speed(name: String?) on FIELD | QUERY
+
+resolver Character {
+  name: String
+}
+
+resolver Hero  {
+  name: String
+  hobby: String?
+}
+
+resolver Deity {
+  name: String
+  power: [String]
+  friends: [Deity]
+}
+
+resolver Animal {
+  name: String
+  weight: Int?
+}
+
+resolver Human {
+  name: String
+  age: Int?
+}
+
+resolver Mortal | Character = Human | Animal | Hero
+
+resolver Query {
+  deity: Deity
+  mortal: Mortal
+}
+
+schema {
+  query: Query
+  mutation: Query
+  subscription: Query
+}

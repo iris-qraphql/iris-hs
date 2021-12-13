@@ -1,0 +1,7 @@
+query ($v1: Pet, $v2: Pet, $v3: Pet, $v4: Pet) {
+  __typename
+  p1: pet(pet: $v1)
+  p2: pet(pet: $v2)
+  p3: pet(pet: $v3)
+  p4: pet(pet: $v4)
+}

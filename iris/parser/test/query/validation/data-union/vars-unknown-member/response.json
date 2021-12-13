@@ -1,0 +1,6 @@
+[
+  {
+    "message": "Variable \"$v1\" got invalid value. Expected type \"Pet\" found HOI. \"HOI\" is not possible union type",
+    "locations": [{ "line": 1, "column": 8 }]
+  }
+]

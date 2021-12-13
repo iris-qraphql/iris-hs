@@ -1,0 +1,9 @@
+{
+  characters {
+    ...Character
+  }
+}
+
+fragment Character on CharacterFields {
+  xyz
+}

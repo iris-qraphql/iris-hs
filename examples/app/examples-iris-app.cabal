@@ -1,0 +1,41 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           examples-iris-app
+version:        0.1.0
+synopsis:       Morpheus GraphQL App
+description:    Iris App
+category:       web, graphql
+homepage:       https://github.com/nalchevanidze/iris-app#readme
+bug-reports:    https://github.com/nalchevanidze/iris-app/issues
+author:         Daviti Nalchevanidze
+maintainer:     d.nalchevanidze@gmail.com
+copyright:      (c) 2019 Daviti Nalchevanidze
+license:        MIT
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/nalchevanidze/iris-app
+
+executable iris-app
+  main-is: Main.hs
+  other-modules:
+      Paths_examples_iris_app
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring >=0.10.4 && <0.11
+    , iris-app
+    , iris-parser
+    , relude >=0.3.0
+    , scotty
+  default-language: Haskell2010

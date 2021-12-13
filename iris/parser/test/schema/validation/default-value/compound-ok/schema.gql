@@ -1,0 +1,32 @@
+data EnumA {}
+data EnumB {}
+data EnumC {}
+
+data TestEnum = EnumA | EnumB | EnumC
+
+data InputSimple {
+  id: ID
+  simpleField: TestEnum?
+}
+
+data InputCompound {
+  inputField2: String
+  inputField3: [InputSimple] 
+}
+
+resolver User {
+  inputs(
+    inputCompound: InputCompound = {
+      inputField2: "value from argument inputCompound",
+      inputField3: [{ id: "some id", simpleField: EnumA }]
+    }
+    input: InputSimple?
+    comment: String = "test string"
+    input3: InputSimple
+    i3: Int
+  ): String
+}
+
+resolver Query {
+  user: User
+}

@@ -1,0 +1,7 @@
+{
+  "v1": { "__typename": "Cat", "bark": "235" },
+  "v2": { "__typename": "Cat", "meow": {} },
+  "v3": { "__typename": "Dog" },
+  "v4": { "__typename": "Dog", "meow": "235" },
+  "v5": { "__typename": "Dog", "bark": 235 }
+}

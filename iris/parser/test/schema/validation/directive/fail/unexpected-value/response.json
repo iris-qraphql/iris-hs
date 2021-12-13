@@ -1,0 +1,22 @@
+[
+  {
+    "message": "Argument \"a1\" got invalid value. Expected type \"Int\" found 0.1.",
+    "locations": [{ "line": 9, "column": 29 }]
+  },
+  {
+    "message": "Argument \"a1\" got invalid value. Expected type \"Int\" found \"some string\".",
+    "locations": [{ "line": 10, "column": 30 }]
+  },
+  {
+    "message": "Argument \"a1\" got invalid value. Expected type \"Int\" found True.",
+    "locations": [{ "line": 11, "column": 30 }]
+  },
+  {
+    "message": "Argument \"a1\" got invalid value. in field \"field\": Expected type \"String?\" found 2394.",
+    "locations": [{ "line": 19, "column": 27 }]
+  },
+  {
+    "message": "Argument \"a1\" got invalid value. Expected type \"MyInput\" found [\"some deprication\"].",
+    "locations": [{ "line": 20, "column": 31 }]
+  }
+]

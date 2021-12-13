@@ -1,0 +1,26 @@
+[
+  {
+    "message": "Variable \"$v2\" got invalid value. in field \"meow\": Expected type \"String?\" found {}.",
+    "locations": [{ "line": 1, "column": 16 }]
+  },
+  {
+    "message": "Variable \"$v5\" got invalid value. in field \"bark\": Expected type \"String\" found 235.",
+    "locations": [{ "line": 1, "column": 40 }]
+  },
+  {
+    "message": "Variable \"$v4\" got invalid value. Unknown Field \"meow\".",
+    "locations": [{ "line": 1, "column": 32 }]
+  },
+  {
+    "message": "Variable \"$v4\" got invalid value. Undefined Field \"bark\".",
+    "locations": [{ "line": 1, "column": 32 }]
+  },
+  {
+    "message": "Variable \"$v1\" got invalid value. Unknown Field \"bark\".",
+    "locations": [{ "line": 1, "column": 8 }]
+  },
+  {
+    "message": "Variable \"$v3\" got invalid value. Undefined Field \"bark\".",
+    "locations": [{ "line": 1, "column": 24 }]
+  }
+]

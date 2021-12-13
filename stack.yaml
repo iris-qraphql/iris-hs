@@ -1,0 +1,14 @@
+resolver: nightly-2021-10-13
+save-hackage-creds: false
+packages:
+  - iris/parser
+  - iris/app
+  - examples/app
+
+allow-newer: true
+extra-deps:
+  - dependent-map-0.2.4.0
+  - dependent-sum-0.4
+  - fastsum-0.1.1.1
+  - type-aligned-0.9.6
+  - morpheus-graphql-tests-0.18.0

@@ -1,0 +1,19 @@
+{
+  characters {
+    ...OnCharacter
+    ...onDeity
+    ...onHero
+  }
+}
+
+fragment OnCharacter on CharacterFields {
+  name
+}
+
+fragment onDeity on Deity {
+  power
+}
+
+fragment onHero on Hero {
+  nickname
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "message": "type guard field HeroUnion.Character.name expected but \"Hero\" does not provide it."
+  },
+  {
+    "message": "type guard field argument DeityUnion.Supernatural.name(id:) expected but Deity.name does not provide it."
+  },
+  {
+    "message": "type guard field argument DeityUnion.Supernatural.power(id:) expects type \"ID\" but Deity.power(id:) is type \"String\"."
+  }
+]

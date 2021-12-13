@@ -1,0 +1,13 @@
+{
+  characters {
+    ... on CharacterFields {
+      name
+    }
+    ... on Deity {
+      power
+    }
+    ... on Hero {
+      nickname
+    }
+  }
+}

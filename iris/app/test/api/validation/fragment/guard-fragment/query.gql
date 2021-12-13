@@ -1,0 +1,10 @@
+{
+  characters {
+    ...Character
+  }
+}
+
+fragment Character on CharacterFields {
+  name
+  power
+}

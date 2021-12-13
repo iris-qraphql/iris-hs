@@ -1,0 +1,6 @@
+query {
+  simple {
+    name(arg: A)
+    power
+  }
+}

@@ -1,0 +1,20 @@
+resolver Query {
+  deity(name: String?): Deity
+}
+
+resolver Character {
+  name(id: ID?): String
+}
+
+resolver Supernatural {
+  power(id: ID): [String]
+}
+
+resolver Deity {
+  # arg id has stronger type
+  name(id: ID): String
+  # arg: has same type
+  power(id: ID, age: Int): [String]
+}
+
+resolver Deityresolver | Character = Deity

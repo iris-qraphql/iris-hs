@@ -1,0 +1,22 @@
+directive @DirectiveA on DATA
+
+directive @DirectiveB on SCALAR
+
+directive @DirectiveC on DATA
+
+directive @DirectiveD on DATA_FIELD_DEFINITION
+
+scalar MyScalar @DirectiveA
+
+data TestEnum @DirectiveB 
+  = EnumA
+  | EnumB
+
+data Input1 @deprecated {
+  field1: ID @include(if: true)
+  field2: String
+}
+
+resolver Query @deprecated {
+  field(a1: Int @DirectiveD): Int @include(if: true)
+}

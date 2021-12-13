@@ -1,0 +1,4 @@
+query  {
+  p1: pet(pet: IOUBi)
+  p2: pet(pet: GQW)
+}

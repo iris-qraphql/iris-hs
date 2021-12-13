@@ -1,0 +1,11 @@
+query {
+  __typename
+  user {
+    address {
+      name
+    }
+    friends {
+      name
+    }
+  }
+}

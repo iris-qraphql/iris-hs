@@ -1,0 +1,25 @@
+resolver Character {
+  name: String?
+}
+
+resolver Hero {
+  field: String?
+}
+
+resolver HeroUnion | Character = Hero
+
+resolver Supernatural {
+  name: String?
+  power: [String]
+}
+
+resolver Deity {
+  name: Int?
+  power: [String]?
+}
+
+resolver DeityUnion | Supernatural = Deity
+
+resolver Query {
+  deity(name: String?): Deity
+}

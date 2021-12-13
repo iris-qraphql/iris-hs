@@ -1,0 +1,301 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           iris-parser
+version:        0.1.0
+synopsis:       Iris Parser
+description:    GraphQL like language
+category:       web, language
+homepage:       https://github.com/morpheus-graphql/iris#readme
+bug-reports:    https://github.com/morpheus-graphql/iris/issues
+author:         Daviti Nalchevanidze
+maintainer:     d.nalchevanidze@gmail.com
+copyright:      (c) 2021 Daviti Nalchevanidze
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    changelog.md
+    README.md
+data-files:
+    test/query/parsing/selection-set/empty-selection/query.gql
+    test/query/parsing/selection-set/non-empty-selection/query.gql
+    test/query/validation/__typename/arguments/query.gql
+    test/query/validation/__typename/schema.gql
+    test/query/validation/__typename/selection-set/query.gql
+    test/query/validation/__typename/success/query.gql
+    test/query/validation/data-types/ok/query.gql
+    test/query/validation/data-types/schema.gql
+    test/query/validation/data-types/selection-on-data/query.gql
+    test/query/validation/data-union/no-typename/query.gql
+    test/query/validation/data-union/ok/query.gql
+    test/query/validation/data-union/schema.gql
+    test/query/validation/data-union/unknown-members/query.gql
+    test/query/validation/data-union/vars-no-typename/query.gql
+    test/query/validation/data-union/vars-ok/query.gql
+    test/query/validation/data-union/vars-unknown-member/query.gql
+    test/query/validation/data-union/vars-wrong-fields/query.gql
+    test/query/validation/data-union/vars-wrong-typename/query.gql
+    test/query/validation/data-union/wrong-fields/query.gql
+    test/rendering/simple/directive/query.gql
+    test/rendering/simple/directive/rendering.gql
+    test/rendering/simple/fragment/query.gql
+    test/rendering/simple/fragment/rendering.gql
+    test/rendering/simple/mutation/query.gql
+    test/rendering/simple/mutation/rendering.gql
+    test/rendering/simple/nested/query.gql
+    test/rendering/simple/nested/rendering.gql
+    test/rendering/simple/query/query.gql
+    test/rendering/simple/query/rendering.gql
+    test/rendering/simple/schema.gql
+    test/rendering/simple/simple/query.gql
+    test/rendering/simple/simple/rendering.gql
+    test/rendering/simple/subscription/query.gql
+    test/rendering/simple/subscription/rendering.gql
+    test/rendering/union/schema.gql
+    test/rendering/union/type-guards/query.gql
+    test/rendering/union/type-guards/rendering.gql
+    test/rendering/union/union/query.gql
+    test/rendering/union/union/rendering.gql
+    test/rendering/variable/enum/query.gql
+    test/rendering/variable/enum/rendering.gql
+    test/rendering/variable/include-exclude/query.gql
+    test/rendering/variable/include-exclude/rendering.gql
+    test/rendering/variable/input/query.gql
+    test/rendering/variable/input/rendering.gql
+    test/rendering/variable/list/query.gql
+    test/rendering/variable/list/rendering.gql
+    test/rendering/variable/schema.gql
+    test/rendering/variable/simple/query.gql
+    test/rendering/variable/simple/rendering.gql
+    test/schema/parsing/descriptions/grave-accent/schema.gql
+    test/schema/parsing/descriptions/ok/schema.gql
+    test/schema/parsing/directive/ok/simple/schema.gql
+    test/schema/parsing/directive/ok/sophisticated/schema.gql
+    test/schema/parsing/schema-definition/fail/dupplicate-field/query-mutation-subscription/schema.gql
+    test/schema/parsing/schema-definition/fail/dupplicate-field/query/schema.gql
+    test/schema/parsing/schema-definition/fail/dupplicate-schema-definition/schema.gql
+    test/schema/parsing/schema-definition/fail/unknown-fields/bla/schema.gql
+    test/schema/parsing/schema-definition/fail/unknown-fields/uppercase/schema.gql
+    test/schema/parsing/schema-definition/ok/query-mutation-subscription/schema.gql
+    test/schema/parsing/schema-definition/ok/query-mutation/schema.gql
+    test/schema/parsing/schema-definition/ok/query/schema.gql
+    test/schema/validation/data-types/simple/schema.gql
+    test/schema/validation/default-value/compound-ok/schema.gql
+    test/schema/validation/default-value/missing-field/schema.gql
+    test/schema/validation/default-value/unexpected-value/schema.gql
+    test/schema/validation/default-value/unknown-field/schema.gql
+    test/schema/validation/directive/fail/at-invalid-place/schema.gql
+    test/schema/validation/directive/fail/missing-argument/schema.gql
+    test/schema/validation/directive/fail/sopthisticated/schema.gql
+    test/schema/validation/directive/fail/unexpected-value/schema.gql
+    test/schema/validation/directive/fail/unknown-directive/schema.gql
+    test/schema/validation/directive/ok/deprecated/custom-directive/schema.gql
+    test/schema/validation/directive/ok/deprecated/schema.gql
+    test/schema/validation/schema-definition/fail/non-object-kind/from-schema/schema.gql
+    test/schema/validation/schema-definition/fail/non-object-kind/without-schema/schema.gql
+    "test/schema/validation/schema-definition/fail/required query/empty/schema.gql"
+    "test/schema/validation/schema-definition/fail/required query/no-query/schema.gql"
+    "test/schema/validation/schema-definition/fail/required query/no-schema-no-query/schema.gql"
+    "test/schema/validation/schema-definition/fail/required query/schema-with-query/schema.gql"
+    test/schema/validation/schema-definition/fail/unknown-type/unknown/schema.gql
+    test/schema/validation/schema-definition/ok/full/schema.gql
+    test/schema/validation/type-guard/field-args/fail/schema.gql
+    test/schema/validation/type-guard/field-args/ok/schema.gql
+    test/schema/validation/type-guard/field-type/fail/schema.gql
+    test/schema/validation/type-guard/field-type/ok/schema.gql
+    test/query/parsing/selection-set/empty-selection/response.json
+    test/query/parsing/selection-set/non-empty-selection/response.json
+    test/query/validation/__typename/arguments/response.json
+    test/query/validation/__typename/selection-set/response.json
+    test/query/validation/__typename/success/response.json
+    test/query/validation/data-types/ok/response.json
+    test/query/validation/data-types/selection-on-data/response.json
+    test/query/validation/data-union/no-typename/response.json
+    test/query/validation/data-union/ok/response.json
+    test/query/validation/data-union/unknown-members/response.json
+    test/query/validation/data-union/vars-no-typename/response.json
+    test/query/validation/data-union/vars-no-typename/variables.json
+    test/query/validation/data-union/vars-ok/response.json
+    test/query/validation/data-union/vars-ok/variables.json
+    test/query/validation/data-union/vars-unknown-member/response.json
+    test/query/validation/data-union/vars-unknown-member/variables.json
+    test/query/validation/data-union/vars-wrong-fields/response.json
+    test/query/validation/data-union/vars-wrong-fields/variables.json
+    test/query/validation/data-union/vars-wrong-typename/response.json
+    test/query/validation/data-union/vars-wrong-typename/variables.json
+    test/query/validation/data-union/wrong-fields/response.json
+    test/rendering/variable/enum/variables.json
+    test/rendering/variable/include-exclude/variables.json
+    test/rendering/variable/input/variables.json
+    test/rendering/variable/list/variables.json
+    test/rendering/variable/simple/variables.json
+    test/schema/parsing/descriptions/grave-accent/response.json
+    test/schema/parsing/descriptions/ok/response.json
+    test/schema/parsing/directive/ok/simple/response.json
+    test/schema/parsing/directive/ok/sophisticated/response.json
+    test/schema/parsing/schema-definition/fail/dupplicate-field/query-mutation-subscription/response.json
+    test/schema/parsing/schema-definition/fail/dupplicate-field/query/response.json
+    test/schema/parsing/schema-definition/fail/dupplicate-schema-definition/response.json
+    test/schema/parsing/schema-definition/fail/unknown-fields/bla/response.json
+    test/schema/parsing/schema-definition/fail/unknown-fields/uppercase/response.json
+    test/schema/parsing/schema-definition/ok/query-mutation-subscription/response.json
+    test/schema/parsing/schema-definition/ok/query-mutation/response.json
+    test/schema/parsing/schema-definition/ok/query/response.json
+    test/schema/validation/data-types/simple/response.json
+    test/schema/validation/default-value/compound-ok/response.json
+    test/schema/validation/default-value/missing-field/response.json
+    test/schema/validation/default-value/unexpected-value/response.json
+    test/schema/validation/default-value/unknown-field/response.json
+    test/schema/validation/directive/fail/at-invalid-place/response.json
+    test/schema/validation/directive/fail/missing-argument/response.json
+    test/schema/validation/directive/fail/sopthisticated/response.json
+    test/schema/validation/directive/fail/unexpected-value/response.json
+    test/schema/validation/directive/fail/unknown-directive/response.json
+    test/schema/validation/directive/ok/deprecated/custom-directive/response.json
+    test/schema/validation/directive/ok/deprecated/response.json
+    test/schema/validation/schema-definition/fail/non-object-kind/from-schema/response.json
+    test/schema/validation/schema-definition/fail/non-object-kind/without-schema/response.json
+    "test/schema/validation/schema-definition/fail/required query/empty/response.json"
+    "test/schema/validation/schema-definition/fail/required query/no-query/response.json"
+    "test/schema/validation/schema-definition/fail/required query/no-schema-no-query/response.json"
+    "test/schema/validation/schema-definition/fail/required query/schema-with-query/response.json"
+    test/schema/validation/schema-definition/fail/unknown-type/unknown/response.json
+    test/schema/validation/schema-definition/ok/full/response.json
+    test/schema/validation/type-guard/field-args/fail/response.json
+    test/schema/validation/type-guard/field-args/ok/response.json
+    test/schema/validation/type-guard/field-type/fail/response.json
+    test/schema/validation/type-guard/field-type/ok/response.json
+
+source-repository head
+  type: git
+  location: https://github.com/morpheus-graphql/iris
+
+library
+  exposed-modules:
+      Data.Mergeable.Utils
+      Language.Iris
+      Language.Iris.Types.Internal.AST
+      Language.Iris.Types
+      Language.Iris.Error
+  other-modules:
+      Data.Mergeable
+      Data.Mergeable.Internal.Merge
+      Data.Mergeable.Internal.NameCollision
+      Data.Mergeable.Internal.Resolution
+      Data.Mergeable.IsMap
+      Data.Mergeable.MergeMap
+      Data.Mergeable.OrdMap
+      Data.Mergeable.SafeHashMap
+      Data.Mergeable.Utils.Empty
+      Data.Mergeable.Utils.Graph
+      Data.Mergeable.Utils.KeyOf
+      Data.Mergeable.Utils.Result
+      Data.Mergeable.Utils.Utils
+      Language.Iris.Error.Class
+      Language.Iris.Error.Data
+      Language.Iris.Error.Resolver
+      Language.Iris.Error.Selection
+      Language.Iris.Error.Variable
+      Language.Iris.Parser
+      Language.Iris.Parsing.Document.TypeSystem
+      Language.Iris.Parsing.Internal.Arguments
+      Language.Iris.Parsing.Internal.Internal
+      Language.Iris.Parsing.Internal.Pattern
+      Language.Iris.Parsing.Internal.SourceText
+      Language.Iris.Parsing.Internal.Terms
+      Language.Iris.Parsing.Internal.Value
+      Language.Iris.Parsing.Request.Operation
+      Language.Iris.Parsing.Request.Parser
+      Language.Iris.Parsing.Request.Selection
+      Language.Iris.Rendering.RenderGQL
+      Language.Iris.Schema.DSL
+      Language.Iris.Schema.Schema
+      Language.Iris.Types.GQLScalar
+      Language.Iris.Types.ID
+      Language.Iris.Types.Internal.AST.Base
+      Language.Iris.Types.Internal.AST.DirectiveLocation
+      Language.Iris.Types.Internal.AST.Error
+      Language.Iris.Types.Internal.AST.Fields
+      Language.Iris.Types.Internal.AST.Name
+      Language.Iris.Types.Internal.AST.OperationType
+      Language.Iris.Types.Internal.AST.Selection
+      Language.Iris.Types.Internal.AST.Stage
+      Language.Iris.Types.Internal.AST.Type
+      Language.Iris.Types.Internal.AST.TypeCategory
+      Language.Iris.Types.Internal.AST.TypeSystem
+      Language.Iris.Types.Internal.AST.Union
+      Language.Iris.Types.Internal.AST.Value
+      Language.Iris.Types.Internal.Config
+      Language.Iris.Types.Internal.Validation
+      Language.Iris.Types.Internal.Validation.Internal
+      Language.Iris.Types.Internal.Validation.SchemaValidator
+      Language.Iris.Types.Internal.Validation.Scope
+      Language.Iris.Types.Internal.Validation.Validator
+      Language.Iris.Types.IO
+      Language.Iris.Validation.Document.TypeGuard
+      Language.Iris.Validation.Document.Validation
+      Language.Iris.Validation.Internal.Arguments
+      Language.Iris.Validation.Internal.Directive
+      Language.Iris.Validation.Internal.Value
+      Language.Iris.Validation.Query.Fragment
+      Language.Iris.Validation.Query.FragmentPreconditions
+      Language.Iris.Validation.Query.Selection
+      Language.Iris.Validation.Query.UnionSelection
+      Language.Iris.Validation.Query.Validation
+      Language.Iris.Validation.Query.Variable
+      Paths_iris_parser
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      aeson >=1.4.4.0 && <=1.6
+    , base >=4.7 && <5
+    , bytestring >=0.10.4 && <0.11
+    , containers >=0.4.2.1 && <0.7
+    , hashable >=1.0.0
+    , megaparsec >=7.0.0 && <10.0.0
+    , mtl >=2.0 && <=3.0
+    , relude >=0.3.0
+    , scientific >=0.3.6.2 && <0.4
+    , template-haskell >=2.0 && <=3.0
+    , text >=1.2.3.0 && <1.3
+    , th-lift-instances >=0.1.1 && <=0.3
+    , transformers >=0.3.0.0 && <0.6
+    , unordered-containers >=0.2.8.0 && <0.3
+    , vector >=0.12.0.1 && <0.13
+  default-language: Haskell2010
+
+test-suite iris-parser-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_iris_parser
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring >=0.10.4 && <0.11
+    , containers >=0.4.2.1 && <0.7
+    , directory >=1.0
+    , hashable >=1.0.0
+    , iris-parser
+    , megaparsec >=7.0.0 && <10.0.0
+    , morpheus-graphql-tests >=0.18.0 && <0.19.0
+    , mtl >=2.0 && <=3.0
+    , relude >=0.3.0
+    , scientific >=0.3.6.2 && <0.4
+    , tasty
+    , tasty-hunit
+    , template-haskell >=2.0 && <=3.0
+    , text >=1.2.3.0 && <1.3
+    , th-lift-instances >=0.1.1 && <=0.3
+    , transformers >=0.3.0.0 && <0.6
+    , unordered-containers >=0.2.8.0 && <0.3
+    , vector >=0.12.0.1 && <0.13
+  default-language: Haskell2010

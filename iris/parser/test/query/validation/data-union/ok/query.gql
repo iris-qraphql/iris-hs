@@ -1,0 +1,8 @@
+query {
+  __typename
+  p1: pet(pet: Other)
+  p2: pet(pet: Other {})
+  p3: pet(pet: Cat )
+  p4: pet(pet: Cat { meow: "235" })
+  p6: pet(pet: Dog { bark: "235" })
+}

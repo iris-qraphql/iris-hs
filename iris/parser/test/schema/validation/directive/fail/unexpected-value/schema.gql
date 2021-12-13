@@ -1,0 +1,25 @@
+directive @DirectiveA(a1: Int) on SCALAR
+
+directive @DirectiveB(a1: MyInput) on DATA_FIELD_DEFINITION
+
+data MyInput {
+  field: String?
+}
+
+scalar MyScalar @DirectiveA(a1: 0.1)
+scalar MyScalar2 @DirectiveA(a1: "some string")
+scalar MyScalar3 @DirectiveA(a1: True)
+
+data TestEnum 
+  = EnumA
+  | EnumB 
+  | EnumC
+
+data Input {
+  field1: ID? @DirectiveB(a1: { field: 2394 })
+  field2: String? @DirectiveB(a1: ["some deprication"])
+}
+
+resolver Query {
+  field: Int?
+}

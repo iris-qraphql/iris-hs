@@ -1,0 +1,7 @@
+resolver Query {
+  name: String
+}
+
+resolver Mutation {
+  name(i: Int?): String
+}

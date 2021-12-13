@@ -1,0 +1,3 @@
+resolver MyType {
+  name: String
+}

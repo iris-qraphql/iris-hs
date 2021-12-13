@@ -1,0 +1,23 @@
+resolver CharacterFields {
+  name: String
+  power: [String]?
+}
+
+resolver Hero {
+  name: String
+  nickname: String
+  # this field should not be required
+  power: [String]?
+}
+
+resolver Deity {
+  name: String
+  power: [String]
+}
+
+resolver Character | CharacterFields = Hero | Deity
+
+resolver Query {
+  deity: Deity
+  characters: [Character]
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "message": "Argument \"pet\" got invalid value. Expected type \"Pet\" found IOUBi. \"IOUBi\" is not possible union type",
+    "locations": [{ "line": 2, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. Expected type \"Pet\" found GQW. \"GQW\" is not possible union type",
+    "locations": [{ "line": 3, "column": 11 }]
+  }
+]

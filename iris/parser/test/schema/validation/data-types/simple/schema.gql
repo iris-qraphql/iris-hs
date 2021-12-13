@@ -1,0 +1,12 @@
+data Address {
+  name: String
+}
+
+resolver User {
+  address(format: String): Address
+  friends: [User]
+}
+
+resolver Query {
+  user: User
+}

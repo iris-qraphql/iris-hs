@@ -1,0 +1,11 @@
+query {
+  mortal {
+    __typename
+    name
+    ... on Hero {
+      __typename
+      name
+      hobby
+    }
+  }
+}

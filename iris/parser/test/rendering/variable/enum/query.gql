@@ -1,0 +1,6 @@
+query($arg: MyEnum) {
+  simple {
+    name(arg: $arg)
+    power
+  }
+}

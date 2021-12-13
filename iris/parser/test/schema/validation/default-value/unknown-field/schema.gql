@@ -1,0 +1,20 @@
+data Input1 {
+  field: Int? 
+}
+
+data Input2 {
+  field: Input1
+}
+
+data Input3 {
+  field: Input2
+}
+
+resolver Query {
+  field(
+    i1: Input3 = {
+      field: { field2: null, field: { field3: null } }
+      field2: null
+    }
+  ): Int
+}

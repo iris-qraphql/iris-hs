@@ -1,0 +1,8 @@
+{
+  "errors": [
+    {
+      "message": "Cannot query field \"xyz\" on type \"CharacterFields\".",
+      "locations": [{ "line": 8, "column": 3 }]
+    }
+  ]
+}

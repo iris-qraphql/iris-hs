@@ -1,0 +1,5 @@
+directive @MyDirective on FIELD_DEFINITION | OBJECT
+
+resolver Query {
+  name: String
+}

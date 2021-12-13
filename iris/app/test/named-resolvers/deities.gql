@@ -1,0 +1,13 @@
+data Power 
+  = Shapeshifting
+  | Thunderbolt
+
+resolver Deity {
+  name: String
+  power: [String]?
+}
+
+resolver Query {
+  deity(id: ID?): Deity?
+  deities: [Deity]
+}

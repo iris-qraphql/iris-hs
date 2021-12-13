@@ -1,0 +1,18 @@
+{
+  "data": {
+    "characters": [
+      {
+        "__typename": "Deity",
+        "name": "Test Deity"
+      },
+      {
+        "__typename": "Hero",
+        "name": "Test Hero"
+      },
+      {
+        "__typename": "Character",
+        "name": "Test Character"
+      }
+    ]
+  }
+}

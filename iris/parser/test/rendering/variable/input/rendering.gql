@@ -1,0 +1,6 @@
+query {
+  simple {
+    name(i: { id: "d2342", int: 5 })
+    power
+  }
+}

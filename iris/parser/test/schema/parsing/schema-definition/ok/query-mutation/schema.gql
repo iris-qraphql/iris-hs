@@ -1,0 +1,12 @@
+resolver Query {
+  name: String
+}
+
+resolver Mutation {
+  name: String
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

@@ -1,0 +1,20 @@
+data Power 
+  = Shapeshifting {}
+  | Thunderbolt {}
+
+
+resolver God {
+  name: String
+  power: [Power]
+}
+
+resolver Titan 
+  = God 
+  | Titan {
+    name: String
+    symbol: String?
+  }
+
+resolver Query {
+  deities(power: Power?): [Deity]
+}

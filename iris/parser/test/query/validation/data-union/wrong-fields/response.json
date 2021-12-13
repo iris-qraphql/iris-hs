@@ -1,0 +1,26 @@
+[
+  {
+    "message": "Argument \"pet\" got invalid value. Unknown Field \"bark\".",
+    "locations": [{ "line": 3, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. in field \"meow\": Expected type \"String?\" found {}.",
+    "locations": [{ "line": 4, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. Undefined Field \"bark\".",
+    "locations": [{ "line": 5, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. Unknown Field \"meow\".",
+    "locations": [{ "line": 6, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. Undefined Field \"bark\".",
+    "locations": [{ "line": 6, "column": 11 }]
+  },
+  {
+    "message": "Argument \"pet\" got invalid value. in field \"bark\": Expected type \"String\" found 235.",
+    "locations": [{ "line": 7, "column": 11 }]
+  }
+]

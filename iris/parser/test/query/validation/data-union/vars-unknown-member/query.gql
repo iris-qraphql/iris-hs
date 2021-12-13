@@ -1,0 +1,3 @@
+query ($v1: Pet) {
+  pet(pet: $v1)
+}

@@ -1,0 +1,12 @@
+query {
+  mortal {
+    ...Character
+    ... on Hero {
+      hobby
+    }
+  }
+}
+
+fragment Character on Character {
+  name
+}

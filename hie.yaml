@@ -1,0 +1,21 @@
+cradle:
+  stack:
+    stackYaml: "./stack.yaml"
+    components:
+      - path: "./iris/parser/src"
+        component: "iris-parser:lib"
+
+      - path: "./iris/app/src"
+        component: "iris-app:lib"
+
+      ## test
+      - path: "./iris/parser/test"
+        component: "iris-parser:test:iris-parser-test"
+
+      - path: "./iris/app/test"
+        component: "iris-app:test:iris-app-test"
+
+      ## exe
+
+      - path: "./examples/app"
+        component: "examples-iris-app:exe:iris-app"

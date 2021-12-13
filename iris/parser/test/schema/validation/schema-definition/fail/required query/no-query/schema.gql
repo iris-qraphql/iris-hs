@@ -1,0 +1,7 @@
+resolver MyType {
+  name: String
+}
+
+schema {
+  mutation: MyType
+}

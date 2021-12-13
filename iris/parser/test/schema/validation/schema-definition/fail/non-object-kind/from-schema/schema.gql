@@ -1,0 +1,17 @@
+data MyType {
+  name: String
+}
+
+resolver MyType1 {
+  name: String
+}
+
+data MyEnum = Enum1
+
+resolver MyUnion = MyType | MyType1 
+
+schema {
+  query: MyType
+  mutation: MyUnion
+  subscription: MyEnum
+}

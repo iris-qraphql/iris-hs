@@ -1,0 +1,34 @@
+{
+  "data": {
+    "realms": [
+      {
+        "name": "Mount Olympus",
+        "owner": {
+          "name": "Zeus",
+          "realm": {
+            "name": "Mount Olympus",
+            "owner": { "name": "Zeus" }
+          },
+          "power": []
+        }
+      },
+      {
+        "name": "Fictional world of dreams",
+        "owner": {
+          "name": "Morpheus",
+          "realm": {
+            "name": "Fictional world of dreams",
+            "owner": {
+              "name": "Morpheus"
+            }
+          },
+          "power": [
+            {
+              "__typename": "Shapeshifting"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
