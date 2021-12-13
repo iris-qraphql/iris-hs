@@ -2,7 +2,7 @@ directive @DirectiveA(a1: Int) on SCALAR
 
 directive @DirectiveB(a1: MyInput) on DATA_FIELD_DEFINITION
 
-data MyInput {
+data MyInput = {
   field: String?
 }
 
@@ -15,7 +15,7 @@ data TestEnum
   | EnumB 
   | EnumC
 
-data Input {
+data Input = {
   field1: ID? @DirectiveB(a1: { field: 2394 })
   field2: String? @DirectiveB(a1: ["some deprication"])
 }

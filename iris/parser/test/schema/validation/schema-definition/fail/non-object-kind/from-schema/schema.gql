@@ -1,4 +1,4 @@
-data MyType {
+data MyType = {
   name: String
 }
 

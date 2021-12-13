@@ -14,7 +14,7 @@ resolver B @DirectveC {
 
 resolver MyUnion @DirectveD = A | B
 
-data Input1 @DirectveE {
+data Input1 @DirectveE = {
   field1: ID? @DirectveE
   field2: String?
 }

@@ -1,12 +1,12 @@
-data Input1 {
+data Input1 = {
   field: Int? 
 }
 
-data Input2 {
+data Input2 = {
   field: Input1
 }
 
-data Input3 {
+data Input3 = {
   field: Input2
 }
 

@@ -2,13 +2,11 @@ directive @DirectiveA(a1: String) on SCALAR
 
 directive @DirectiveC(arg: Int) on ARGUMENT_DEFINITION
 
-data MyEnum = EnumA
-
 resolver MyType @SomeDirective {
   field(a1: Int? @DirectiveC(arg: True, someargs: 1)): String? @DirectiveC
 }
 
-data Input @include {
+data Input @include = {
   field: ID? @skip
 }
 

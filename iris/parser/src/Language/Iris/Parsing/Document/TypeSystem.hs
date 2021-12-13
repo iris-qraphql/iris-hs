@@ -34,6 +34,7 @@ import Language.Iris.Parsing.Internal.Pattern
 import Language.Iris.Parsing.Internal.Terms
   ( at,
     colon,
+    equal,
     ignoredTokens,
     keyword,
     optDescription,
@@ -112,7 +113,7 @@ resolverTypeDefinition description =
       <$> typeDeclaration "resolver"
       <*> optionalDirectives
       <*> ( (LazyTypeContent <$> fieldsDefinition)
-              <|> (LazyUnionContent <$> typeGuard <*> unionMembersDefinition)
+              <|> (LazyUnionContent <$> (typeGuard <* equal) <*> unionMembersDefinition)
           )
 {-# INLINEABLE resolverTypeDefinition #-}
 
@@ -133,8 +134,11 @@ dataTypeDefinition description =
       description
       <$> typeDeclaration "data"
       <*> optionalDirectives
-      <*> ( (StrictUnionContent <$> unionMembersDefinition) 
-            <|> (StrictTypeContent <$> (fieldsDefinition <|> pure empty))
+      <*> ( equal
+              *> ( (StrictUnionContent <$> unionMembersDefinition)
+                     <|> (StrictTypeContent <$> fieldsDefinition)
+                 )
+              <|> pure (StrictTypeContent empty)
           )
 {-# INLINEABLE dataTypeDefinition #-}
 

@@ -12,7 +12,7 @@ data TestEnum @DirectiveB
   = EnumA
   | EnumB
 
-data Input1 @deprecated {
+data Input1 @deprecated = {
   field1: ID @include(if: true)
   field2: String
 }

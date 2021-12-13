@@ -1,15 +1,11 @@
-data EnumA {}
-data EnumB {}
-data EnumC {}
+data TestEnum = EnumA {} | EnumB {} | EnumC {}
 
-data TestEnum = EnumA | EnumB | EnumC
-
-data InputSimple {
+data InputSimple = {
   id: ID
   simpleField: TestEnum?
 }
 
-data InputCompound {
+data InputCompound = {
   inputField2: String
   inputField3: [InputSimple] 
 }

@@ -1,10 +1,8 @@
 scalar MyScalar
 
-data A {}
-data B {}
-data MyEnum = A | B
+data MyEnum = A {} | B {}
 
-data Input {
+data Input = {
   id: String 
   int: MyScalar
 }

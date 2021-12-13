@@ -1,14 +1,14 @@
 data TestEnum 
-  = EnumA
-  | EnumB
+  = EnumA {}
+  | EnumB {}
 
-data Input1 {
+data Input1 = {
   field1: ID?
   field2: String
   field3: TestEnum?
 }
 
-data Input2 {
+data Input2 = {
   field1: Input1
   field2: String
 }

@@ -1,14 +1,12 @@
-data Cat {
+data Cat = {
   meow: String?
 }
 
-data Dog {
+data Dog = {
   bark: String
 }
 
-data Other {}
-
-data Pet = Cat | Dog | Other
+data Pet = Cat | Dog | Other {}
 
 resolver Query {
   pet ( pet:Pet): Pet

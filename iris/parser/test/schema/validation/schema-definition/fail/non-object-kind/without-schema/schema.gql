@@ -2,7 +2,7 @@ resolver MyType1 {
   name: String
 }
 
-data Query {
+data Query = {
   name: String
 }
 

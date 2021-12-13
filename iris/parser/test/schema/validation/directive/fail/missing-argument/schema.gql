@@ -8,9 +8,9 @@ directive @DirectiveC(
 
 scalar MyScalar @DirectiveA
 
-data MyEnum @DirectiveA = EnumA
+data MyEnum @DirectiveA = EnumA {}
 
-data MyInput @DirectiveB {
+data MyInput @DirectiveB = {
   field: String? @DirectiveB
 }
 

@@ -1,4 +1,4 @@
-data Address {
+data Address = {
   street: String
 }
 

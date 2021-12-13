@@ -85,7 +85,7 @@ resolver __Variant {
   fields(includeDeprecated: Boolean = false): [__Field]?
 }
 
-data __TypeRef {
+data __TypeRef = {
   name: String
   required: Boolean 
   parameter: __TypeRef?
