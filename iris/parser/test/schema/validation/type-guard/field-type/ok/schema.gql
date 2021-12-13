@@ -1,16 +1,16 @@
-resolver Query {
+resolver Query = {
   deity(name: String?): Deity
 }
 
-resolver Character {
+resolver Character = {
   name: String?
 }
 
-resolver Supernatural {
+resolver Supernatural = {
   power: [String]
 }
 
-resolver Hero  {
+resolver Hero = {
   name: String?
 }
 
@@ -18,7 +18,7 @@ resolver HeroUnion | Character = Hero
 
 resolver DeityUnion | Supernatural = Deity
 
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]
 }

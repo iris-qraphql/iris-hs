@@ -1,20 +1,22 @@
-data Power 
+
+data Lifespan 
+  = Immortal {} 
+  | Limited { max: Int? }
+
+data Power
   = Shapeshifting {}
   | Thunderbolt {}
 
-
-resolver God {
+resolver God = {
   name: String
   power: [Power]
 }
 
-resolver Titan 
-  = God 
-  | Titan {
-    name: String
-    symbol: String?
-  }
+resolver Deity
+  = God
+  | Titan { name: String } # exists only inside Deity
+  | Monsters {} # exists only inside of Deity`
 
-resolver Query {
-  deities(power: Power?): [Deity]
+resolver Query = {
+  deities(lifespan: Lifespan?): [Deity]
 }

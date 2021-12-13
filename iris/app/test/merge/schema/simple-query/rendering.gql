@@ -1,14 +1,14 @@
-resolver Type1 {
+resolver Type1 = {
   name: String
 }
 
-resolver Type2 {
+resolver Type2 = {
   name: String
   age: Int
   id: ID
 }
 
-resolver Query {
+resolver Query = {
   type: Type2
   id: ID
 }

@@ -1,6 +1,6 @@
 resolver Entity = Deity | Realm
 
-resolver Query {
+resolver Query = {
   entity(id: ID?): Entity?
   entities: [Entity]
 }

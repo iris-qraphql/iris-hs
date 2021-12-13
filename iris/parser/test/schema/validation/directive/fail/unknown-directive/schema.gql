@@ -4,21 +4,21 @@ data TestEnum @DirectveB
   = EnumA
   | EnumB
 
-resolver A @DirectveC {
+resolver A @DirectveC = {
   name: String @DirectveC
 }
 
-resolver B @DirectveC {
+resolver B @DirectveC = {
   name: String @DirectveC
 }
 
 resolver MyUnion @DirectveD = A | B
 
-data Input1 @DirectveE {
+data Input1 @DirectveE = {
   field1: ID? @DirectveE
   field2: String?
 }
 
-resolver Query @DirectveF {
+resolver Query @DirectveF = {
   field(a1: Int? @DirectveF): Int? @DirectveF
 }

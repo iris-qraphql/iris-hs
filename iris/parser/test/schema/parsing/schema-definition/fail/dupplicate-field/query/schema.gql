@@ -1,4 +1,4 @@
-resolver Query {
+resolver Query = {
   name: String
 }
 

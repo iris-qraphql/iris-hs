@@ -127,7 +127,7 @@ equal = symbol EQUAL
 {-# INLINE equal #-}
 
 pipe :: Parser a -> Parser [a]
-pipe x = optional (symbol PIPE) *> (x `sepBy1` symbol PIPE)
+pipe x = x `sepBy1` symbol PIPE
 {-# INLINE pipe #-}
 
 symPipe :: Parser ()

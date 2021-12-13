@@ -30,7 +30,6 @@ import Language.Iris.Parsing.Internal.Internal
 import Language.Iris.Parsing.Internal.Terms
   ( at,
     colon,
-    equal,
     ignoredTokens,
     keyword,
     optDescription,
@@ -84,8 +83,7 @@ unionMembersDefinition ::
 unionMembersDefinition =
   label "UnionMember" $
     lift . fromElems
-      =<< equal
-      *> pipe
+      =<< pipe
         ( UnionMember
             <$> optDescription
             <*> parseTypeName

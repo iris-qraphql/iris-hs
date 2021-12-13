@@ -2,34 +2,34 @@ directive @Turbo(name: String?) on FIELD | QUERY
 
 directive @Speed(name: String?) on FIELD | QUERY
 
-resolver Character {
+resolver Character = {
   name: String
 }
 
-resolver Hero  {
+resolver Hero  = {
   name: String
   hobby: String?
 }
 
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]
   friends: [Deity]
 }
 
-resolver Animal {
+resolver Animal = {
   name: String
   weight: Int?
 }
 
-resolver Human {
+resolver Human = {
   name: String
   age: Int?
 }
 
 resolver Mortal | Character = Human | Animal | Hero
 
-resolver Query {
+resolver Query = {
   deity: Deity
   mortal: Mortal
 }

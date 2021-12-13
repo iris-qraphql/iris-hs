@@ -1,4 +1,4 @@
-resolver MyType {
+resolver MyType = {
   name: String
 }
 

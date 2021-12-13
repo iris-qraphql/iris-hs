@@ -1,19 +1,19 @@
 data TestEnum 
-  = EnumA
-  | EnumB
+  = EnumA {}
+  | EnumB {}
 
-data Input1 {
+data Input1 = {
   field1: ID?
   field2: String
   field3: TestEnum?
 }
 
-data Input2 {
+data Input2 = {
   field1: Input1
   field2: String
 }
 
-resolver Query {
+resolver Query = {
   field(
     i1: Input2 = { field1: { field2: 1 }, field2: true }
     i2: Input1 = { field1: { field3: 2344 }, field2: 123 }

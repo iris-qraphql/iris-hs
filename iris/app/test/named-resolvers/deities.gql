@@ -2,12 +2,12 @@ data Power
   = Shapeshifting
   | Thunderbolt
 
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]?
 }
 
-resolver Query {
+resolver Query = {
   deity(id: ID?): Deity?
   deities: [Deity]
 }

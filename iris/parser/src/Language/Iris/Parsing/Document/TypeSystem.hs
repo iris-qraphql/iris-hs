@@ -34,6 +34,7 @@ import Language.Iris.Parsing.Internal.Pattern
 import Language.Iris.Parsing.Internal.Terms
   ( at,
     colon,
+    equal,
     ignoredTokens,
     keyword,
     optDescription,
@@ -111,9 +112,14 @@ resolverTypeDefinition description =
     TypeDefinition description
       <$> typeDeclaration "resolver"
       <*> optionalDirectives
-      <*> ( (LazyTypeContent <$> fieldsDefinition)
-              <|> (LazyUnionContent <$> typeGuard <*> unionMembersDefinition)
-          )
+      <*> (content <|> pure (LazyTypeContent empty))
+  where
+    content = do
+      tyGuard <- typeGuard
+      equal
+        *> ( (LazyTypeContent <$> fieldsDefinition)
+               <|> (LazyUnionContent tyGuard <$> unionMembersDefinition)
+           )
 {-# INLINEABLE resolverTypeDefinition #-}
 
 -- Input Objects : https://graphql.github.io/graphql-spec/June2018/#sec-Input-Objects
@@ -133,8 +139,11 @@ dataTypeDefinition description =
       description
       <$> typeDeclaration "data"
       <*> optionalDirectives
-      <*> ( (StrictUnionContent <$> unionMembersDefinition) 
-            <|> (StrictTypeContent <$> (fieldsDefinition <|> pure empty))
+      <*> ( equal
+              *> ( (StrictUnionContent <$> unionMembersDefinition)
+                     <|> (StrictTypeContent <$> fieldsDefinition)
+                 )
+              <|> pure (StrictTypeContent empty)
           )
 {-# INLINEABLE dataTypeDefinition #-}
 

@@ -646,5 +646,5 @@ instance RenderGQL (TypeDefinition a s) where
           <> renderGQL typeName
           <> " = "
           <> renderMembers unionMembers
-      __render (StrictTypeContent fields) = "data " <> renderGQL typeName <> renderGQL fields
-      __render LazyTypeContent {lazyObjectFields} = "resolver " <> renderGQL typeName <> renderGQL lazyObjectFields
+      __render (StrictTypeContent fields) = "data " <> renderGQL typeName <> " =" <> renderGQL fields
+      __render LazyTypeContent {lazyObjectFields} = "resolver " <> renderGQL typeName <> " =" <> renderGQL lazyObjectFields

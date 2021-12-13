@@ -2,6 +2,6 @@
 A condition to be used against `ActivityLog` object types. All fields are tested
 for equality and combined with a logical ‘and.’
 """
-resolver Query {
+resolver Query = {
   field: Int
 }

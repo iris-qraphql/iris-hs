@@ -1,12 +1,12 @@
-resolver Query {
+resolver Query = {
   id: ID
   name: String
 }
 
-resolver Mutation {
+resolver Mutation = {
   id: ID
 }
 
-resolver Subscription {
+resolver Subscription = {
   name: String
 }

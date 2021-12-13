@@ -22,18 +22,18 @@ data Power
   = Shapeshifting {}
   | Thunderbolt {}
 
-resolver God {
+resolver God = {
   name: String
   power: Set<Power>
 }
 
 resolver Deity
   = God
-  | Titan { name: String } # exists only inside of scope `Deity`
-  | Monsters {} # exists only inside of scope `Deity`
+  | Titan { name: String } # exists only inside `Deity`
+  | Monsters {} # exists only inside `Deity`
 
-resolver Query {
-  deities(lifespan: Family?): [Deity]
+resolver Query = {
+  deities(lifespan: Lifespan?): [Deity]
 }
 ```
 

@@ -2,11 +2,11 @@ scalar MyScalar
 
 data TestEnum = EnumA | EnumB
 
-data Input1 {
+data Input1 = {
   field1: ID
   field2: String
 }
 
-resolver Query {
+resolver Query = {
   field(a1: Int): Int @deprecated
 }

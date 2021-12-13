@@ -8,16 +8,16 @@ directive @DirectiveC(
 
 scalar MyScalar @DirectiveA
 
-data MyEnum @DirectiveA = EnumA
+data MyEnum @DirectiveA = EnumA {}
 
-data MyInput @DirectiveB {
+data MyInput @DirectiveB = {
   field: String? @DirectiveB
 }
 
-resolver MyType @DirectiveC {
+resolver MyType @DirectiveC = {
   field(a1: Int? @DirectiveC): String? @DirectiveC
 }
 
-resolver Query {
+resolver Query = {
   name: String?
 }
