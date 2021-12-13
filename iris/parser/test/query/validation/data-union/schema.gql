@@ -8,6 +8,6 @@ data Dog = {
 
 data Pet = Cat | Dog | Other {}
 
-resolver Query {
+resolver Query = {
   pet ( pet:Pet): Pet
 }

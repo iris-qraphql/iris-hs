@@ -1,13 +1,13 @@
-resolver Realm {
+resolver Realm = {
   name: String
   owner: Deity
 }
 
-resolver Deity {
+resolver Deity = {
   realm: Realm
 }
 
-resolver Query {
+resolver Query = {
   realms: [Realm]
   realm(id: ID?): Realm?
 }

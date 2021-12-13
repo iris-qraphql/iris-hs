@@ -7,12 +7,12 @@ data Input = {
   int: MyScalar
 }
 
-resolver Deity {
+resolver Deity = {
   name(i: Input?, arg: MyEnum?, list: [Input]?): String
   power: [String]
 }
 
-resolver Query {
+resolver Query = {
   simple(name: String?): Deity
 }
 

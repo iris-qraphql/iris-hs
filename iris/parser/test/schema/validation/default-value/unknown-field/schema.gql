@@ -10,7 +10,7 @@ data Input3 = {
   field: Input2
 }
 
-resolver Query {
+resolver Query = {
   field(
     i1: Input3 = {
       field: { field2: null, field: { field3: null } }

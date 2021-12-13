@@ -7,6 +7,6 @@ data Input1 = {
   field2: String
 }
 
-resolver Query {
+resolver Query = {
   field(a1: Int): Int @deprecated
 }

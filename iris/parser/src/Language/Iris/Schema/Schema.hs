@@ -45,7 +45,7 @@ scalar Float
 scalar String
 scalar ID
 
-resolver __Schema {
+resolver __Schema = {
   types: [__Type]
   queryType: __Type
   mutationType: __Type?
@@ -53,7 +53,7 @@ resolver __Schema {
   directives: [__Directive]
 }
 
-resolver __TypeFields {
+resolver __TypeFields = {
   name: String
   description: String?
 }
@@ -79,7 +79,7 @@ resolver __Type
 
 data __Role = DATA {} | RESOLVER {} 
 
-resolver __Variant {
+resolver __Variant = {
   name: String
   namespace: String?
   fields(includeDeprecated: Boolean = false): [__Field]?
@@ -91,7 +91,7 @@ data __TypeRef = {
   parameter: __TypeRef?
 }
 
-resolver __Field {
+resolver __Field = {
   name: String
   description: String?
   type: __TypeRef
@@ -99,14 +99,14 @@ resolver __Field {
   deprecation: String?
 }
 
-resolver __Argument {
+resolver __Argument = {
   name: String
   description: String?
   type: __TypeRef
   defaultValue: String?
 }
 
-resolver __Directive {
+resolver __Directive = {
   name: String
   description: String?
   locations: [__DirectiveLocation]
@@ -128,7 +128,7 @@ data __DirectiveLocation
   | FIELD_DEFINITION {}
   | ARGUMENT_DEFINITION {}
 
-resolver Query {
+resolver Query = {
   __type(name: String): __Type?
   __schema: __Schema
 }

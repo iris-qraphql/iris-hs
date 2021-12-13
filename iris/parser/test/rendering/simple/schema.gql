@@ -1,12 +1,12 @@
 directive @MyDirective(name: String?) on FIELD | QUERY
 
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]
   friends: [Deity]
 }
 
-resolver Query {
+resolver Query = {
   deity(name: String?): Deity
 }
 

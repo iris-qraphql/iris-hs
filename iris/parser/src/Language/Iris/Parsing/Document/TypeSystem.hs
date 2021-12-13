@@ -112,13 +112,14 @@ resolverTypeDefinition description =
     TypeDefinition description
       <$> typeDeclaration "resolver"
       <*> optionalDirectives
-      <*> ( ( equal
-                *> ( (LazyTypeContent <$> fieldsDefinition)
-                       <|> (LazyUnionContent <$> typeGuard <*> unionMembersDefinition)
-                   )
-            )
-              <|> pure (LazyTypeContent empty)
-          )
+      <*> (content <|> pure (LazyTypeContent empty))
+  where
+    content = do
+      tyGuard <- typeGuard
+      equal
+        *> ( (LazyTypeContent <$> fieldsDefinition)
+               <|> (LazyUnionContent tyGuard <$> unionMembersDefinition)
+           )
 {-# INLINEABLE resolverTypeDefinition #-}
 
 -- Input Objects : https://graphql.github.io/graphql-spec/June2018/#sec-Input-Objects

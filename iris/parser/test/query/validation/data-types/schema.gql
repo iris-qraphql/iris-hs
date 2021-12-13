@@ -2,12 +2,12 @@ data Address = {
   street: String
 }
 
-resolver User {
+resolver User = {
   name: String
   address (format: String?): Address
   friends: [User]
 }
 
-resolver Query {
+resolver Query = {
   user: User
 }

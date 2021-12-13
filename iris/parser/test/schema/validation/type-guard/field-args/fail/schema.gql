@@ -1,24 +1,24 @@
-resolver Query {
+resolver Query = {
   deity(name: String?): Deity
 }
 
-resolver Character {
+resolver Character = {
   name(id: ID?): String
 }
 
-resolver Hero {
+resolver Hero = {
   # arg: id has weeker type
   power(id: ID?): String
 }
 
 resolver HeroUnion | Character = Hero
 
-resolver Supernatural {
+resolver Supernatural = {
   name(id: ID?): String
   power(id: ID): [String]
 }
 
-resolver Deity {
+resolver Deity = {
   # undefined args (id: String)
   name: String
   # arg: id has different type

@@ -12,7 +12,7 @@ data Input3 = {
   field: Input2
 }
 
-resolver Query {
+resolver Query = {
   field(
     i1: Input3? = { field: {} }
     i2: Input3? = {}

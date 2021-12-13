@@ -1,8 +1,8 @@
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]
 }
 
-resolver Query {
+resolver Query = {
   deity(name: String?): Deity?
 }

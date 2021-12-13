@@ -1,4 +1,4 @@
-resolver Query {
+resolver Query = {
   name: String
 }
 
@@ -14,11 +14,11 @@ schema {
   subscription: Subscription
 }
 
-resolver Mutation {
+resolver Mutation = {
   name: String
 }
 
-resolver Subscription {
+resolver Subscription = {
   name: String
 }
 

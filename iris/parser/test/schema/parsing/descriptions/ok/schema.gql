@@ -7,7 +7,7 @@ haha52352 "
 3434
 "
 """
-resolver MyType {
+resolver MyType = {
   field: Int
 }
 
@@ -19,6 +19,6 @@ haha52352 "
 
 ""
 """
-resolver Query {
+resolver Query = {
   name: String
 }

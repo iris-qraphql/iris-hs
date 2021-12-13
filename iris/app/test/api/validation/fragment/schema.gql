@@ -1,23 +1,23 @@
-resolver CharacterFields {
+resolver CharacterFields = {
   name: String
   power: [String]?
 }
 
-resolver Hero {
+resolver Hero = {
   name: String
   nickname: String
   # this field should not be required
   power: [String]?
 }
 
-resolver Deity {
+resolver Deity = {
   name: String
   power: [String]
 }
 
 resolver Character | CharacterFields = Hero | Deity
 
-resolver Query {
+resolver Query = {
   deity: Deity
   characters: [Character]
 }

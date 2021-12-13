@@ -1,5 +1,5 @@
 directive @MyDirective on FIELD_DEFINITION | OBJECT
 
-resolver Query {
+resolver Query = {
   name: String
 }

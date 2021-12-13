@@ -10,7 +10,7 @@ data InputCompound = {
   inputField3: [InputSimple] 
 }
 
-resolver User {
+resolver User = {
   inputs(
     inputCompound: InputCompound = {
       inputField2: "value from argument inputCompound",
@@ -23,6 +23,6 @@ resolver User {
   ): String
 }
 
-resolver Query {
+resolver Query = {
   user: User
 }

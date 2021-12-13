@@ -17,6 +17,6 @@ data Input1 @deprecated = {
   field2: String
 }
 
-resolver Query @deprecated {
+resolver Query @deprecated = {
   field(a1: Int @DirectiveD): Int @include(if: true)
 }

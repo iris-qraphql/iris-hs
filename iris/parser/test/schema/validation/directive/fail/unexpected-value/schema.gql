@@ -20,6 +20,6 @@ data Input = {
   field2: String? @DirectiveB(a1: ["some deprication"])
 }
 
-resolver Query {
+resolver Query = {
   field: Int?
 }

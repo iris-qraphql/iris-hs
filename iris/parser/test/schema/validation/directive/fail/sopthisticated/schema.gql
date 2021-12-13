@@ -2,7 +2,7 @@ directive @DirectiveA(a1: String) on SCALAR
 
 directive @DirectiveC(arg: Int) on ARGUMENT_DEFINITION
 
-resolver MyType @SomeDirective {
+resolver MyType @SomeDirective = {
   field(a1: Int? @DirectiveC(arg: True, someargs: 1)): String? @DirectiveC
 }
 
@@ -10,6 +10,6 @@ data Input @include = {
   field: ID? @skip
 }
 
-resolver Query @DirectiveC(arg: "bla") {
+resolver Query @DirectiveC(arg: "bla") = {
   field(a1: Int): Int @skip
 }

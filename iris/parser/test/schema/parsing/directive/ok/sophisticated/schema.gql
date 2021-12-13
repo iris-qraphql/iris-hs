@@ -12,6 +12,6 @@ data MyInput = {
   field: Int?
 }
 
-resolver Query {
+resolver Query = {
   name: String
 }
