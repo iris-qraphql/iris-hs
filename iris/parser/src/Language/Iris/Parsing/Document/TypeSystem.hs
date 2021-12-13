@@ -112,8 +112,12 @@ resolverTypeDefinition description =
     TypeDefinition description
       <$> typeDeclaration "resolver"
       <*> optionalDirectives
-      <*> ( (LazyTypeContent <$> fieldsDefinition)
-              <|> (LazyUnionContent <$> (typeGuard <* equal) <*> unionMembersDefinition)
+      <*> ( ( equal
+                *> ( (LazyTypeContent <$> fieldsDefinition)
+                       <|> (LazyUnionContent <$> typeGuard <*> unionMembersDefinition)
+                   )
+            )
+              <|> pure (LazyTypeContent empty)
           )
 {-# INLINEABLE resolverTypeDefinition #-}
 
