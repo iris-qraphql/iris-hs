@@ -38,6 +38,7 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     FieldsDefinition,
     LAZY,
+    Name,
     STRICT,
     TRUE,
     TypeContent (..),
@@ -60,10 +61,7 @@ import Relude
 class RenderIntrospection a where
   render :: (Monad m) => a -> m (ResolverValue m)
 
-instance RenderIntrospection TypeName where
-  render = pure . mkString . unpackName
-
-instance RenderIntrospection FieldName where
+instance RenderIntrospection (Name t) where
   render = pure . mkString . unpackName
 
 instance RenderIntrospection Description where
@@ -83,21 +81,15 @@ instance RenderIntrospection TypeKind where
   render = pure . mkString . fromLBS . GQL.render
 
 instance RenderIntrospection (DirectiveDefinition VALID) where
-  render
-    DirectiveDefinition
-      { directiveDefinitionName,
-        directiveDefinitionDescription,
-        directiveDefinitionLocations,
-        directiveDefinitionArgs
-      } =
-      pure $
-        mkObject
-          (Just "__Directive")
-          [ renderName directiveDefinitionName,
-            description directiveDefinitionDescription,
-            ("locations", render directiveDefinitionLocations),
-            ("args", render directiveDefinitionArgs)
-          ]
+  render DirectiveDefinition {..} =
+    pure $
+      mkObject
+        (Just "__Directive")
+        [ renderName directiveDefinitionName,
+          description directiveDefinitionDescription,
+          ("locations", render directiveDefinitionLocations),
+          ("args", render directiveDefinitionArgs)
+        ]
 
 instance RenderIntrospection DirectiveLocation where
   render locations = pure $ mkString (pack $ show locations)
@@ -138,7 +130,7 @@ instance
         (Just "__Field")
         [ renderName fieldName,
           description fieldDescription,
-          type' fieldType,
+          renderType fieldType,
           ("args", maybe (pure $ mkList []) render fieldContent),
           renderDeprecated fieldDirectives
         ]
@@ -153,7 +145,7 @@ instance RenderIntrospection (FieldDefinition STRICT VALID) where
         (Just "__Argument")
         [ renderName fieldName,
           description fieldDescription,
-          type' fieldType,
+          renderType fieldType,
           ("defaultValue", render fieldContent)
         ]
 
@@ -170,11 +162,13 @@ __TypeRef :: Monad m => TypeName -> Bool -> Maybe (ResolverValue m) -> ResolverV
 __TypeRef name isRequired value =
   mkObject
     (Just "__TypeRef")
-    ( [ renderName name,
-        ("required", render isRequired)
-      ]
-        <> maybeToList (("parameter",) . pure <$> value)
-    )
+    [ renderName name,
+      ("required", render isRequired),
+      renderParameters value
+    ]
+
+renderParameters :: Monad m => Maybe (ResolverValue m) -> (FieldName, m (ResolverValue m))
+renderParameters value = ("parameters", pure $ mkList (maybeToList value))
 
 renderDeprecated :: Monad m => Directives s -> (FieldName, m (ResolverValue m))
 renderDeprecated dirs =
@@ -185,12 +179,12 @@ renderDeprecated dirs =
 description :: Monad m => Maybe Description -> (FieldName, m (ResolverValue m))
 description = ("description",) . render
 
-renderTypeName :: IsString p => TypeKind -> p
+renderTypeName :: TypeKind -> TypeName
 renderTypeName SCALAR = "__Type.Scalar"
 renderTypeName OBJECT {} = "__Type.ADT"
 renderTypeName UNION = "__Type.ADT"
 renderTypeName DATA = "__Type.ADT"
-renderTypeName LIST = "__Type.Collection"
+renderTypeName LIST = "__Type.Series"
 
 mkType ::
   (Monad m) =>
@@ -221,11 +215,12 @@ mkFieldsType kind name desc fields =
     name
     desc
     Nothing
-    [ ( name,
-        Just $
-          render $
-            filter fieldVisibility $
-              toList fields
+    [ ( Nothing,
+        name,
+        Just
+          $ render
+          $ filter fieldVisibility
+          $ toList fields
       )
     ]
 
@@ -238,7 +233,15 @@ mkUnionType ::
   UnionTypeDefinition t VALID ->
   ResolverValue m
 mkUnionType kind name desc typeGuard variants =
-  mkVariants kind name desc typeGuard (map (\x -> (memberName x, Nothing)) (toList variants))
+  mkVariants
+    kind
+    name
+    desc
+    typeGuard
+    ( map
+        (\x -> (if null (memberFields x) then Just name else Nothing, memberName x, Nothing))
+        (toList variants)
+    )
 
 mkVariants ::
   (Monad m) =>
@@ -246,7 +249,7 @@ mkVariants ::
   TypeName ->
   Maybe Description ->
   Maybe TypeName ->
-  [(TypeName, Maybe (m (ResolverValue m)))] ->
+  [(Maybe TypeName, TypeName, Maybe (m (ResolverValue m)))] ->
   ResolverValue m
 mkVariants
   kind
@@ -258,22 +261,19 @@ mkVariants
       kind
       name
       desc
-      ( [ ("role", render ((if kind == DATA then "DATA" else "RESOLVER") :: TypeName)),
-          ("variants", pure $ mkList $ map mkVariant variants)
-        ]
-          <> optionalField "guard" typeGuard
-      )
-    where
-      mkVariant (variantName, fields) =
-        mkObject
-          (Just "__Variant")
-          [ renderName variantName,
-            ("namespace", if null fields then render name else pure mkNull),
-            ("fields", fromMaybe (pure mkNull) fields)
-          ]
+      [ ("role", render ((if kind == DATA then "DATA" else "RESOLVER") :: TypeName)),
+        ("variants", pure $ mkList $ map renderVariant variants),
+        ("guard", render typeGuard)
+      ]
 
-optionalField :: (RenderIntrospection a, Monad m) => FieldName -> Maybe a -> [(FieldName, m (ResolverValue m))]
-optionalField name v = maybeToList ((name,) . render <$> v)
+renderVariant :: Monad m => (Maybe TypeName, TypeName, Maybe (m (ResolverValue m))) -> ResolverValue m
+renderVariant (namespace, variantName, fields) =
+  mkObject
+    (Just "__Variant")
+    [ renderName variantName,
+      ("namespace", render namespace),
+      ("fields", fromMaybe (pure mkNull) fields)
+    ]
 
 mkObjectType ::
   Monad m =>
@@ -291,5 +291,5 @@ renderName ::
   (FieldName, m (ResolverValue m))
 renderName = ("name",) . render
 
-type' :: Monad m => TypeRef -> (FieldName, m (ResolverValue m))
-type' = ("type",) . render
+renderType :: Monad m => TypeRef -> (FieldName, m (ResolverValue m))
+renderType = ("type",) . render

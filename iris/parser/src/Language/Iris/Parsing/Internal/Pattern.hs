@@ -209,8 +209,7 @@ parseDirectiveLocation =
             ]
             <> map
               (fmap TYPE_DIRECTIVE . toKeyword)
-              [ UNION,
-                DATA,
+              [ DATA,
                 SCALAR
               ]
             <> [ string "OBJECT"

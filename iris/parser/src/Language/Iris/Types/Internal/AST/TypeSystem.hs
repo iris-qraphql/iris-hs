@@ -415,7 +415,7 @@ lookupType (tName, Just variantName) tm = do
             typeContent = LazyTypeContent content,
             ..
           }
-    (StrictUnionContent vs) -> do
+    (StrictTypeContent vs) -> do
       content <- lookup variantName vs >>= memberFields
       pure
         TypeDefinition
@@ -487,13 +487,8 @@ data
     { dataScalar :: ScalarDefinition
     } ->
     TypeContentOfKind STRICT a s
-  StrictUnionContent ::
-    { strictUnionMembers :: UnionTypeDefinition STRICT s
-    } ->
-    TypeContentOfKind STRICT a s
   StrictTypeContent ::
-    { strictObjectFields :: FieldsDefinition STRICT s
-    } ->
+    { dataVariants :: UnionTypeDefinition STRICT s} ->
     TypeContentOfKind (IS_OBJECT STRICT) a s
   LazyTypeContent ::
     { lazyObjectFields :: FieldsDefinition LAZY s
@@ -513,7 +508,6 @@ deriving instance Lift (TypeContent a b s)
 
 indexOf :: TypeContent b a s -> Int
 indexOf ScalarTypeContent {} = 0
-indexOf StrictUnionContent {} = 1
 indexOf StrictTypeContent {} = 2
 indexOf LazyTypeContent {} = 5
 indexOf LazyUnionContent {} = 6
@@ -525,20 +519,17 @@ instance Strictness (TypeContent TRUE k s) where
 
 instance ToAny (TypeContent TRUE) where
   toAny ScalarTypeContent {..} = ScalarTypeContent {..}
-  toAny StrictUnionContent {..} = StrictUnionContent {..}
   toAny StrictTypeContent {..} = StrictTypeContent {..}
   toAny LazyTypeContent {..} = LazyTypeContent {..}
   toAny LazyUnionContent {..} = LazyUnionContent {..}
 
 instance FromAny (TypeContent TRUE) STRICT where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny StrictUnionContent {..} = Just StrictUnionContent {..}
   fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
   fromAny _ = Nothing
 
 instance FromAny (TypeContent TRUE) LAZY where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny StrictUnionContent {..} = Just StrictUnionContent {..}
   fromAny LazyTypeContent {..} = Just LazyTypeContent {..}
   fromAny LazyUnionContent {..} = Just LazyUnionContent {..}
   fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
@@ -562,14 +553,12 @@ createScalarType typeName = mkType typeName $ ScalarTypeContent (ScalarDefinitio
 isLeaf :: TypeContent TRUE a s -> Bool
 isLeaf ScalarTypeContent {} = True
 isLeaf StrictTypeContent {} = True
-isLeaf StrictUnionContent {} = True
 isLeaf _ = False
 
 kindOf :: TypeDefinition a s -> TypeKind
 kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
   where
     __kind ScalarTypeContent {} = SCALAR
-    __kind StrictUnionContent {} = DATA
     __kind StrictTypeContent {} = DATA
     __kind LazyTypeContent {} = OBJECT (toOperationType typeName)
     __kind LazyUnionContent {} = UNION
@@ -637,14 +626,13 @@ instance RenderGQL (TypeDefinition a s) where
   renderGQL TypeDefinition {typeName, typeContent} = __render typeContent <> newline
     where
       __render ScalarTypeContent {} = "scalar " <> renderGQL typeName
-      __render StrictUnionContent {strictUnionMembers} =
+      __render StrictTypeContent {dataVariants} =
         "data " <> renderGQL typeName
           <> " = "
-          <> renderMembers strictUnionMembers
+          <> renderMembers dataVariants
       __render LazyUnionContent {unionMembers} =
         "resolver "
           <> renderGQL typeName
           <> " = "
           <> renderMembers unionMembers
-      __render (StrictTypeContent fields) = "data " <> renderGQL typeName <> " =" <> renderGQL fields
       __render LazyTypeContent {lazyObjectFields} = "resolver " <> renderGQL typeName <> " =" <> renderGQL lazyObjectFields
