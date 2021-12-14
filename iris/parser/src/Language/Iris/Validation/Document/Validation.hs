@@ -128,11 +128,9 @@ instance TypeCheck (TypeContent TRUE cat) where
   type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
   typeCheck LazyTypeContent {lazyObjectFields} =
     LazyTypeContent <$> traverse typeCheck lazyObjectFields
-  typeCheck StrictTypeContent {strictObjectFields} =
-    StrictTypeContent <$> traverse typeCheck strictObjectFields
+  typeCheck StrictTypeContent {dataVariants} =
+    StrictTypeContent <$> traverse typeCheck dataVariants
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
-  typeCheck StrictUnionContent {strictUnionMembers} =
-    StrictUnionContent <$> traverse typeCheck strictUnionMembers
   typeCheck
     LazyUnionContent
       { unionTypeGuardName,

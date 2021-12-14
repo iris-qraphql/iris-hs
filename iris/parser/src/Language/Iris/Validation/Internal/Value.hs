@@ -60,7 +60,8 @@ import Language.Iris.Types.Internal.Validation
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
-
+import Language.Iris.Types.Internal.Validation.Internal (askTypeMember)
+import Data.Mergeable.Utils (empty)
 violation ::
   Maybe GQLError ->
   Value s ->
@@ -154,15 +155,16 @@ validateUnwrapped ::
   TypeContent TRUE STRICT schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
-validateUnwrapped (StrictTypeContent parentFields) (Object conName fields) =
-  Object conName <$> validateInputObject parentFields fields
-validateUnwrapped (StrictUnionContent tags) value =
+validateUnwrapped (StrictTypeContent variants) (Object conName fields) =
+  case toList variants of
+    [UnionMember {memberFields = Just variantFields}] ->
+      Object conName <$> validateInputObject variantFields fields
+    _ -> validateStrictUnionType variants (Object conName fields)
+validateUnwrapped (StrictTypeContent tags) value =
   validateStrictUnionType tags value
 validateUnwrapped (ScalarTypeContent dataScalar) value =
   validateScalar dataScalar value
-validateUnwrapped _ value = violation Nothing value
 
--- INPUT Object
 validateInputObject ::
   ValidateWithDefault ctx schemaS valueS =>
   FieldsDefinition STRICT schemaS ->
@@ -258,7 +260,7 @@ validateStrictUnionType inputUnion (Object (Just conName) rawFields) =
   case isPossibleInputUnion inputUnion conName of
     Left message -> violation (Just $ msg message) (Object (Just conName) rawFields)
     Right memberTypeRef -> do
-      fields <- strictObjectFields . typeContent <$> askTypeMember memberTypeRef
+      fields <- fromMaybe empty . memberFields <$> askTypeMember memberTypeRef
       Object (Just conName) <$> validateInputObject fields rawFields
 validateStrictUnionType _ (Object Nothing fields)
   | member __typename fields =

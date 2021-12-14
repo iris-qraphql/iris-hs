@@ -420,7 +420,7 @@ lookupType (tName, Just variantName) tm = do
       pure
         TypeDefinition
           { typeName = name,
-            typeContent = StrictTypeContent content,
+          --  typeContent = StrictTypeContent content,
             ..
           }
     _ -> Nothing

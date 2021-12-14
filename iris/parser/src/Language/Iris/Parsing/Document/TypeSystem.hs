@@ -14,7 +14,8 @@ import Data.ByteString.Lazy (ByteString)
 import Data.Foldable (foldr')
 import Data.Mergeable (NameCollision (nameCollision), throwErrors)
 import Data.Mergeable.Utils
-  ( empty,
+  ( IsMap (singleton),
+    empty,
     fromElems,
   )
 import Language.Iris.Parsing.Internal.Internal
@@ -61,6 +62,7 @@ import Language.Iris.Types.Internal.AST
     SchemaDefinition (..),
     TypeContent (..),
     TypeDefinition (..),
+    UnionMember (..),
     Value,
     buildSchema,
   )
@@ -134,17 +136,19 @@ dataTypeDefinition ::
   Maybe Description ->
   Parser (TypeDefinition LAZY s)
 dataTypeDefinition description =
-  label "DataTypeDefinition" $
+  label "DataTypeDefinition" $ do
+    name <- typeDeclaration "data"
     TypeDefinition
       description
-      <$> typeDeclaration "data"
-      <*> optionalDirectives
+      name
+      <$> optionalDirectives
       <*> ( equal
-              *> ( (StrictUnionContent <$> unionMembersDefinition)
-                     <|> (StrictTypeContent <$> fieldsDefinition)
+              *> ( fmap StrictTypeContent unionMembersDefinition
+                     <|> fmap (typeVariant name) (fieldsDefinition <|> pure empty)
                  )
-              <|> pure (StrictTypeContent empty)
           )
+  where
+    typeVariant name = StrictTypeContent . singleton name . UnionMember Nothing name . Just
 {-# INLINEABLE dataTypeDefinition #-}
 
 -- 3.13 DirectiveDefinition

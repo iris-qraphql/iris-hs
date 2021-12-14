@@ -22,11 +22,9 @@ module Language.Iris.Types.Internal.Validation.Internal
 where
 
 import Control.Monad.Except (MonadError (throwError))
-import Data.Mergeable.Utils.Empty
 import Language.Iris.Types.Internal.AST
   ( FromAny,
     GQLError,
-    IS_OBJECT,
     LAZY,
     OBJECT,
     Operation (..),
@@ -70,22 +68,18 @@ __askType name =
 askTypeMember ::
   Constraints m c cat s ctx =>
   UnionMember cat s ->
-  m (TypeDefinition (IS_OBJECT cat) s)
-askTypeMember UnionMember {memberName, memberFields = Just fields} = do
+  m (UnionMember cat s)
+askTypeMember UnionMember {memberName, memberFields = Just fields, ..} = do
   typename <- asksScope currentTypeName
   pure
-    TypeDefinition
-      { typeDescription = Nothing,
-        typeName = packVariantTypeName typename memberName,
-        typeDirectives = empty,
-        typeContent = packMember fields
+    UnionMember
+      { memberName = packVariantTypeName typename memberName,
+        memberFields = Just fields,
+        ..
       }
 askTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject
 
-askObjectType ::
-  Constraints m c cat s ctx =>
-  TypeName ->
-  m (TypeDefinition (IS_OBJECT cat) s)
+askObjectType :: Constraints m c cat s ctx => TypeName -> m (UnionMember cat s)
 askObjectType = __askType >=> constraintObject
 
 type Constraints m c cat s ctx =
@@ -120,23 +114,24 @@ _kindConstraint err anyType =
 
 class KindErrors c where
   kindConstraint :: KindConstraint f c => TypeDefinition LAZY s -> f (TypeDefinition c s)
-  constraintObject ::
-    ( Applicative f,
-      MonadError GQLError f
-    ) =>
-    TypeDefinition c s ->
-    f (TypeDefinition (IS_OBJECT c) s)
+  constraintObject :: MonadError GQLError m => TypeDefinition c s -> m (UnionMember c s)
 
 instance KindErrors STRICT where
   kindConstraint = _kindConstraint " data type"
-  constraintObject TypeDefinition {typeContent = StrictTypeContent {..}, ..} = pure TypeDefinition {typeContent = StrictTypeContent {..}, ..}
+  constraintObject
+    TypeDefinition
+      { typeName,
+        typeContent = StrictTypeContent typeFields
+      } =
+      case toList typeFields of
+        [UnionMember {..}] -> pure (UnionMember {..})
+        _ -> throwError (violation "data object" typeName)
   constraintObject TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
 instance KindErrors LAZY where
   kindConstraint = _kindConstraint " output type"
-
-  -- constraintObject TypeDefinition {typeContent = StrictTypeContent {..}, ..} = pure TypeDefinition {typeContent = StrictTypeContent {..}, ..}
-  constraintObject TypeDefinition {typeContent = LazyTypeContent {..}, ..} = pure TypeDefinition {typeContent = LazyTypeContent {..}, ..}
+  constraintObject TypeDefinition {typeName, typeDescription, typeContent = LazyTypeContent fields} =
+    pure (UnionMember typeDescription typeName (Just fields))
   constraintObject TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::

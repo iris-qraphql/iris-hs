@@ -28,12 +28,9 @@ import Language.Iris.Types.Internal.AST
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    IS_OBJECT,
     LAZY,
     Subtyping (..),
     TRUE,
-    TypeContent (..),
-    TypeDefinition (..),
     TypeName,
     TypeRef (..),
     UnionMember (..),
@@ -68,14 +65,14 @@ validateTypeGuard unionTypeNames typeGuardName = do
   traverse (askTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
-    hasCompatibleFields :: TypeDefinition (IS_OBJECT LAZY) CONST -> TypeDefinition (IS_OBJECT LAZY) CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
+    hasCompatibleFields :: UnionMember LAZY CONST -> UnionMember LAZY CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
     hasCompatibleFields guardType memberType =
       inTypeGuard
-        (T.typeName guardType)
-        (T.typeName memberType)
+        (T.memberName guardType)
+        (T.memberName memberType)
         $ isCompatibleTo
-          (lazyObjectFields $ typeContent memberType)
-          (lazyObjectFields $ typeContent guardType)
+          (fromMaybe empty $ memberFields memberType)
+          (fromMaybe empty $ memberFields guardType)
 
 class StructuralCompatibility a where
   type Context a :: PLACE -> Type
