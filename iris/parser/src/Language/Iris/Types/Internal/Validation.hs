@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -18,7 +17,6 @@ module Language.Iris.Types.Internal.Validation
     OperationContext (..),
     runValidator,
     askType,
-    askTypeMember,
     selectRequired,
     selectKnown,
     Constraint (..),
@@ -84,7 +82,6 @@ import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Internal
   ( askObjectType,
     askType,
-    askTypeMember,
     getOperationType,
   )
 import Language.Iris.Types.Internal.Validation.Validator

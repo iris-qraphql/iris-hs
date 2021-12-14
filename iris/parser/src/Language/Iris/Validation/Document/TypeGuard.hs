@@ -11,17 +11,16 @@ module Language.Iris.Validation.Document.TypeGuard
 where
 
 import Control.Monad.Except (throwError)
-import Language.Iris.Error.Resolver
-  ( TypeGuardError (..),
-    partialImplements,
-  )
 import Data.Mergeable.Utils
   ( KeyOf (..),
     empty,
     selectOr,
   )
-import qualified  Language.Iris.Types.Internal.AST as T
-
+import Language.Iris.Error.Resolver
+  ( TypeGuardError (..),
+    partialImplements,
+  )
+import qualified Language.Iris.Types.Internal.AST as T
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
@@ -29,22 +28,22 @@ import Language.Iris.Types.Internal.AST
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
+    IS_OBJECT,
     LAZY,
     Subtyping (..),
     TRUE,
-    IS_OBJECT,
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
     TypeRef (..),
-    UnionMember (..), 
+    UnionMember (..),
   )
 import Language.Iris.Types.Internal.Validation
   ( ValidatorContext (localContext),
-    askTypeMember, 
   )
 import Language.Iris.Types.Internal.Validation.Internal
-  ( askObjectType
+  ( askObjectType,
+    askTypeMember,
   )
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
@@ -53,7 +52,7 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
     PLACE,
     SchemaValidator,
     TypeEntity (..),
-    TypeSystemContext(..) ,
+    TypeSystemContext (..),
     inArgument,
     inField,
     inTypeGuard,
@@ -61,19 +60,22 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
 import Relude hiding (empty, local)
 
 validateTypeGuard ::
-  [UnionMember LAZY CONST] -> TypeName -> 
+  [UnionMember LAZY CONST] ->
+  TypeName ->
   SchemaValidator (TypeEntity ON_TYPE) TypeName
-validateTypeGuard  unionTypeNames  typeGuardName = do
+validateTypeGuard unionTypeNames typeGuardName = do
   guardType <- askObjectType typeGuardName
   traverse (askTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
     hasCompatibleFields :: TypeDefinition (IS_OBJECT LAZY) CONST -> TypeDefinition (IS_OBJECT LAZY) CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
-    hasCompatibleFields guardType memberType = inTypeGuard 
-      (T.typeName guardType) (T.typeName memberType)  $ 
-      isCompatibleTo 
-        (lazyObjectFields $ typeContent memberType)
-        (lazyObjectFields $ typeContent guardType) 
+    hasCompatibleFields guardType memberType =
+      inTypeGuard
+        (T.typeName guardType)
+        (T.typeName memberType)
+        $ isCompatibleTo
+          (lazyObjectFields $ typeContent memberType)
+          (lazyObjectFields $ typeContent guardType)
 
 class StructuralCompatibility a where
   type Context a :: PLACE -> Type

@@ -41,13 +41,10 @@ import Language.Iris.Types.Internal.AST.TypeSystem
     UnionTypeDefinition,
     mkType,
   )
-import Language.Iris.Types.Internal.Validation
-  ( FragmentValidator,
-    Scope (..),
-    askObjectType,
-    askTypeMember,
-    asksScope,
-  )
+import Language.Iris.Types.Internal.Validation.Internal
+    ( askObjectType, askTypeMember )
+import Language.Iris.Types.Internal.Validation.Validator
+    ( FragmentValidator, Scope(..), asksScope )
 import Language.Iris.Validation.Query.Fragment
   ( ValidateFragmentSelection,
     castFragmentType,

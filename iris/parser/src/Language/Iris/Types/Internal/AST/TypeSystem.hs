@@ -432,15 +432,6 @@ lookupDataType name Schema {types, query, mutation, subscription} =
     <|> (subscription >>= isType name)
     <|> lookupType (unpackVariantTypeName name) types
 
--- 3.4 Types : https://graphql.github.io/graphql-spec/June2018/#sec-Types
--------------------------------------------------------------------------
--- TypeDefinition :
---   ScalarTypeDefinition
---   ObjectTypeDefinition
---   UnionTypeDefinition
---   EnumTypeDefinition
---   InputObjectTypeDefinition
-
 data TypeDefinition (a :: TypeCategory) (s :: Stage) = TypeDefinition
   { typeDescription :: Maybe Description,
     typeName :: TypeName,

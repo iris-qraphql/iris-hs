@@ -54,7 +54,6 @@ import Language.Iris.Types.Internal.AST
 import Language.Iris.Types.Internal.AST.Name (__typename)
 import Language.Iris.Types.Internal.Validation
   ( askType,
-    askTypeMember,
     selectKnown,
     selectWithDefaultValue,
   )

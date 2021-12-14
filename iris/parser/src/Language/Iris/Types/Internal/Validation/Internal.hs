@@ -24,8 +24,7 @@ where
 import Control.Monad.Except (MonadError (throwError))
 import Data.Mergeable.Utils.Empty
 import Language.Iris.Types.Internal.AST
-  ( FieldsDefinition,
-    FromAny,
+  ( FromAny,
     GQLError,
     IS_OBJECT,
     LAZY,
@@ -64,7 +63,8 @@ __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
 __askType name =
   asks schema
-    >>= maybe (throwError (unknownType name)) pure . lookupDataType name
+    >>= maybe (throwError (unknownType name)) pure
+      . lookupDataType name
     >>= kindConstraint
 
 askTypeMember ::
@@ -82,15 +82,6 @@ askTypeMember UnionMember {memberName, memberFields = Just fields} = do
       }
 askTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject
 
-class PackMember cat where
-  packMember :: FieldsDefinition cat s -> TypeContent TRUE (IS_OBJECT cat) s
-
-instance PackMember LAZY where
-  packMember = LazyTypeContent
-
-instance PackMember STRICT where
-  packMember = StrictTypeContent
-
 askObjectType ::
   Constraints m c cat s ctx =>
   TypeName ->
@@ -102,8 +93,7 @@ type Constraints m c cat s ctx =
     Monad m,
     MonadReader (ValidatorContext s ctx) m,
     KindErrors cat,
-    FromAny (TypeContent TRUE) cat,
-    PackMember cat
+    FromAny (TypeContent TRUE) cat
   )
 
 getOperationType :: Operation a -> SelectionValidator (TypeDefinition OBJECT VALID)
