@@ -105,8 +105,8 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
         renderContent ScalarTypeContent {} = mkType SCALAR typeName typeDescription []
         renderContent (StrictTypeContent variants) =
           mkUnionType DATA typeName typeDescription Nothing variants
-        renderContent (LazyTypeContent objectFields) =
-          mkFieldsType (OBJECT Nothing) typeName typeDescription objectFields
+        renderContent (LazyTypeContent member) =
+          mkFieldsType (OBJECT Nothing) typeName typeDescription (memberFields member)
         renderContent (LazyUnionContent typeGuard variants) =
           mkUnionType UNION typeName typeDescription typeGuard variants
 

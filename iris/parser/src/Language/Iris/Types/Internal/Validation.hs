@@ -44,7 +44,6 @@ module Language.Iris.Types.Internal.Validation
     setPosition,
     setSelection,
     ValidatorContext (..),
-    askObjectType,
   )
 where
 
@@ -80,8 +79,7 @@ import Language.Iris.Types.Internal.AST
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Internal
-  ( askObjectType,
-    askType,
+  ( askType,
     getOperationType,
   )
 import Language.Iris.Types.Internal.Validation.Validator
@@ -113,10 +111,7 @@ constraint ::
   inp ->
   TypeDefinition LAZY s ->
   Validator s ctx (TypeDefinition k s)
-constraint ONLY_OBJECT _ TypeDefinition {typeContent = LazyTypeContent {lazyObjectFields}, ..} =
-  pure TypeDefinition {typeContent = LazyTypeContent {lazyObjectFields}, ..}
 constraint ONLY_DATA ctx x = maybe (throwError (kindViolation ONLY_DATA ctx)) pure (fromAny x)
-constraint target ctx _ = throwError (kindViolation target ctx)
 
 selectRequired ::
   ( IsMap FieldName c,

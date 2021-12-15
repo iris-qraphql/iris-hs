@@ -98,13 +98,11 @@ import Language.Iris.Types.Internal.AST.Fields
   ( DirectiveDefinition (..),
     Directives,
     DirectivesDefinition,
-    FieldsDefinition,
   )
 import Language.Iris.Types.Internal.AST.Name
   ( FieldName,
     TypeName,
     isNotSystemTypeName,
-    packVariantTypeName,
     unpackName,
     unpackVariantTypeName,
   )
@@ -134,9 +132,8 @@ import Language.Iris.Types.Internal.AST.TypeCategory
     type (<=?),
   )
 import Language.Iris.Types.Internal.AST.Union
-  ( UnionMember,
+  ( UnionMember (memberFields),
     UnionTypeDefinition,
-    memberFields,
   )
 import Language.Iris.Types.Internal.AST.Value
   ( Value (..),
@@ -244,8 +241,8 @@ mergeOperation
   TypeDefinition {typeContent = LazyTypeContent fields1}
   TypeDefinition {typeContent = LazyTypeContent fields2, ..} =
     do
-      fields <- merge fields1 fields2
-      pure $ TypeDefinition {typeContent = LazyTypeContent fields, ..}
+      fields <- merge (memberFields fields1) (memberFields fields2)
+      pure $ TypeDefinition {typeContent = LazyTypeContent (fields1 {memberFields = fields}), ..}
 
 data SchemaDefinition = SchemaDefinition
   { schemaDirectives :: Directives CONST,
@@ -401,36 +398,12 @@ isType name x
   | name == typeName x = Just (toAny x)
   | otherwise = Nothing
 
-lookupType :: (TypeName, Maybe TypeName) -> TypeDefinitions s -> Maybe (TypeDefinition LAZY s)
-lookupType (tName, Nothing) tm = lookup tName tm
-lookupType (tName, Just variantName) tm = do
-  TypeDefinition {..} <- lookup tName tm
-  let name = packVariantTypeName tName variantName
-  case typeContent of
-    (LazyUnionContent _ vs) -> do
-      content <- lookup variantName vs >>= memberFields
-      pure
-        TypeDefinition
-          { typeName = name,
-            typeContent = LazyTypeContent content,
-            ..
-          }
-    (StrictTypeContent vs) -> do
-      content <- lookup variantName vs >>= memberFields
-      pure
-        TypeDefinition
-          { typeName = name,
-          --  typeContent = StrictTypeContent content,
-            ..
-          }
-    _ -> Nothing
-
 lookupDataType :: TypeName -> Schema s -> Maybe (TypeDefinition LAZY s)
 lookupDataType name Schema {types, query, mutation, subscription} =
   isType name query
     <|> (mutation >>= isType name)
     <|> (subscription >>= isType name)
-    <|> lookupType (unpackVariantTypeName name) types
+    <|> lookup (fst (unpackVariantTypeName name)) types
 
 data TypeDefinition (a :: TypeCategory) (s :: Stage) = TypeDefinition
   { typeDescription :: Maybe Description,
@@ -479,10 +452,10 @@ data
     } ->
     TypeContentOfKind STRICT a s
   StrictTypeContent ::
-    { dataVariants :: UnionTypeDefinition STRICT s} ->
+    {dataVariants :: UnionTypeDefinition STRICT s} ->
     TypeContentOfKind (IS_OBJECT STRICT) a s
   LazyTypeContent ::
-    { lazyObjectFields :: FieldsDefinition LAZY s
+    { resolverVariant :: UnionMember LAZY s
     } ->
     TypeContentOfKind (IS_OBJECT LAZY) a s
   LazyUnionContent ::
@@ -626,4 +599,4 @@ instance RenderGQL (TypeDefinition a s) where
           <> renderGQL typeName
           <> " = "
           <> renderMembers unionMembers
-      __render LazyTypeContent {lazyObjectFields} = "resolver " <> renderGQL typeName <> " =" <> renderGQL lazyObjectFields
+      __render LazyTypeContent {resolverVariant} = "resolver " <> renderGQL typeName <> " =" <> renderGQL (memberFields resolverVariant)

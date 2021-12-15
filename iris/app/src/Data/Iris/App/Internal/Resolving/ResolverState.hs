@@ -61,7 +61,7 @@ import Language.Iris.Types.Internal.AST
     internal,
     isInternal,
     lookupDataType,
-    msg,
+    msg, UnionMember (memberFields),
   )
 import Relude
 
@@ -100,7 +100,7 @@ setCurrentType name ma = do
 
 fieldTypeName :: FieldName -> TypeDefinition LAZY VALID -> Maybe TypeName
 fieldTypeName name t = case typeContent t of
-  (LazyTypeContent fs) -> selectOr Nothing (Just . typeConName . fieldType) name fs
+  (LazyTypeContent memb) -> selectOr Nothing (Just . typeConName . fieldType) name (memberFields memb)
   _ -> Nothing
 
 askFieldTypeName :: MonadReader ResolverContext m => FieldName -> m (Maybe TypeName)

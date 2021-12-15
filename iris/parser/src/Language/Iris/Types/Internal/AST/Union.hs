@@ -42,9 +42,11 @@ import Relude hiding (empty)
 data UnionMember (cat :: TypeCategory) (s :: Stage) = UnionMember
   { memberDescription :: Maybe Description,
     memberName :: TypeName,
-    memberFields :: Maybe (FieldsDefinition cat s)
+    membership :: Maybe TypeName,
+    memberFields :: FieldsDefinition cat s
   }
   deriving (Show, Lift, Eq)
+
 
 instance NameCollision GQLError (UnionMember c s) where
   nameCollision UnionMember {memberName} =

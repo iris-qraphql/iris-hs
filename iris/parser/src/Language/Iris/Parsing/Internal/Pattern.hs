@@ -19,7 +19,7 @@ module Language.Iris.Parsing.Internal.Pattern
 where
 
 import Data.ByteString.Lazy.Internal (ByteString)
-import Data.Mergeable.Utils (fromElems)
+import Data.Mergeable.Utils (empty, fromElems)
 import Language.Iris.Parsing.Internal.Arguments
   ( maybeArguments,
   )
@@ -60,11 +60,11 @@ import Language.Iris.Types.Internal.AST
     TRUE,
     TypeKind (..),
     TypeName,
-    UnionMember (UnionMember),
+    UnionMember (..),
     UnionTypeDefinition,
     Value,
   )
-import Relude hiding (ByteString, many)
+import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
   ( choice,
     label,
@@ -79,16 +79,26 @@ import Text.Megaparsec.Byte (string)
 --
 unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  Parser (UnionTypeDefinition cat s)
-unionMembersDefinition =
+  TypeName -> Parser (UnionTypeDefinition cat s)
+unionMembersDefinition typeName =
   label "UnionMember" $
     lift . fromElems
-      =<< pipe
-        ( UnionMember
-            <$> optDescription
-            <*> parseTypeName
-            <*> optional fieldsDefinition
-        )
+      =<< pipe (parseMember typeName)
+
+parseMember ::
+  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
+  TypeName -> Parser (UnionMember cat s)
+parseMember typeName = do
+  memberDescription <- optDescription
+  memberName <- parseTypeName
+  fields <- optional fieldsDefinition
+  pure
+    UnionMember
+      { memberFields = fromMaybe empty fields,
+        membership = fmap (const typeName) fields,
+        ..
+      }
+
 {-# INLINEABLE unionMembersDefinition #-}
 
 -- Field Arguments: https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
@@ -127,7 +137,7 @@ fieldsDefinition = label "FieldsDefinition" $ setOf fieldDefinition
 
 fieldDefinition ::
   (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  Parser (FieldDefinition  cat s)
+  Parser (FieldDefinition cat s)
 fieldDefinition =
   label "FieldDefinition" $
     FieldDefinition

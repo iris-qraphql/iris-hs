@@ -110,17 +110,19 @@ resolverTypeDefinition ::
   Maybe Description ->
   Parser (TypeDefinition LAZY s)
 resolverTypeDefinition description =
-  label "ResolverTypeDefinition" $
-    TypeDefinition description
-      <$> typeDeclaration "resolver"
-      <*> optionalDirectives
-      <*> (content <|> pure (LazyTypeContent empty))
+  label "ResolverTypeDefinition" $ do
+    name <- typeDeclaration "resolver"
+    TypeDefinition
+      description
+      name
+      <$> optionalDirectives
+      <*> (content name <|> pure (LazyTypeContent $ UnionMember Nothing name Nothing empty))
   where
-    content = do
+    content name = do
       tyGuard <- typeGuard
       equal
-        *> ( (LazyTypeContent <$> fieldsDefinition)
-               <|> (LazyUnionContent tyGuard <$> unionMembersDefinition)
+        *> ( (LazyTypeContent . UnionMember Nothing name Nothing <$> fieldsDefinition)
+               <|> (LazyUnionContent tyGuard <$> unionMembersDefinition name)
            )
 {-# INLINEABLE resolverTypeDefinition #-}
 
@@ -143,12 +145,12 @@ dataTypeDefinition description =
       name
       <$> optionalDirectives
       <*> ( equal
-              *> ( fmap StrictTypeContent unionMembersDefinition
+              *> ( fmap StrictTypeContent (unionMembersDefinition name)
                      <|> fmap (typeVariant name) (fieldsDefinition <|> pure empty)
                  )
           )
   where
-    typeVariant name = StrictTypeContent . singleton name . UnionMember Nothing name . Just
+    typeVariant name = StrictTypeContent . singleton name . UnionMember Nothing name Nothing
 {-# INLINEABLE dataTypeDefinition #-}
 
 -- 3.13 DirectiveDefinition

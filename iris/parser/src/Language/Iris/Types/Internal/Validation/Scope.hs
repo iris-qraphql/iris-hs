@@ -48,13 +48,13 @@ data Scope = Scope
   }
   deriving (Show)
 
-setSelection :: TypeDefinition a s -> Ref FieldName -> Scope -> Scope
+setSelection :: TypeName -> Ref FieldName -> Scope -> Scope
 setSelection currentType Ref {refName, refPosition} Scope {..} =
   Scope
     { fieldName = refName,
       -- path = path <> [unpackName refName],
-      currentTypeName = typeName currentType,
-      currentTypeKind = kindOf currentType,
+      currentTypeName = currentType,
+     -- currentTypeKind = kindOf currentType,
       position = Just refPosition,
       ..
     }

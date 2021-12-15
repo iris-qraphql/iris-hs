@@ -38,7 +38,6 @@ import Language.Iris.Types.Internal.AST
     FragmentName,
     GQLError,
     LAZY,
-    OBJECT,
     Operation (..),
     OperationType (..),
     RAW,
@@ -49,15 +48,16 @@ import Language.Iris.Types.Internal.AST
     TRUE,
     TypeContent (..),
     TypeDefinition (..),
+    UnionMember (..),
     UnionTag (..),
     VALID,
-    __typename,
     at,
     isLeaf,
     mergeNonEmpty,
     mkTypeRef,
     msg,
     typed,
+    __typename,
   )
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
@@ -159,7 +159,7 @@ validateFragmentSelection f@Fragment {fragmentSelection} = do
 
 validateSelectionSet ::
   (ValidateFragmentSelection s) =>
-  TypeDefinition OBJECT VALID ->
+  UnionMember LAZY VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateSelectionSet typeDef =
@@ -168,9 +168,9 @@ validateSelectionSet typeDef =
     >=> mergeNonEmpty
 
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
-validateSelection :: ValidateFragmentSelection s => TypeDefinition OBJECT VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
+validateSelection :: ValidateFragmentSelection s => UnionMember LAZY VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
-  withScope (setSelection typeDef selectionRef) $
+  withScope (setSelection (memberName typeDef) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
   where
     selectionRef = Ref selectionName selectionPosition
@@ -187,35 +187,35 @@ validateSelection typeDef sel@Selection {..} =
               }
           )
 validateSelection typeDef (Spread dirs ref) =
-  processSelectionDirectives FRAGMENT_SPREAD dirs
-    $ const
-    $ validateSpreadSelection typeDef ref
+  processSelectionDirectives FRAGMENT_SPREAD dirs $
+    const $
+      validateSpreadSelection typeDef ref
 validateSelection typeDef (InlineFragment fragment@Fragment {fragmentDirectives}) =
-  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives
-    $ const
-    $ validateInlineFragmentSelection typeDef fragment
+  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives $
+    const $
+      validateInlineFragmentSelection typeDef fragment
 
 validateSpreadSelection ::
   ValidateFragmentSelection s =>
-  TypeDefinition a VALID ->
+  UnionMember a VALID ->
   Ref FragmentName ->
   FragmentValidator s (SelectionSet VALID)
 validateSpreadSelection typeDef =
-  fmap unionTagSelection . validateSpread validateFragmentSelection [typeName typeDef]
+  fmap unionTagSelection . validateSpread validateFragmentSelection [memberName typeDef]
 
 validateInlineFragmentSelection ::
   ValidateFragmentSelection s =>
-  TypeDefinition OBJECT VALID ->
+  UnionMember LAZY VALID ->
   Fragment RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateInlineFragmentSelection typeDef =
-  fmap fragmentSelection . validateFragment validateFragmentSelection [typeName typeDef]
+  fmap fragmentSelection . validateFragment validateFragmentSelection [memberName typeDef]
 
 selectSelectionField ::
   Ref FieldName ->
-  TypeDefinition OBJECT s ->
+  UnionMember LAZY s ->
   FragmentValidator s' (FieldDefinition LAZY s)
-selectSelectionField ref TypeDefinition {typeContent}
+selectSelectionField ref UnionMember {memberFields}
   | refName ref == "__typename" =
     pure
       FieldDefinition
@@ -225,11 +225,11 @@ selectSelectionField ref TypeDefinition {typeContent}
           fieldContent = Nothing,
           fieldDirectives = empty
         }
-  | otherwise = selectKnown ref (lazyObjectFields typeContent)
+  | otherwise = selectKnown ref memberFields
 
 validateSelectionContent ::
   ValidateFragmentSelection s =>
-  TypeDefinition OBJECT VALID ->
+  UnionMember LAZY VALID ->
   Ref FieldName ->
   Arguments RAW ->
   SelectionContent RAW ->
@@ -263,9 +263,9 @@ validateByTypeContent ::
   SelectionSet RAW ->
   FragmentValidator s (SelectionContent VALID)
 validateByTypeContent
-  typeDef@TypeDefinition {typeContent, ..}
+  TypeDefinition {typeContent, ..}
   currentSelectionRef =
-    withScope (setSelection typeDef currentSelectionRef)
+    withScope (setSelection typeName currentSelectionRef)
       . __validate typeContent
     where
       __validate ::
@@ -281,10 +281,10 @@ validateByTypeContent
           unionMembers
       -- Validate Regular selection set
       __validate LazyTypeContent {..} =
-        fmap SelectionSet . validateSelectionSet (TypeDefinition {typeContent = LazyTypeContent {..}, ..})
+        fmap SelectionSet . validateSelectionSet resolverVariant
       __validate _ =
-        const
-          $ throwError
-          $ hasNoSubfields
-            currentSelectionRef
-            typeName
+        const $
+          throwError $
+            hasNoSubfields
+              currentSelectionRef
+              typeName

@@ -19,7 +19,7 @@ import Data.Mergeable.Utils
     fromElems,
     selectOr,
   )
-import Language.Iris.Types.Internal.AST (UnionMember, memberFields, memberName, mergeNonEmpty, startHistory)
+import Language.Iris.Types.Internal.AST (UnionMember (..), mergeNonEmpty, startHistory)
 import Language.Iris.Types.Internal.AST.Base (Position (..))
 import Language.Iris.Types.Internal.AST.Name (TypeName)
 import Language.Iris.Types.Internal.AST.Selection
@@ -32,17 +32,13 @@ import Language.Iris.Types.Internal.AST.Selection
 import Language.Iris.Types.Internal.AST.Stage (RAW, VALID)
 import Language.Iris.Types.Internal.AST.TypeCategory
   ( LAZY,
-    OBJECT,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
-  ( TypeContent (..),
-    TypeDefinition (..),
-    UnionTypeDefinition,
-    mkType,
+  ( UnionTypeDefinition,
   )
 import Language.Iris.Types.Internal.Validation.Internal
   ( askObjectType,
-    askTypeMember,
+    resolveTypeMember,
   )
 import Language.Iris.Types.Internal.Validation.Validator
   ( FragmentValidator,
@@ -92,8 +88,8 @@ exploreFragments validateFragment types selectionSet = do
               selectionContent = SelectionField,
               selectionDirectives = empty
             }
-        )
-          : selections
+        ) :
+        selections
       )
 
 -- sorts Fragment by conditional Types
@@ -130,29 +126,24 @@ joinClusters selSet typedSelections
     mkUnionTag :: (TypeName, [SelectionSet VALID]) -> FragmentValidator s UnionTag
     mkUnionTag (typeName, fragments) = UnionTag typeName <$> mergeNonEmpty (selSet :| fragments)
 
-mkUnionRootType :: FragmentValidator s (TypeDefinition OBJECT VALID)
-mkUnionRootType = (`mkType` LazyTypeContent empty) <$> asksScope currentTypeName
-
-mkUType :: TypeName -> FragmentValidator s (TypeDefinition OBJECT VALID)
-mkUType name =
-  mkType name . LazyTypeContent
-    . fromMaybe empty
-    . memberFields
-    <$> askObjectType name
+mkUnionRootType :: FragmentValidator s (UnionMember LAZY VALID)
+mkUnionRootType = do
+  memberName <- asksScope currentTypeName
+  pure UnionMember {memberName, memberFields = empty}
 
 validateUnionSelection ::
   ValidateFragmentSelection s =>
   (Fragment RAW -> FragmentValidator s (SelectionSet VALID)) ->
-  (TypeDefinition OBJECT VALID -> SelectionSet RAW -> FragmentValidator s (SelectionSet VALID)) ->
+  (UnionMember LAZY VALID -> SelectionSet RAW -> FragmentValidator s (SelectionSet VALID)) ->
   Maybe TypeName ->
   UnionTypeDefinition LAZY VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionContent VALID)
 validateUnionSelection validateFragment validate guardName members inputSelectionSet = do
-  unionTypes <- traverse askTypeMember members
+  unionTypes <- traverse resolveTypeMember members
   x <- traverse askObjectType (toList guardName)
   (tags, selectionSet) <- first tagUnionFragments <$> exploreFragments validateFragment (x <> toList unionTypes) inputSelectionSet
-  typeDef <- maybe mkUnionRootType mkUType guardName
+  typeDef <- maybe mkUnionRootType askObjectType guardName
   validSelectionSet <- validate typeDef selectionSet
   let typeGuardFragments = maybe [] (\name -> selectOr [] id name tags) guardName
   defaultSelection <- mergeNonEmpty (validSelectionSet :| typeGuardFragments)

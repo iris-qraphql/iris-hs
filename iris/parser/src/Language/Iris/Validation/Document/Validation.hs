@@ -126,8 +126,8 @@ instance TypeCheck (TypeDefinition cat) where
 
 instance TypeCheck (TypeContent TRUE cat) where
   type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
-  typeCheck LazyTypeContent {lazyObjectFields} =
-    LazyTypeContent <$> traverse typeCheck lazyObjectFields
+  typeCheck LazyTypeContent {resolverVariant} =
+    LazyTypeContent <$> typeCheck resolverVariant
   typeCheck StrictTypeContent {dataVariants} =
     StrictTypeContent <$> traverse typeCheck dataVariants
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
@@ -199,5 +199,5 @@ validateDefaultValue typeRef argName value = do
 instance FieldDirectiveLocation cat => TypeCheck (UnionMember cat) where
   type TypeContext (UnionMember cat) = TypeEntity ON_TYPE
   typeCheck UnionMember {..} =
-    UnionMember memberDescription memberName
-      <$> traverse (traverse typeCheck) memberFields
+    UnionMember memberDescription memberName membership
+      <$> traverse typeCheck memberFields

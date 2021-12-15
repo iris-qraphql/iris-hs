@@ -38,7 +38,7 @@ import Language.Iris.Types.Internal.AST
     TRUE,
     TypeContent (..),
     TypeDefinition (..),
-    TypeDefinitions,
+    TypeDefinitions, UnionMember (..),
   )
 import Relude hiding (optional)
 
@@ -103,8 +103,9 @@ instance Stitching (TypeDefinition cat s) where
       <*> prop stitch typeContent x y
 
 instance Stitching (TypeContent TRUE cat s) where
-  stitch (LazyTypeContent  fields1) (LazyTypeContent fields2) =
-    LazyTypeContent <$> stitch fields1 fields2
+  stitch (LazyTypeContent v1) (LazyTypeContent v2) = do
+    fields <- stitch (memberFields v1) (memberFields v2)
+    pure $ LazyTypeContent (v1 {memberFields = fields})
   stitch x y
     | x == y = pure y
     | otherwise = throwError ("Schema Stitching works only for objects" :: GQLError)

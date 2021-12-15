@@ -86,12 +86,16 @@ import Language.Iris.Types.Internal.AST.Stage
     VALID,
   )
 import Language.Iris.Types.Internal.AST.TypeCategory
-  ( OBJECT,
+  ( LAZY,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
-  ( Schema (..),
-    TypeDefinition (..), HistoryT, (<:>),
+  ( HistoryT,
+    Schema (..),
+    TypeContent (..),
+    TypeDefinition (..),
+    (<:>),
   )
+import Language.Iris.Types.Internal.AST.Union
 import Language.Iris.Types.Internal.AST.Value
   ( ResolvedValue,
     Variable (..),
@@ -99,8 +103,6 @@ import Language.Iris.Types.Internal.AST.Value
   )
 import Relude hiding (intercalate, show)
 import Prelude (show)
-
-
 
 data Fragment (stage :: Stage) = Fragment
   { fragmentName :: FragmentName,
@@ -362,9 +364,9 @@ instance RenderGQL (Operation VALID) where
 getOperationName :: Maybe FieldName -> TypeName
 getOperationName = maybe "AnonymousOperation" coerce
 
-getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (TypeDefinition OBJECT VALID)
-getOperationDataType Operation {operationType = Query} lib = pure (query lib)
+getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (UnionMember LAZY VALID)
+getOperationDataType Operation {operationType = Query} lib = pure (resolverVariant $ typeContent $ query lib)
 getOperationDataType Operation {operationType = Mutation, operationPosition} lib =
-  maybe (throwError $ mutationIsNotDefined operationPosition) pure (mutation lib)
+   maybe (throwError $ mutationIsNotDefined operationPosition) pure (resolverVariant . typeContent <$> mutation lib)
 getOperationDataType Operation {operationType = Subscription, operationPosition} lib =
-  maybe (throwError $ subscriptionIsNotDefined operationPosition) pure (subscription lib)
+   maybe (throwError $ subscriptionIsNotDefined operationPosition) pure (resolverVariant . typeContent <$> subscription lib)

@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -14,19 +15,18 @@
 
 module Language.Iris.Types.Internal.Validation.Internal
   ( askType,
-    askTypeMember,
+    resolveTypeMember,
     getOperationType,
     askObjectType,
-    __askType,
   )
 where
 
 import Control.Monad.Except (MonadError (throwError))
+import Data.Mergeable.Utils (IsMap (lookup))
 import Language.Iris.Types.Internal.AST
   ( FromAny,
     GQLError,
     LAZY,
-    OBJECT,
     Operation (..),
     STRICT,
     TRUE,
@@ -41,13 +41,11 @@ import Language.Iris.Types.Internal.AST
     msg,
     typeConName,
   )
-import Language.Iris.Types.Internal.AST.Name (packVariantTypeName)
+import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
 import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Validator
-  ( Scope (currentTypeName),
-    SelectionValidator,
+  ( SelectionValidator,
     ValidatorContext (schema),
-    asksScope,
   )
 import Relude hiding (empty)
 
@@ -57,6 +55,9 @@ askType ::
   m (TypeDefinition cat s)
 askType = untyped (__askType . typeConName)
 
+noVariant :: MonadError GQLError m => TypeName -> m a
+noVariant = throwError . violation "can't find variant"
+
 __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
 __askType name =
@@ -65,24 +66,24 @@ __askType name =
       . lookupDataType name
     >>= kindConstraint
 
-askTypeMember ::
+askObjectType :: Constraints m c cat s ctx => TypeName -> m (UnionMember cat s)
+askObjectType name = case unpackVariantTypeName name of
+  (tName, variantName) -> __askType tName >>= constraintObject variantName
+
+resolveTypeMember ::
   Constraints m c cat s ctx =>
   UnionMember cat s ->
   m (UnionMember cat s)
-askTypeMember UnionMember {memberName, memberFields = Just fields, ..} = do
-  typename <- asksScope currentTypeName
+resolveTypeMember UnionMember {memberName, membership = Just name, memberFields, ..} = do
   pure
     UnionMember
-      { memberName = packVariantTypeName typename memberName,
-        memberFields = Just fields,
+      { memberName = packVariantTypeName name memberName,
+        membership = Just name,
         ..
       }
-askTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject
+resolveTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject Nothing
 
-askObjectType :: Constraints m c cat s ctx => TypeName -> m (UnionMember cat s)
-askObjectType = __askType >=> constraintObject
-
-type Constraints m c cat s ctx =
+type Constraints m c (cat :: TypeCategory) s ctx =
   ( MonadError GQLError m,
     Monad m,
     MonadReader (ValidatorContext s ctx) m,
@@ -90,7 +91,7 @@ type Constraints m c cat s ctx =
     FromAny (TypeContent TRUE) cat
   )
 
-getOperationType :: Operation a -> SelectionValidator (TypeDefinition OBJECT VALID)
+getOperationType :: Operation a -> SelectionValidator (UnionMember LAZY VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
 
 unknownType :: TypeName -> GQLError
@@ -114,11 +115,11 @@ _kindConstraint err anyType =
 
 class KindErrors c where
   kindConstraint :: KindConstraint f c => TypeDefinition LAZY s -> f (TypeDefinition c s)
-  constraintObject :: MonadError GQLError m => TypeDefinition c s -> m (UnionMember c s)
+  constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (UnionMember c s)
 
 instance KindErrors STRICT where
   kindConstraint = _kindConstraint " data type"
-  constraintObject
+  constraintObject _
     TypeDefinition
       { typeName,
         typeContent = StrictTypeContent typeFields
@@ -126,13 +127,17 @@ instance KindErrors STRICT where
       case toList typeFields of
         [UnionMember {..}] -> pure (UnionMember {..})
         _ -> throwError (violation "data object" typeName)
-  constraintObject TypeDefinition {typeName} = throwError (violation "data object" typeName)
+  constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
 instance KindErrors LAZY where
   kindConstraint = _kindConstraint " output type"
-  constraintObject TypeDefinition {typeName, typeDescription, typeContent = LazyTypeContent fields} =
-    pure (UnionMember typeDescription typeName (Just fields))
-  constraintObject TypeDefinition {typeName} = throwError (violation "object" typeName)
+  constraintObject Nothing TypeDefinition {typeContent = LazyTypeContent member} = pure member
+  constraintObject (Just variantName) TypeDefinition {typeContent = LazyUnionContent _ variants} =
+    maybe
+      (noVariant variantName)
+      pure
+      (lookup variantName variants)
+  constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::
   Token ->

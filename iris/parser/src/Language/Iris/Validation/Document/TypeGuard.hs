@@ -40,7 +40,7 @@ import Language.Iris.Types.Internal.Validation
   )
 import Language.Iris.Types.Internal.Validation.Internal
   ( askObjectType,
-    askTypeMember,
+    resolveTypeMember,
   )
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
@@ -62,7 +62,7 @@ validateTypeGuard ::
   SchemaValidator (TypeEntity ON_TYPE) TypeName
 validateTypeGuard unionTypeNames typeGuardName = do
   guardType <- askObjectType typeGuardName
-  traverse (askTypeMember >=> hasCompatibleFields guardType) unionTypeNames
+  traverse (resolveTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
     hasCompatibleFields :: UnionMember LAZY CONST -> UnionMember LAZY CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
@@ -71,8 +71,8 @@ validateTypeGuard unionTypeNames typeGuardName = do
         (T.memberName guardType)
         (T.memberName memberType)
         $ isCompatibleTo
-          (fromMaybe empty $ memberFields memberType)
-          (fromMaybe empty $ memberFields guardType)
+          (memberFields memberType)
+          (memberFields guardType)
 
 class StructuralCompatibility a where
   type Context a :: PLACE -> Type

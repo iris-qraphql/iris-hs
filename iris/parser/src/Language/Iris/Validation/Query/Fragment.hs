@@ -30,24 +30,23 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     Fragments,
-    OBJECT,
+    LAZY,
     Position,
     RAW,
     Ref (..),
     SelectionSet,
     Stage,
-    TypeDefinition,
     TypeName,
+    UnionMember,
     UnionTag (..),
     VALID,
   )
 import Language.Iris.Types.Internal.Validation
-  ( Constraint (..),
-    FragmentValidator,
+  ( FragmentValidator,
     askFragments,
-    constraint,
     selectKnown,
-    setPosition, withScope,
+    setPosition,
+    withScope,
   )
 import Language.Iris.Types.Internal.Validation.Internal
 import Relude hiding (empty)
@@ -119,8 +118,6 @@ resolveSpread allowedTargets ref@Ref {refName, refPosition} =
     >>= selectKnown ref
     >>= castFragmentType (Just refName) refPosition allowedTargets
 
-selectFragmentType :: Fragment RAW -> FragmentValidator s (TypeDefinition OBJECT VALID)
-selectFragmentType fr@Fragment {fragmentType, fragmentPosition} = withScope (setPosition fragmentPosition) $
-  do
-    typeDef <- __askType fragmentType
-    constraint ONLY_OBJECT fr typeDef
+selectFragmentType :: Fragment RAW -> FragmentValidator s (UnionMember LAZY VALID)
+selectFragmentType fr@Fragment {fragmentType, fragmentPosition} =
+  withScope (setPosition fragmentPosition) $ askObjectType fragmentType
