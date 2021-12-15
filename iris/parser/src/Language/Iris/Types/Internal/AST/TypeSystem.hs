@@ -121,7 +121,6 @@ import Language.Iris.Types.Internal.AST.Type
   )
 import Language.Iris.Types.Internal.AST.TypeCategory
   ( FromAny (..),
-    IS_OBJECT,
     LAZY,
     STRICT,
     ToAny (..),
@@ -202,9 +201,9 @@ instance Lift ScalarDefinition where
 
 data Schema (s :: Stage) = Schema
   { types :: TypeDefinitions s,
-    query :: TypeDefinition (IS_OBJECT LAZY) s,
-    mutation :: Maybe (TypeDefinition (IS_OBJECT LAZY) s),
-    subscription :: Maybe (TypeDefinition (IS_OBJECT LAZY) s),
+    query :: TypeDefinition LAZY s, -- TODO: OBJECT
+    mutation :: Maybe (TypeDefinition LAZY s), -- TODO: OBJECT
+    subscription :: Maybe (TypeDefinition LAZY s), -- TODO: OBJECT
     directiveDefinitions :: DirectivesDefinition s
   }
   deriving (Show, Lift)
@@ -225,24 +224,25 @@ instance
 
 mergeOptional ::
   (Monad m, MonadError GQLError m) =>
-  Maybe (TypeDefinition (IS_OBJECT LAZY) s) ->
-  Maybe (TypeDefinition (IS_OBJECT LAZY) s) ->
-  m (Maybe (TypeDefinition (IS_OBJECT LAZY) s))
+  Maybe (TypeDefinition LAZY s) ->
+  Maybe (TypeDefinition LAZY s) ->
+  m (Maybe (TypeDefinition LAZY s))
 mergeOptional Nothing y = pure y
 mergeOptional (Just x) Nothing = pure (Just x)
 mergeOptional (Just x) (Just y) = Just <$> mergeOperation x y
 
 mergeOperation ::
   (Monad m, MonadError GQLError m) =>
-  TypeDefinition (IS_OBJECT LAZY) s ->
-  TypeDefinition (IS_OBJECT LAZY) s ->
-  m (TypeDefinition (IS_OBJECT LAZY) s)
+  TypeDefinition LAZY s ->
+  TypeDefinition LAZY s ->
+  m (TypeDefinition LAZY s)
 mergeOperation
   TypeDefinition {typeContent = LazyTypeContent fields1}
   TypeDefinition {typeContent = LazyTypeContent fields2, ..} =
     do
       fields <- merge (memberFields fields1) (memberFields fields2)
       pure $ TypeDefinition {typeContent = LazyTypeContent (fields1 {memberFields = fields}), ..}
+mergeOperation TypeDefinition {} TypeDefinition {} = throwError "can't merge non object types"
 
 data SchemaDefinition = SchemaDefinition
   { schemaDirectives :: Directives CONST,
@@ -313,9 +313,9 @@ defineSchemaWith ::
     MonadError GQLError f
   ) =>
   [TypeDefinition cat s] ->
-  ( Maybe (TypeDefinition (IS_OBJECT LAZY) s),
-    Maybe (TypeDefinition (IS_OBJECT LAZY) s),
-    Maybe (TypeDefinition (IS_OBJECT LAZY) s)
+  ( Maybe (TypeDefinition LAZY s),
+    Maybe (TypeDefinition LAZY s),
+    Maybe (TypeDefinition LAZY s)
   ) ->
   f (Schema s)
 defineSchemaWith oTypes (Just query, mutation, subscription) = do
@@ -365,7 +365,7 @@ typeReference ::
   (Monad m, MonadError GQLError m) =>
   [TypeDefinition LAZY s] ->
   RootOperationTypeDefinition ->
-  m (Maybe (TypeDefinition (IS_OBJECT LAZY) s))
+  m (Maybe (TypeDefinition LAZY s))
 typeReference types rootOperation =
   popByKey types rootOperation
     >>= maybe
@@ -379,11 +379,11 @@ selectOperation ::
   SchemaDefinition ->
   OperationType ->
   [TypeDefinition LAZY s] ->
-  f (Maybe (TypeDefinition (IS_OBJECT LAZY) s))
+  f (Maybe (TypeDefinition LAZY s))
 selectOperation SchemaDefinition {unSchemaDefinition} operationType lib =
   selectOr (pure Nothing) (typeReference lib) operationType unSchemaDefinition
 
-initTypeLib :: TypeDefinition (IS_OBJECT LAZY) s -> Schema s
+initTypeLib :: TypeDefinition LAZY s -> Schema s
 initTypeLib query =
   Schema
     { types = empty,
@@ -393,7 +393,7 @@ initTypeLib query =
       directiveDefinitions = empty
     }
 
-isType :: TypeName -> TypeDefinition (IS_OBJECT LAZY) s -> Maybe (TypeDefinition LAZY s)
+isType :: TypeName -> TypeDefinition LAZY s -> Maybe (TypeDefinition LAZY s)
 isType name x
   | name == typeName x = Just (toAny x)
   | otherwise = Nothing
@@ -453,11 +453,11 @@ data
     TypeContentOfKind STRICT a s
   StrictTypeContent ::
     {dataVariants :: UnionTypeDefinition STRICT s} ->
-    TypeContentOfKind (IS_OBJECT STRICT) a s
+    TypeContentOfKind STRICT a s
   LazyTypeContent ::
     { resolverVariant :: UnionMember LAZY s
     } ->
-    TypeContentOfKind (IS_OBJECT LAZY) a s
+    TypeContentOfKind LAZY a s
   LazyUnionContent ::
     { unionTypeGuardName :: Maybe TypeName,
       unionMembers :: UnionTypeDefinition LAZY s
@@ -497,10 +497,6 @@ instance FromAny (TypeContent TRUE) LAZY where
   fromAny LazyTypeContent {..} = Just LazyTypeContent {..}
   fromAny LazyUnionContent {..} = Just LazyUnionContent {..}
   fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
-
-instance FromAny (TypeContent TRUE) (IS_OBJECT LAZY) where
-  fromAny LazyTypeContent {..} = Just LazyTypeContent {..}
-  fromAny _ = Nothing
 
 mkType :: TypeName -> TypeContent TRUE a s -> TypeDefinition a s
 mkType typeName typeContent =
@@ -545,7 +541,7 @@ popByKey ::
   (MonadError GQLError m) =>
   [TypeDefinition LAZY s] ->
   RootOperationTypeDefinition ->
-  m (Maybe (TypeDefinition (IS_OBJECT LAZY) s))
+  m (Maybe (TypeDefinition LAZY s))
 popByKey types (RootOperationTypeDefinition opType name) = case lookupWith typeName name types of
   Just dt@TypeDefinition {typeContent = LazyTypeContent {}} ->
     pure (fromAny dt)

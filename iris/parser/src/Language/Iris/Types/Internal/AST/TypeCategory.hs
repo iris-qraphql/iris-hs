@@ -12,10 +12,8 @@ module Language.Iris.Types.Internal.AST.TypeCategory
     type (<=?),
     LAZY,
     STRICT,
-    OBJECT,
     ToAny (..),
     FromAny (..),
-    IS_OBJECT,
   )
 where
 
@@ -26,19 +24,12 @@ import Language.Iris.Types.Internal.AST.Base
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
-data TypeCategory
-  = STRICT
-  | LAZY
-  | IS_OBJECT TypeCategory
+data TypeCategory = STRICT | LAZY
   deriving (Show, Eq, Ord)
 
 type STRICT = 'STRICT
 
 type LAZY = 'LAZY
-
-type IS_OBJECT = 'IS_OBJECT
-
-type OBJECT = IS_OBJECT LAZY
 
 class ToAny a where
   toAny :: a k (s :: Stage) -> a LAZY s
@@ -51,8 +42,5 @@ type (a :: TypeCategory) <=! (b :: TypeCategory) = a <=? b ~ TRUE
 -- <=
 type family (elem :: TypeCategory) <=? (cat :: TypeCategory) :: Bool where
   'STRICT <=? 'LAZY = TRUE
-  'IS_OBJECT 'STRICT <=? 'STRICT = TRUE
-  'IS_OBJECT 'STRICT <=? 'LAZY = TRUE
-  'IS_OBJECT 'LAZY <=? 'LAZY = TRUE
   a <=? a = TRUE
   a <=? b = FALSE

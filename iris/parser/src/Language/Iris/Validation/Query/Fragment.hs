@@ -119,5 +119,5 @@ resolveSpread allowedTargets ref@Ref {refName, refPosition} =
     >>= castFragmentType (Just refName) refPosition allowedTargets
 
 selectFragmentType :: Fragment RAW -> FragmentValidator s (UnionMember LAZY VALID)
-selectFragmentType fr@Fragment {fragmentType, fragmentPosition} =
+selectFragmentType Fragment {fragmentType, fragmentPosition} =
   withScope (setPosition fragmentPosition) $ askObjectType fragmentType

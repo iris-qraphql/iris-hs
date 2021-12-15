@@ -146,7 +146,6 @@ data InputSource
   deriving (Show)
 
 data Constraint (a :: TypeCategory) where
- -- ONLY_OBJECT :: Constraint OBJECT
   ONLY_DATA :: Constraint STRICT
 
 inField :: FieldDefinition STRICT s -> InputValidator s c a -> InputValidator s c a

@@ -23,7 +23,7 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    OBJECT,
+    LAZY,
     Object,
     ObjectEntry (..),
     Ref (..),
@@ -188,7 +188,7 @@ instance Unknown (Directive s') ctx where
 class KindViolation (t :: TypeCategory) ctx where
   kindViolation :: c t -> ctx -> GQLError
 
-instance KindViolation OBJECT (Fragment s) where
+instance KindViolation LAZY (Fragment s) where
   kindViolation _ Fragment {fragmentName, fragmentType, fragmentPosition} =
     ( "Fragment "
         <> msg fragmentName
