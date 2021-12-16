@@ -70,7 +70,7 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     Position (..),
     Ref (..),
-    STRICT,
+    DATA_TYPE,
     TypeName,
     Value (..),
     fromAny,
@@ -136,7 +136,7 @@ selectWithDefaultValue ::
   (Value s -> Validator s ctx validValue) ->
   (a -> Validator s ctx validValue) ->
   Maybe (Value s) ->
-  FieldDefinition STRICT s ->
+  FieldDefinition DATA_TYPE s ->
   c a ->
   Validator s ctx validValue
 selectWithDefaultValue

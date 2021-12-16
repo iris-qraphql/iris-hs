@@ -86,7 +86,7 @@ import Language.Iris.Types.Internal.AST.Type
   )
 import Language.Iris.Types.Internal.AST.Role
   ( LAZY,
-    STRICT,
+    DATA_TYPE,
     ToAny (..),
     Role,
     toAny,
@@ -307,7 +307,7 @@ mkObjectField args fieldName typeWrappers typeConName =
 
 type InputFieldsDefinition s = OrdMap FieldName (InputValueDefinition s)
 
-type InputValueDefinition = FieldDefinition STRICT
+type InputValueDefinition = FieldDefinition DATA_TYPE
 
 -- 3.6.1 Field Arguments : https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
 -----------------------------------------------------------------------------------------------
@@ -323,7 +323,7 @@ instance RenderGQL (ArgumentDefinition s) where
   renderGQL = renderGQL . argument
 
 data ArgumentDefinition s = ArgumentDefinition
-  { argument :: FieldDefinition STRICT s,
+  { argument :: FieldDefinition DATA_TYPE s,
     argumentDefaultValue :: Maybe (Value s)
   }
   deriving (Show, Lift, Eq)

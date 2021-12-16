@@ -8,7 +8,7 @@
 module Language.Iris.Types.Internal.AST.Role
   ( Role (..),
     LAZY,
-    STRICT,
+    DATA_TYPE,
     ToAny (..),
     FromAny (..),
   )
@@ -17,9 +17,9 @@ where
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
-data Role = STRICT | LAZY deriving (Show, Eq, Ord)
+data Role = DATA_TYPE | LAZY deriving (Show, Eq, Ord)
 
-type STRICT = 'STRICT
+type DATA_TYPE = 'DATA_TYPE
 
 type LAZY = 'LAZY
 

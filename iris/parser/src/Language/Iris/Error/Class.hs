@@ -27,7 +27,7 @@ import Language.Iris.Types.Internal.AST
     Object,
     ObjectEntry (..),
     Ref (..),
-    STRICT,
+    DATA_TYPE,
     Role,
     TypeName,
     TypeRef (..),
@@ -198,7 +198,7 @@ instance KindViolation LAZY (Fragment s) where
     )
       `at` fragmentPosition
 
-instance KindViolation STRICT (Variable s) where
+instance KindViolation DATA_TYPE (Variable s) where
   kindViolation
     _
     Variable

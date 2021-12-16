@@ -31,7 +31,7 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     GQLResult,
     LAZY,
-    STRICT,
+    DATA_TYPE,
     Schema (..),
     Role,
     TypeContent (..),
@@ -160,7 +160,7 @@ class FieldDirectiveLocation (cat :: Role) where
 instance FieldDirectiveLocation LAZY where
   directiveLocation _ = FIELD_DEFINITION
 
-instance FieldDirectiveLocation STRICT where
+instance FieldDirectiveLocation DATA_TYPE where
   directiveLocation _ = DATA_FIELD_DEFINITION
 
 instance TypeCheck DirectiveDefinition where

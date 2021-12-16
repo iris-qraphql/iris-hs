@@ -121,7 +121,7 @@ import Language.Iris.Types.Internal.AST.Type
 import Language.Iris.Types.Internal.AST.Role
   ( FromAny (..),
     LAZY,
-    STRICT,
+    DATA_TYPE,
     ToAny (..),
     Role,
     fromAny,
@@ -156,7 +156,7 @@ type StrictUnionContent k s = [UnionMember k s]
 
 -- used for preserving type information from untyped values
 -- e.g
--- unionType :: UnionMember STRICT VALID -> Typed STRICT VALID TypeName
+-- unionType :: UnionMember DATA_TYPE VALID -> Typed DATA_TYPE VALID TypeName
 -- unionType = typed memberName
 typed :: (a c s -> b) -> a c s -> Typed c s b
 typed f = Typed . f
@@ -441,7 +441,7 @@ data
     (s :: Stage)
   where
   ScalarTypeContent :: {dataScalar :: ScalarDefinition} -> TypeContent a s
-  DataTypeContent :: {dataVariants :: UnionTypeDefinition STRICT s} -> TypeContent a s
+  DataTypeContent :: {dataVariants :: UnionTypeDefinition DATA_TYPE s} -> TypeContent a s
   ResolverTypeContent ::
     { resolverTypeGuard :: Maybe TypeName,
       resolverVariants :: UnionTypeDefinition LAZY s
@@ -468,7 +468,7 @@ instance ToAny TypeContent where
   toAny DataTypeContent {..} = DataTypeContent {..}
   toAny ResolverTypeContent {..} = ResolverTypeContent {..}
 
-instance FromAny TypeContent STRICT where
+instance FromAny TypeContent DATA_TYPE where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
   fromAny _ = Nothing

@@ -82,7 +82,7 @@ module Language.Iris.Types.Internal.AST
     GQLErrors,
     ObjectEntry (..),
     UnionTag (..),
-    STRICT,
+    DATA_TYPE,
     LAZY,
     TypeName,
     Token,

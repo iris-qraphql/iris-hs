@@ -57,7 +57,7 @@ import Language.Iris.Types.Internal.AST
     Fragments,
     GQLResult,
     RAW,
-    STRICT,
+    DATA_TYPE,
     Schema,
     Stage,
     Role,
@@ -146,9 +146,9 @@ data InputSource
   deriving (Show)
 
 data Constraint (a :: Role) where
-  ONLY_DATA :: Constraint STRICT
+  ONLY_DATA :: Constraint DATA_TYPE
 
-inField :: FieldDefinition STRICT s -> InputValidator s c a -> InputValidator s c a
+inField :: FieldDefinition DATA_TYPE s -> InputValidator s c a -> InputValidator s c a
 inField
   FieldDefinition
     { fieldName,

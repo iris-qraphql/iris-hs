@@ -39,7 +39,7 @@ import Language.Iris.Types.Internal.AST
     FieldsDefinition,
     LAZY,
     Name,
-    STRICT,
+    DATA_TYPE,
     TypeContent (..),
     TypeDefinition (..),
     TypeKind (..),
@@ -133,7 +133,7 @@ instance
 instance RenderIntrospection (ArgumentsDefinition VALID) where
   render = fmap mkList . traverse (render . argument) . toList
 
-instance RenderIntrospection (FieldDefinition STRICT VALID) where
+instance RenderIntrospection (FieldDefinition DATA_TYPE VALID) where
   render FieldDefinition {..} =
     pure $
       mkObject

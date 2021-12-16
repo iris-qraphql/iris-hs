@@ -26,7 +26,7 @@ import Language.Iris.Types.Internal.AST
     CONST,
     DirectiveDefinition (..),
     FieldDefinition (..),
-    STRICT,
+    DATA_TYPE,
     LAZY,
     ObjectEntry (..),
     Position (..),
@@ -86,7 +86,7 @@ validateArgument
       argument
       requestArgs
 
-toArgument :: FieldDefinition STRICT s -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
+toArgument :: FieldDefinition DATA_TYPE s -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
 toArgument
   FieldDefinition {fieldName}
   value = mkArg . fromMaybe (Position 0 0) <$> asksScope position
@@ -95,7 +95,7 @@ toArgument
 
 validateArgumentValue ::
   (ValidateWithDefault ctx schemaS valueS) =>
-  FieldDefinition STRICT schemaS ->
+  FieldDefinition DATA_TYPE schemaS ->
   Argument valueS ->
   Validator schemaS ctx (Argument VALID)
 validateArgumentValue

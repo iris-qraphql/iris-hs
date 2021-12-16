@@ -27,7 +27,7 @@ import Language.Iris.Types.Internal.AST
     Object,
     ObjectEntry (..),
     Ref (..),
-    STRICT,
+    DATA_TYPE,
     ScalarDefinition (..),
     ScalarValue (..),
     TypeContent (..),
@@ -93,7 +93,7 @@ checkTypeCompatibility valueType ref var@Variable {variableValue = ValidVariable
 
 validateInputByTypeRef ::
   ValidateWithDefault c schemaS s =>
-  Typed STRICT schemaS TypeRef ->
+  Typed DATA_TYPE schemaS TypeRef ->
   Value s ->
   Validator schemaS (InputContext c) (Value VALID)
 validateInputByTypeRef
@@ -107,7 +107,7 @@ validateInputByTypeRef
 
 validateValueByField ::
   ValidateWithDefault c schemaS s =>
-  FieldDefinition STRICT schemaS ->
+  FieldDefinition DATA_TYPE schemaS ->
   Value s ->
   Validator schemaS (InputContext c) (Value VALID)
 validateValueByField field =
@@ -119,7 +119,7 @@ validateValueByField field =
 validateInputByType ::
   ValidateWithDefault ctx schemaS valueS =>
   TypeWrapper ->
-  TypeDefinition STRICT schemaS ->
+  TypeDefinition DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 validateInputByType tyWrappers typeDef =
@@ -129,7 +129,7 @@ validateInputByType tyWrappers typeDef =
 validateWrapped ::
   ValidateWithDefault ctx schemaS valueS =>
   TypeWrapper ->
-  TypeDefinition STRICT schemaS ->
+  TypeDefinition DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 -- Validate Null. value = null ?
@@ -150,7 +150,7 @@ validateWrapped _ _ entryValue = violation Nothing entryValue
 
 validateUnwrapped ::
   ValidateWithDefault ctx schemaS valueS =>
-  TypeContent STRICT schemaS ->
+  TypeContent DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 validateUnwrapped (DataTypeContent variants) (Object conName fields) =
@@ -165,7 +165,7 @@ validateUnwrapped (ScalarTypeContent dataScalar) value =
 
 validateInputObject ::
   ValidateWithDefault ctx schemaS valueS =>
-  FieldsDefinition STRICT schemaS ->
+  FieldsDefinition DATA_TYPE schemaS ->
   Object valueS ->
   InputValidator schemaS ctx (Object VALID)
 validateInputObject fieldsDef object =
@@ -175,7 +175,7 @@ validateInputObject fieldsDef object =
 class ValidateWithDefault c schemaS s where
   validateWithDefault ::
     Object s ->
-    FieldDefinition STRICT schemaS ->
+    FieldDefinition DATA_TYPE schemaS ->
     Validator schemaS (InputContext c) (ObjectEntry VALID)
 
 instance ValidateWithDefault c VALID s where
@@ -244,7 +244,7 @@ isInt _ = False
 
 validateStrictUnionType ::
   ValidateWithDefault ctx schemaS s =>
-  UnionTypeDefinition STRICT schemaS ->
+  UnionTypeDefinition DATA_TYPE schemaS ->
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateStrictUnionType inputUnion (Object (Just conName) rawFields) =

@@ -27,7 +27,7 @@ import Language.Iris.Types.Internal.AST
     GQLError,
     LAZY,
     Operation (..),
-    STRICT,
+    DATA_TYPE,
     Token,
     TypeName,
     TypeRef,
@@ -115,7 +115,7 @@ class KindErrors c where
   kindConstraint :: KindConstraint f c => TypeDefinition LAZY s -> f (TypeDefinition c s)
   constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (UnionMember c s)
 
-instance KindErrors STRICT where
+instance KindErrors DATA_TYPE where
   kindConstraint = _kindConstraint " data type"
   constraintObject
     _

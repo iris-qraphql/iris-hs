@@ -56,7 +56,7 @@ import Language.Iris.Types.Internal.AST
     FieldsDefinition,
     LAZY,
     OperationType (..),
-    STRICT,
+    DATA_TYPE,
     TypeKind (..),
     TypeName,
     UnionMember (..),
@@ -145,7 +145,7 @@ fieldDefinition =
       <*> (colon *> parseType)
       <*> optionalDirectives
 
-instance Parse (Value s) => Parse (FieldContent STRICT s) where
+instance Parse (Value s) => Parse (FieldContent DATA_TYPE s) where
   parse = pure DataFieldContent
 
 instance Parse (Value s) => Parse (FieldContent LAZY s) where
