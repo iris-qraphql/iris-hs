@@ -109,7 +109,9 @@ renderObject :: (RenderGQL a) => [a] -> Rendering
 renderObject fields = space <> "{" <> renderAtNewLine fields <> newline <> "}"
 
 renderMembers :: (RenderGQL a, Foldable t) => t a -> Rendering
-renderMembers members = intercalate (space <> "|" <> space) (fmap renderGQL (toList members))
+renderMembers members = 
+  intercalate (space <> "|" <> space) 
+  (fmap renderGQL (toList members))
 
 renderArguments :: (RenderGQL a) => [a] -> Rendering
 renderArguments arguments

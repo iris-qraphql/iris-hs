@@ -15,7 +15,7 @@ module Language.Iris.Validation.Internal.Value
 where
 
 import Control.Monad.Except (throwError)
-import Data.Mergeable.IsMap (member, selectBy)
+import Data.Mergeable.IsMap (member)
 import Language.Iris.Error.Data (typeViolation)
 import Language.Iris.Error.Variable (incompatibleVariableType)
 import Language.Iris.Types.Internal.AST
@@ -57,7 +57,7 @@ import Language.Iris.Types.Internal.Validation
     selectKnown,
     selectWithDefaultValue,
   )
-import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember)
+import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember, lookupTypeVariant)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -244,21 +244,14 @@ isInt :: ScalarValue -> Bool
 isInt Int {} = True
 isInt _ = False
 
-isPossibleInputUnion :: UnionTypeDefinition STRICT s -> TypeName -> Either GQLError (UnionMember STRICT s)
-isPossibleInputUnion tags name =
-  selectBy
-    (msg name <> " is not possible union type")
-    name
-    tags
-
 validateStrictUnionType ::
   ValidateWithDefault ctx schemaS s =>
   UnionTypeDefinition STRICT schemaS ->
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateStrictUnionType inputUnion (Object (Just conName) rawFields) =
-  case isPossibleInputUnion inputUnion conName of
-    Left message -> violation (Just $ msg message) (Object (Just conName) rawFields)
+  case lookupTypeVariant conName inputUnion of
+    Left _ -> violation (Just $ msg conName <> " is not possible union type") (Object (Just conName) rawFields)
     Right memberTypeRef -> do
       fields <- memberFields <$> resolveTypeMember memberTypeRef
       Object (Just conName) <$> validateInputObject fields rawFields

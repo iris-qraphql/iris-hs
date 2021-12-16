@@ -17,11 +17,11 @@ module Language.Iris.Types.Internal.Validation.Internal
     resolveTypeMember,
     getOperationType,
     askObjectType,
+    lookupTypeVariant,
   )
 where
 
 import Control.Monad.Except (MonadError (throwError))
-import Data.Mergeable.Utils (IsMap (lookup))
 import Language.Iris.Types.Internal.AST
   ( FromAny,
     GQLError,
@@ -56,6 +56,7 @@ askType = untyped (__askType . typeConName)
 
 noVariant :: MonadError GQLError m => TypeName -> m a
 noVariant = throwError . violation "can't find variant"
+
 
 __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
@@ -118,7 +119,8 @@ class KindErrors c where
 
 instance KindErrors STRICT where
   kindConstraint = _kindConstraint " data type"
-  constraintObject _
+  constraintObject
+    _
     TypeDefinition
       { typeName,
         typeContent = StrictTypeContent typeFields
@@ -128,14 +130,21 @@ instance KindErrors STRICT where
         _ -> throwError (violation "data object" typeName)
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
+lookupTypeVariant :: MonadError GQLError m => TypeName -> UnionTypeDefinition cat s -> m (UnionMember cat s)
+lookupTypeVariant variantName variants =
+  maybe
+    (noVariant variantName)
+    pure
+    (find ((variantName ==) . memberName) variants)
+
 instance KindErrors LAZY where
   kindConstraint = _kindConstraint " output type"
-  constraintObject Nothing TypeDefinition {typeContent = LazyTypeContent member} = pure member
-  constraintObject (Just variantName) TypeDefinition {typeContent = LazyUnionContent _ variants} =
+  constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
+  constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
     maybe
       (noVariant variantName)
       pure
-      (lookup variantName variants)
+      (find ((variantName ==) . memberName) variants)
   constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::

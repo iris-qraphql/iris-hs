@@ -80,10 +80,7 @@ import Text.Megaparsec.Byte (string)
 unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
   TypeName -> Parser (UnionTypeDefinition cat s)
-unionMembersDefinition typeName =
-  label "UnionMember" $
-    lift . fromElems
-      =<< pipe (parseMember typeName)
+unionMembersDefinition typeName = label "UnionMember" $ pipe (parseMember typeName)
 
 parseMember ::
   (Parse (Value s), Parse (FieldContent TRUE cat s)) =>

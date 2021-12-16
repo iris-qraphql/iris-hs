@@ -33,6 +33,7 @@ module Language.Iris.Parsing.Internal.Terms
 where
 
 import Data.ByteString.Lazy.Internal (ByteString)
+import qualified Data.List.NonEmpty as NE
 import Data.Mergeable.IsMap (FromList)
 import Data.Mergeable.Utils
   ( Empty (..),
@@ -126,8 +127,8 @@ equal :: Parser ()
 equal = symbol EQUAL
 {-# INLINE equal #-}
 
-pipe :: Parser a -> Parser [a]
-pipe x = x `sepBy1` symbol PIPE
+pipe :: Parser a -> Parser (NonEmpty a)
+pipe x = NE.fromList <$> x `sepBy1` symbol PIPE
 {-# INLINE pipe #-}
 
 symPipe :: Parser ()

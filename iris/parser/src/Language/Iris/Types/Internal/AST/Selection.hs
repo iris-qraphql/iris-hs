@@ -364,9 +364,12 @@ instance RenderGQL (Operation VALID) where
 getOperationName :: Maybe FieldName -> TypeName
 getOperationName = maybe "AnonymousOperation" coerce
 
+getTypeVariant :: MonadError GQLError m => TypeDefinition LAZY VALID -> m (UnionMember LAZY VALID)
+getTypeVariant TypeDefinition {typeContent = ResolverTypeContent _ (x :| [])} = pure x
+
 getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (UnionMember LAZY VALID)
-getOperationDataType Operation {operationType = Query} lib = pure (resolverVariant $ typeContent $ query lib)
+getOperationDataType Operation {operationType = Query} lib = getTypeVariant (query lib)
 getOperationDataType Operation {operationType = Mutation, operationPosition} lib =
-   maybe (throwError $ mutationIsNotDefined operationPosition) pure (resolverVariant . typeContent <$> mutation lib)
+  maybe (throwError $ mutationIsNotDefined operationPosition) getTypeVariant (mutation lib)
 getOperationDataType Operation {operationType = Subscription, operationPosition} lib =
-   maybe (throwError $ subscriptionIsNotDefined operationPosition) pure (resolverVariant . typeContent <$> subscription lib)
+  maybe (throwError $ subscriptionIsNotDefined operationPosition) getTypeVariant (subscription lib)

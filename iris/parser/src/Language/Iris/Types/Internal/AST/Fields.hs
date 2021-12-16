@@ -168,7 +168,7 @@ data DirectiveDefinition s = DirectiveDefinition
   { directiveDefinitionName :: FieldName,
     directiveDefinitionDescription :: Maybe Description,
     directiveDefinitionArgs :: ArgumentsDefinition s,
-    directiveDefinitionLocations :: [DirectiveLocation]
+    directiveDefinitionLocations :: NonEmpty DirectiveLocation
   }
   deriving (Show, Lift)
 

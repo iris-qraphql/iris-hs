@@ -131,7 +131,7 @@ import Language.Iris.Types.Internal.AST.TypeCategory
     type (<=?),
   )
 import Language.Iris.Types.Internal.AST.Union
-  ( UnionMember (memberFields),
+  ( UnionMember (..),
     UnionTypeDefinition,
   )
 import Language.Iris.Types.Internal.AST.Value
@@ -237,11 +237,10 @@ mergeOperation ::
   TypeDefinition LAZY s ->
   m (TypeDefinition LAZY s)
 mergeOperation
-  TypeDefinition {typeContent = LazyTypeContent fields1}
-  TypeDefinition {typeContent = LazyTypeContent fields2, ..} =
-    do
-      fields <- merge (memberFields fields1) (memberFields fields2)
-      pure $ TypeDefinition {typeContent = LazyTypeContent (fields1 {memberFields = fields}), ..}
+  TypeDefinition {typeContent = ResolverTypeContent Nothing (v1 :| [])}
+  TypeDefinition {typeContent = ResolverTypeContent Nothing (v2 :| []), ..} = do
+    fields <- merge (memberFields v1) (memberFields v2)
+    pure $ TypeDefinition {typeContent = ResolverTypeContent Nothing ((v1 {memberFields = fields}) :| []), ..}
 mergeOperation TypeDefinition {} TypeDefinition {} = throwError "can't merge non object types"
 
 data SchemaDefinition = SchemaDefinition
@@ -454,11 +453,7 @@ data
   StrictTypeContent ::
     {dataVariants :: UnionTypeDefinition STRICT s} ->
     TypeContentOfKind STRICT a s
-  LazyTypeContent ::
-    { resolverVariant :: UnionMember LAZY s
-    } ->
-    TypeContentOfKind LAZY a s
-  LazyUnionContent ::
+  ResolverTypeContent ::
     { unionTypeGuardName :: Maybe TypeName,
       unionMembers :: UnionTypeDefinition LAZY s
     } ->
@@ -472,20 +467,17 @@ deriving instance Lift (TypeContent a b s)
 
 indexOf :: TypeContent b a s -> Int
 indexOf ScalarTypeContent {} = 0
-indexOf StrictTypeContent {} = 2
-indexOf LazyTypeContent {} = 5
-indexOf LazyUnionContent {} = 6
+indexOf StrictTypeContent {} = 1
+indexOf ResolverTypeContent {} = 3
 
 instance Strictness (TypeContent TRUE k s) where
-  isResolverType LazyTypeContent {} = True
-  isResolverType LazyUnionContent {} = True
+  isResolverType ResolverTypeContent {} = True
   isResolverType _ = False
 
 instance ToAny (TypeContent TRUE) where
   toAny ScalarTypeContent {..} = ScalarTypeContent {..}
   toAny StrictTypeContent {..} = StrictTypeContent {..}
-  toAny LazyTypeContent {..} = LazyTypeContent {..}
-  toAny LazyUnionContent {..} = LazyUnionContent {..}
+  toAny ResolverTypeContent {..} = ResolverTypeContent {..}
 
 instance FromAny (TypeContent TRUE) STRICT where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
@@ -494,8 +486,7 @@ instance FromAny (TypeContent TRUE) STRICT where
 
 instance FromAny (TypeContent TRUE) LAZY where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny LazyTypeContent {..} = Just LazyTypeContent {..}
-  fromAny LazyUnionContent {..} = Just LazyUnionContent {..}
+  fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
   fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
 
 mkType :: TypeName -> TypeContent TRUE a s -> TypeDefinition a s
@@ -520,8 +511,7 @@ kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
   where
     __kind ScalarTypeContent {} = SCALAR
     __kind StrictTypeContent {} = DATA
-    __kind LazyTypeContent {} = OBJECT (toOperationType typeName)
-    __kind LazyUnionContent {} = UNION
+    __kind ResolverTypeContent {} = OBJECT (toOperationType typeName)
 
 defineType ::
   ( Monad m,
@@ -543,7 +533,7 @@ popByKey ::
   RootOperationTypeDefinition ->
   m (Maybe (TypeDefinition LAZY s))
 popByKey types (RootOperationTypeDefinition opType name) = case lookupWith typeName name types of
-  Just dt@TypeDefinition {typeContent = LazyTypeContent {}} ->
+  Just dt@TypeDefinition {typeContent = ResolverTypeContent {}} ->
     pure (fromAny dt)
   Just {} ->
     throwError $
@@ -586,13 +576,9 @@ instance RenderGQL (TypeDefinition a s) where
   renderGQL TypeDefinition {typeName, typeContent} = __render typeContent <> newline
     where
       __render ScalarTypeContent {} = "scalar " <> renderGQL typeName
-      __render StrictTypeContent {dataVariants} =
-        "data " <> renderGQL typeName
-          <> " = "
-          <> renderMembers dataVariants
-      __render LazyUnionContent {unionMembers} =
-        "resolver "
-          <> renderGQL typeName
-          <> " = "
-          <> renderMembers unionMembers
-      __render LazyTypeContent {resolverVariant} = "resolver " <> renderGQL typeName <> " =" <> renderGQL (memberFields resolverVariant)
+      __render StrictTypeContent {dataVariants} = "data " <> renderGQL typeName <> renderVariants typeName dataVariants
+      __render ResolverTypeContent {unionMembers} = "resolver " <> renderGQL typeName <> renderVariants typeName unionMembers
+
+renderVariants :: TypeName -> NonEmpty (UnionMember cat s) -> Rendering
+renderVariants typeName (UnionMember {memberFields, memberName} :| []) | typeName == memberName = " =" <> renderGQL memberFields
+renderVariants _ xs = " = " <> renderMembers xs

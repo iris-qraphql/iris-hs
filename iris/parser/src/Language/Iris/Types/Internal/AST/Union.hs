@@ -15,7 +15,7 @@ module Language.Iris.Types.Internal.AST.Union
   )
 where
 
-import Data.Mergeable (NameCollision (..), OrdMap)
+import Data.Mergeable (NameCollision (..))
 import Data.Mergeable.Utils (KeyOf (..))
 import Language.Haskell.TH.Syntax (Lift (..))
 import Language.Iris.Rendering.RenderGQL
@@ -47,16 +47,16 @@ data UnionMember (cat :: TypeCategory) (s :: Stage) = UnionMember
   }
   deriving (Show, Lift, Eq)
 
-
 instance NameCollision GQLError (UnionMember c s) where
   nameCollision UnionMember {memberName} =
     "There can Be only one union variant named "
       <> msg memberName
 
-type UnionTypeDefinition c s = OrdMap TypeName (UnionMember c s)
+type UnionTypeDefinition c s = NonEmpty (UnionMember c s)
 
 instance RenderGQL (UnionMember cat s) where
-  renderGQL = renderGQL . memberName
+  renderGQL UnionMember {memberName, memberFields} =
+    renderGQL memberName <> renderGQL memberFields
 
 instance Msg (UnionMember cat s) where
   msg = msg . memberName

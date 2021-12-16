@@ -56,12 +56,13 @@ import Language.Iris.Types.Internal.AST
     TypeDefinition (..),
     TypeName,
     TypeRef (typeConName),
+    UnionMember (memberFields),
     VALID,
     at,
     internal,
     isInternal,
     lookupDataType,
-    msg, UnionMember (memberFields),
+    msg,
   )
 import Relude
 
@@ -100,7 +101,7 @@ setCurrentType name ma = do
 
 fieldTypeName :: FieldName -> TypeDefinition LAZY VALID -> Maybe TypeName
 fieldTypeName name t = case typeContent t of
-  (LazyTypeContent memb) -> selectOr Nothing (Just . typeConName . fieldType) name (memberFields memb)
+  (ResolverTypeContent _ (memb :| [])) -> selectOr Nothing (Just . typeConName . fieldType) name (memberFields memb)
   _ -> Nothing
 
 askFieldTypeName :: MonadReader ResolverContext m => FieldName -> m (Maybe TypeName)
@@ -138,10 +139,10 @@ instance (Monad m) => MonadError GQLError (ResolverStateT e m) where
   throwError err = do
     ctx <- asks id
     let f = if isInternal err then renderInternalResolverError ctx else resolverFailureMessage ctx
-    ResolverStateT
-      $ lift
-      $ throwError
-      $ f err
+    ResolverStateT $
+      lift $
+        throwError $
+          f err
   catchError (ResolverStateT mx) f = ResolverStateT $ catchError mx (_runResolverStateT . f)
 
 instance (Monad m) => PushEvents e (ResolverStateT e m) where

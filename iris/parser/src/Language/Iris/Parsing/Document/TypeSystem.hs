@@ -14,8 +14,7 @@ import Data.ByteString.Lazy (ByteString)
 import Data.Foldable (foldr')
 import Data.Mergeable (NameCollision (nameCollision), throwErrors)
 import Data.Mergeable.Utils
-  ( IsMap (singleton),
-    empty,
+  ( empty,
     fromElems,
   )
 import Language.Iris.Parsing.Internal.Internal
@@ -116,14 +115,16 @@ resolverTypeDefinition description =
       description
       name
       <$> optionalDirectives
-      <*> (content name <|> pure (LazyTypeContent $ UnionMember Nothing name Nothing empty))
+      <*> (content name <|> pure (typeVariant name  empty))
   where
+    typeVariant n = ResolverTypeContent Nothing . (:| []) . UnionMember Nothing n Nothing
     content name = do
       tyGuard <- typeGuard
       equal
-        *> ( (LazyTypeContent . UnionMember Nothing name Nothing <$> fieldsDefinition)
-               <|> (LazyUnionContent tyGuard <$> unionMembersDefinition name)
+        *> ( (typeVariant name <$> fieldsDefinition)
+               <|> (ResolverTypeContent tyGuard <$> unionMembersDefinition name)
            )
+
 {-# INLINEABLE resolverTypeDefinition #-}
 
 -- Input Objects : https://graphql.github.io/graphql-spec/June2018/#sec-Input-Objects
@@ -150,7 +151,7 @@ dataTypeDefinition description =
                  )
           )
   where
-    typeVariant name = StrictTypeContent . singleton name . UnionMember Nothing name Nothing
+    typeVariant name = StrictTypeContent . (:| []) . UnionMember Nothing name Nothing
 {-# INLINEABLE dataTypeDefinition #-}
 
 -- 3.13 DirectiveDefinition

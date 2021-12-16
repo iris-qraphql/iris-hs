@@ -126,17 +126,15 @@ instance TypeCheck (TypeDefinition cat) where
 
 instance TypeCheck (TypeContent TRUE cat) where
   type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
-  typeCheck LazyTypeContent {resolverVariant} =
-    LazyTypeContent <$> typeCheck resolverVariant
   typeCheck StrictTypeContent {dataVariants} =
     StrictTypeContent <$> traverse typeCheck dataVariants
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
   typeCheck
-    LazyUnionContent
+    ResolverTypeContent
       { unionTypeGuardName,
         unionMembers
       } =
-      LazyUnionContent
+      ResolverTypeContent
         <$> traverse (validateTypeGuard (toList unionMembers)) unionTypeGuardName
         <*> traverse typeCheck unionMembers
 

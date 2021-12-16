@@ -87,7 +87,7 @@ instance RenderIntrospection (DirectiveDefinition VALID) where
         (Just "__Directive")
         [ renderName directiveDefinitionName,
           description directiveDefinitionDescription,
-          ("locations", render directiveDefinitionLocations),
+          ("locations", render (toList directiveDefinitionLocations)),
           ("args", render directiveDefinitionArgs)
         ]
 
@@ -105,9 +105,7 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
         renderContent ScalarTypeContent {} = mkType SCALAR typeName typeDescription []
         renderContent (StrictTypeContent variants) =
           mkUnionType DATA typeName typeDescription Nothing variants
-        renderContent (LazyTypeContent member) =
-          mkFieldsType (OBJECT Nothing) typeName typeDescription (memberFields member)
-        renderContent (LazyUnionContent typeGuard variants) =
+        renderContent (ResolverTypeContent typeGuard variants) =
           mkUnionType UNION typeName typeDescription typeGuard variants
 
 instance RenderIntrospection (FieldContent TRUE a VALID) where
