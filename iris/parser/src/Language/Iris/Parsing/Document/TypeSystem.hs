@@ -146,12 +146,12 @@ dataTypeDefinition description =
       name
       <$> optionalDirectives
       <*> ( equal
-              *> ( fmap StrictTypeContent (unionMembersDefinition name)
+              *> ( fmap DataTypeContent (unionMembersDefinition name)
                      <|> fmap (typeVariant name) (fieldsDefinition <|> pure empty)
                  )
           )
   where
-    typeVariant name = StrictTypeContent . (:| []) . UnionMember Nothing name Nothing
+    typeVariant name = DataTypeContent . (:| []) . UnionMember Nothing name Nothing
 {-# INLINEABLE dataTypeDefinition #-}
 
 -- 3.13 DirectiveDefinition

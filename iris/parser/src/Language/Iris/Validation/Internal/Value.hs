@@ -155,12 +155,12 @@ validateUnwrapped ::
   TypeContent TRUE STRICT schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
-validateUnwrapped (StrictTypeContent variants) (Object conName fields) =
+validateUnwrapped (DataTypeContent variants) (Object conName fields) =
   case toList variants of
     [UnionMember {memberFields}] ->
       Object conName <$> validateInputObject memberFields fields
     _ -> validateStrictUnionType variants (Object conName fields)
-validateUnwrapped (StrictTypeContent tags) value =
+validateUnwrapped (DataTypeContent tags) value =
   validateStrictUnionType tags value
 validateUnwrapped (ScalarTypeContent dataScalar) value =
   validateScalar dataScalar value

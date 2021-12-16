@@ -446,16 +446,11 @@ data
     (a :: TypeCategory)
     (s :: Stage)
   where
-  ScalarTypeContent ::
-    { dataScalar :: ScalarDefinition
-    } ->
-    TypeContentOfKind STRICT a s
-  StrictTypeContent ::
-    {dataVariants :: UnionTypeDefinition STRICT s} ->
-    TypeContentOfKind STRICT a s
+  ScalarTypeContent :: {dataScalar :: ScalarDefinition} -> TypeContentOfKind STRICT a s
+  DataTypeContent :: {dataVariants :: UnionTypeDefinition STRICT s} -> TypeContentOfKind STRICT a s
   ResolverTypeContent ::
-    { unionTypeGuardName :: Maybe TypeName,
-      unionMembers :: UnionTypeDefinition LAZY s
+    { resolverTypeGuard :: Maybe TypeName,
+      resolverVariants :: UnionTypeDefinition LAZY s
     } ->
     TypeContentOfKind LAZY a s
 
@@ -467,7 +462,7 @@ deriving instance Lift (TypeContent a b s)
 
 indexOf :: TypeContent b a s -> Int
 indexOf ScalarTypeContent {} = 0
-indexOf StrictTypeContent {} = 1
+indexOf DataTypeContent {} = 1
 indexOf ResolverTypeContent {} = 3
 
 instance Strictness (TypeContent TRUE k s) where
@@ -476,18 +471,18 @@ instance Strictness (TypeContent TRUE k s) where
 
 instance ToAny (TypeContent TRUE) where
   toAny ScalarTypeContent {..} = ScalarTypeContent {..}
-  toAny StrictTypeContent {..} = StrictTypeContent {..}
+  toAny DataTypeContent {..} = DataTypeContent {..}
   toAny ResolverTypeContent {..} = ResolverTypeContent {..}
 
 instance FromAny (TypeContent TRUE) STRICT where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
+  fromAny DataTypeContent {..} = Just DataTypeContent {..}
   fromAny _ = Nothing
 
 instance FromAny (TypeContent TRUE) LAZY where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
   fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
-  fromAny StrictTypeContent {..} = Just StrictTypeContent {..}
+  fromAny DataTypeContent {..} = Just DataTypeContent {..}
 
 mkType :: TypeName -> TypeContent TRUE a s -> TypeDefinition a s
 mkType typeName typeContent =
@@ -503,14 +498,14 @@ createScalarType typeName = mkType typeName $ ScalarTypeContent (ScalarDefinitio
 
 isLeaf :: TypeContent TRUE a s -> Bool
 isLeaf ScalarTypeContent {} = True
-isLeaf StrictTypeContent {} = True
+isLeaf DataTypeContent {} = True
 isLeaf _ = False
 
 kindOf :: TypeDefinition a s -> TypeKind
 kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
   where
     __kind ScalarTypeContent {} = SCALAR
-    __kind StrictTypeContent {} = DATA
+    __kind DataTypeContent {} = DATA
     __kind ResolverTypeContent {} = OBJECT (toOperationType typeName)
 
 defineType ::
@@ -576,8 +571,8 @@ instance RenderGQL (TypeDefinition a s) where
   renderGQL TypeDefinition {typeName, typeContent} = __render typeContent <> newline
     where
       __render ScalarTypeContent {} = "scalar " <> renderGQL typeName
-      __render StrictTypeContent {dataVariants} = "data " <> renderGQL typeName <> renderVariants typeName dataVariants
-      __render ResolverTypeContent {unionMembers} = "resolver " <> renderGQL typeName <> renderVariants typeName unionMembers
+      __render DataTypeContent {dataVariants} = "data " <> renderGQL typeName <> renderVariants typeName dataVariants
+      __render ResolverTypeContent {resolverVariants} = "resolver " <> renderGQL typeName <> renderVariants typeName resolverVariants
 
 renderVariants :: TypeName -> NonEmpty (UnionMember cat s) -> Rendering
 renderVariants typeName (UnionMember {memberFields, memberName} :| []) | typeName == memberName = " =" <> renderGQL memberFields

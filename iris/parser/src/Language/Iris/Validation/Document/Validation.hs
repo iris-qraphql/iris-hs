@@ -126,17 +126,17 @@ instance TypeCheck (TypeDefinition cat) where
 
 instance TypeCheck (TypeContent TRUE cat) where
   type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
-  typeCheck StrictTypeContent {dataVariants} =
-    StrictTypeContent <$> traverse typeCheck dataVariants
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
+  typeCheck DataTypeContent {dataVariants} =
+    DataTypeContent <$> traverse typeCheck dataVariants
   typeCheck
     ResolverTypeContent
-      { unionTypeGuardName,
-        unionMembers
+      { resolverTypeGuard,
+        resolverVariants
       } =
       ResolverTypeContent
-        <$> traverse (validateTypeGuard (toList unionMembers)) unionTypeGuardName
-        <*> traverse typeCheck unionMembers
+        <$> traverse (validateTypeGuard (toList resolverVariants)) resolverTypeGuard
+        <*> traverse typeCheck resolverVariants
 
 instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
   type TypeContext (FieldDefinition cat) = TypeEntity ON_TYPE

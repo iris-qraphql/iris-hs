@@ -103,7 +103,7 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
       } = pure $ renderContent typeContent
       where
         renderContent ScalarTypeContent {} = mkType SCALAR typeName typeDescription []
-        renderContent (StrictTypeContent variants) =
+        renderContent (DataTypeContent variants) =
           mkUnionType DATA typeName typeDescription Nothing variants
         renderContent (ResolverTypeContent typeGuard variants) =
           mkUnionType UNION typeName typeDescription typeGuard variants

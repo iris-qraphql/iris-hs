@@ -123,7 +123,7 @@ instance KindErrors STRICT where
     _
     TypeDefinition
       { typeName,
-        typeContent = StrictTypeContent typeFields
+        typeContent = DataTypeContent typeFields
       } =
       case toList typeFields of
         [UnionMember {..}] -> pure (UnionMember {..})

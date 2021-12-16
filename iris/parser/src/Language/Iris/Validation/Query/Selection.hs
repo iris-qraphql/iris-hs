@@ -273,14 +273,14 @@ validateByTypeContent
         SelectionSet RAW ->
         FragmentValidator s (SelectionContent VALID)
       -- Validate UnionSelection
-      __validate ResolverTypeContent {unionMembers = (resolverVariant :| [])} =
+      __validate ResolverTypeContent {resolverVariants = (resolverVariant :| [])} =
         fmap SelectionSet . validateSelectionSet resolverVariant
-      __validate ResolverTypeContent {unionTypeGuardName, unionMembers} =
+      __validate ResolverTypeContent {resolverTypeGuard, resolverVariants} =
         validateUnionSelection
           validateFragmentSelection
           validateSelectionSet
-          unionTypeGuardName
-          unionMembers
+          resolverTypeGuard
+          resolverVariants
       __validate _ =
         const $
           throwError $
