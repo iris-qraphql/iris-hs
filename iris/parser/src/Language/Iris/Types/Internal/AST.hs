@@ -45,7 +45,6 @@ module Language.Iris.Types.Internal.AST
     UnionTypeDefinition,
     ArgumentsDefinition,
     FieldDefinition (..),
-    InputFieldsDefinition,
     TypeContent (..),
     TypeDefinition (..),
     Schema (..),
@@ -66,9 +65,6 @@ module Language.Iris.Types.Internal.AST
     isNullable,
     Subtyping (..),
     isNotSystemTypeName,
-    isLeaf,
-    isResolverType,
-    createScalarType,
     mkTypeRef,
     fieldVisibility,
     lookupDeprecated,
@@ -95,7 +91,6 @@ module Language.Iris.Types.Internal.AST
     FieldContent (..),
     fieldArguments,
     mkType,
-    mkObjectField,
     Variant (..),
     RawTypeDefinition (..),
     RootOperationTypeDefinition (..),
@@ -150,7 +145,7 @@ import Language.Iris.Types.Internal.AST.Stage
 import Language.Iris.Types.Internal.AST.Type
 import Language.Iris.Types.Internal.AST.Role
 import Language.Iris.Types.Internal.AST.TypeSystem
-import Language.Iris.Types.Internal.AST.Union
+import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.AST.Value
 import Prelude (Show)
 

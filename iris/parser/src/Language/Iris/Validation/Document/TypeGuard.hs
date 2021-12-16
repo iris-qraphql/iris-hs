@@ -67,8 +67,8 @@ validateTypeGuard unionTypeNames typeGuardName = do
     hasCompatibleFields :: Variant RESOLVER_TYPE CONST -> Variant RESOLVER_TYPE CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
     hasCompatibleFields guardType memberType =
       inTypeGuard
-        (T.memberName guardType)
-        (T.memberName memberType)
+        (T.variantName guardType)
+        (T.variantName memberType)
         $ isCompatibleTo
           (memberFields memberType)
           (memberFields guardType)

@@ -9,7 +9,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Language.Iris.Types.Internal.AST.Union
+module Language.Iris.Types.Internal.AST.Variant
   ( UnionTypeDefinition,
     Variant (..),
   )

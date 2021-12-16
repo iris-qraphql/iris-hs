@@ -23,16 +23,16 @@ where
 
 import Control.Monad.Except (MonadError (throwError))
 import Language.Iris.Types.Internal.AST
-  ( FromAny,
+  ( DATA_TYPE,
+    FromAny,
     GQLError,
-    RESOLVER_TYPE,
     Operation (..),
-    DATA_TYPE,
+    RESOLVER_TYPE,
     Token,
     TypeName,
     TypeRef,
-    Variant (..),
     VALID,
+    Variant (..),
     fromAny,
     getOperationDataType,
     internal,
@@ -72,14 +72,14 @@ resolveTypeMember ::
   Constraints m c cat s ctx =>
   Variant cat s ->
   m (Variant cat s)
-resolveTypeMember Variant {memberName, membership = Just name, memberFields, ..} = do
+resolveTypeMember Variant {variantName, membership = Just name, memberFields, ..} = do
   pure
     Variant
-      { memberName = packVariantTypeName name memberName,
+      { variantName = packVariantTypeName name variantName,
         membership = Just name,
         ..
       }
-resolveTypeMember Variant {memberName} = __askType memberName >>= constraintObject Nothing
+resolveTypeMember Variant {variantName} = __askType variantName >>= constraintObject Nothing
 
 type Constraints m c (cat :: Role) s ctx =
   ( MonadError GQLError m,
@@ -129,20 +129,13 @@ instance KindErrors DATA_TYPE where
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
 lookupTypeVariant :: MonadError GQLError m => TypeName -> UnionTypeDefinition cat s -> m (Variant cat s)
-lookupTypeVariant variantName variants =
-  maybe
-    (noVariant variantName)
-    pure
-    (find ((variantName ==) . memberName) variants)
+lookupTypeVariant name variants = maybe (noVariant name) pure (find ((name ==) . variantName) variants)
 
 instance KindErrors RESOLVER_TYPE where
   kindConstraint = _kindConstraint " output type"
   constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
   constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
-    maybe
-      (noVariant variantName)
-      pure
-      (find ((variantName ==) . memberName) variants)
+    lookupTypeVariant variantName variants
   constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::

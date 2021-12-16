@@ -89,21 +89,7 @@ scalarTypeDefinition description =
       <*> pure (ScalarTypeContent (ScalarDefinition pure))
 {-# INLINEABLE scalarTypeDefinition #-}
 
---
---  ResolverTypeDefinition:
---    Description(opt) type Name Directives(Const)(opt) FieldsDefinition(opt)
---
---  ResolverTypeContent  =
---    - FieldDefinition(list)
---    - UnionMemberTypes
---
---  FieldDefinition
---    Description(opt) Name ArgumentsDefinition(opt) : Type Directives(Const)(opt)
---
---  UnionTypeDefinition:
---    Description(opt) type Name Directives(Const)(opt) UnionMemberTypes(opt)
---
---  UnionMemberTypes = UnionMemberTypes | NamedType
+
 resolverTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->
@@ -124,16 +110,8 @@ resolverTypeDefinition description =
         *> ( (typeVariant name <$> fieldsDefinition)
                <|> (ResolverTypeContent tyGuard <$> unionMembersDefinition name)
            )
-
 {-# INLINEABLE resolverTypeDefinition #-}
 
--- Input Objects : https://graphql.github.io/graphql-spec/June2018/#sec-Input-Objects
---
---   DataTypeDefinition
---     Description(opt) data Name  Directives(Const)(opt) dataFieldsDefinition(opt)
---
---   dataFieldsDefinition:
---     { InputValueDefinition(list) }
 dataTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->

@@ -62,10 +62,10 @@ splitFragment ::
   Selection RAW ->
   FragmentValidator s (Either UnionTag (Selection RAW))
 splitFragment _ _ x@Selection {} = pure (Right x)
-splitFragment f types (Spread _ ref) = Left <$> validateSpread f (memberName <$> types) ref
+splitFragment f types (Spread _ ref) = Left <$> validateSpread f (variantName <$> types) ref
 splitFragment f types (InlineFragment fragment@Fragment {fragmentType}) =
   Left . UnionTag fragmentType
-    <$> ( castFragmentType Nothing (fragmentPosition fragment) (memberName <$> types) fragment
+    <$> ( castFragmentType Nothing (fragmentPosition fragment) (variantName <$> types) fragment
             >>= f
         )
 
@@ -128,11 +128,11 @@ joinClusters selSet typedSelections
 
 mkUnionRootType :: FragmentValidator s (Variant RESOLVER_TYPE VALID)
 mkUnionRootType = do
-  memberName <- asksScope currentTypeName
+  variantName <- asksScope currentTypeName
   pure
     Variant
-      { memberDescription = Nothing,
-        memberName,
+      { variantDescription = Nothing,
+        variantName,
         membership = Nothing,
         memberFields = empty
       }

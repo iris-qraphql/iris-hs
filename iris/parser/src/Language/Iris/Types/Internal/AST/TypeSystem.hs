@@ -30,10 +30,8 @@ module Language.Iris.Types.Internal.AST.TypeSystem
     TypeDefinitions,
     Role,
     mkType,
-    createScalarType,
     initTypeLib,
     kindOf,
-    isLeaf,
     lookupWith,
     RawTypeDefinition (..),
     RootOperationTypeDefinition (..),
@@ -109,27 +107,26 @@ import Language.Iris.Types.Internal.AST.OperationType
   ( OperationType (..),
     toOperationType,
   )
+import Language.Iris.Types.Internal.AST.Role
+  ( DATA_TYPE,
+    FromAny (..),
+    RESOLVER_TYPE,
+    Role,
+    ToAny (..),
+    fromAny,
+    toAny,
+  )
 import Language.Iris.Types.Internal.AST.Stage
   ( CONST,
     Stage,
     VALID,
   )
 import Language.Iris.Types.Internal.AST.Type
-  ( Strictness (..),
-    TypeKind (..),
+  ( TypeKind (..),
   )
-import Language.Iris.Types.Internal.AST.Role
-  ( FromAny (..),
-    RESOLVER_TYPE,
-    DATA_TYPE,
-    ToAny (..),
-    Role,
-    fromAny,
-    toAny,
-  )
-import Language.Iris.Types.Internal.AST.Union
-  ( Variant (..),
-    UnionTypeDefinition,
+import Language.Iris.Types.Internal.AST.Variant
+  ( UnionTypeDefinition,
+    Variant (..),
   )
 import Language.Iris.Types.Internal.AST.Value
   ( Value (..),
@@ -157,7 +154,7 @@ type StrictUnionContent k s = [Variant k s]
 -- used for preserving type information from untyped values
 -- e.g
 -- unionType :: Variant DATA_TYPE VALID -> Typed DATA_TYPE VALID TypeName
--- unionType = typed memberName
+-- unionType = typed variantName
 typed :: (a c s -> b) -> a c s -> Typed c s b
 typed f = Typed . f
 
@@ -187,14 +184,6 @@ instance Lift ScalarDefinition where
 #if MIN_VERSION_template_haskell(2,16,0)
   liftTyped _ = [||ScalarDefinition pure||]
 #endif
-
--- 3.2 Schema : https://graphql.github.io/graphql-spec/June2018/#sec-Schema
----------------------------------------------------------------------------
--- SchemaDefinition :
---    schema Directives[Const](opt) { RootOperationTypeDefinition(list)}
---
--- RootOperationTypeDefinition :
---    OperationType: NamedType
 
 data Schema (s :: Stage) = Schema
   { types :: TypeDefinitions s,
@@ -417,9 +406,6 @@ instance Ord (TypeDefinition k s) where
 instance KeyOf TypeName (TypeDefinition a s) where
   keyOf = typeName
 
-instance Strictness (TypeDefinition k s) where
-  isResolverType = isResolverType . typeContent
-
 instance NameCollision GQLError (TypeDefinition cat s) where
   nameCollision x =
     "There can Be only One TypeDefinition Named " <> msg (typeName x) <> "."
@@ -459,10 +445,6 @@ indexOf ScalarTypeContent {} = 0
 indexOf DataTypeContent {} = 1
 indexOf ResolverTypeContent {} = 3
 
-instance Strictness (TypeContent k s) where
-  isResolverType ResolverTypeContent {} = True
-  isResolverType _ = False
-
 instance ToAny TypeContent where
   toAny ScalarTypeContent {..} = ScalarTypeContent {..}
   toAny DataTypeContent {..} = DataTypeContent {..}
@@ -486,14 +468,6 @@ mkType typeName typeContent =
       typeDirectives = empty,
       typeContent
     }
-
-createScalarType :: TypeName -> TypeDefinition a s
-createScalarType typeName = mkType typeName $ ScalarTypeContent (ScalarDefinition pure)
-
-isLeaf :: TypeContent a s -> Bool
-isLeaf ScalarTypeContent {} = True
-isLeaf DataTypeContent {} = True
-isLeaf _ = False
 
 kindOf :: TypeDefinition a s -> TypeKind
 kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
@@ -569,5 +543,5 @@ instance RenderGQL (TypeDefinition a s) where
       __render ResolverTypeContent {resolverVariants} = "resolver " <> renderGQL typeName <> renderVariants typeName resolverVariants
 
 renderVariants :: TypeName -> NonEmpty (Variant cat s) -> Rendering
-renderVariants typeName (Variant {memberFields, memberName} :| []) | typeName == memberName = " =" <> renderGQL memberFields
+renderVariants typeName (Variant {memberFields, variantName} :| []) | typeName == variantName = " =" <> renderGQL memberFields
 renderVariants _ xs = " = " <> renderMembers xs

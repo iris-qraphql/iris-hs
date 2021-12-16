@@ -37,21 +37,20 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    RESOLVER_TYPE,
     Operation (..),
     OperationType (..),
     RAW,
+    RESOLVER_TYPE,
     Ref (..),
     Selection (..),
     SelectionContent (..),
     SelectionSet,
     TypeContent (..),
     TypeDefinition (..),
-    Variant (..),
     UnionTag (..),
     VALID,
+    Variant (..),
     at,
-    isLeaf,
     mergeNonEmpty,
     mkTypeRef,
     msg,
@@ -169,7 +168,7 @@ validateSelectionSet typeDef =
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
 validateSelection :: ValidateFragmentSelection s => Variant RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
-  withScope (setSelection (memberName typeDef) selectionRef) $
+  withScope (setSelection (variantName typeDef) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
   where
     selectionRef = Ref selectionName selectionPosition
@@ -200,7 +199,7 @@ validateSpreadSelection ::
   Ref FragmentName ->
   FragmentValidator s (SelectionSet VALID)
 validateSpreadSelection typeDef =
-  fmap unionTagSelection . validateSpread validateFragmentSelection [memberName typeDef]
+  fmap unionTagSelection . validateSpread validateFragmentSelection [variantName typeDef]
 
 validateInlineFragmentSelection ::
   ValidateFragmentSelection s =>
@@ -208,7 +207,7 @@ validateInlineFragmentSelection ::
   Fragment RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateInlineFragmentSelection typeDef =
-  fmap fragmentSelection . validateFragment validateFragmentSelection [memberName typeDef]
+  fmap fragmentSelection . validateFragment validateFragmentSelection [variantName typeDef]
 
 selectSelectionField ::
   Ref FieldName ->
@@ -249,10 +248,9 @@ validateContentLeaf ::
   FragmentValidator s' (SelectionContent s)
 validateContentLeaf
   (Ref selectionName selectionPosition)
-  TypeDefinition {typeName, typeContent}
-    | isLeaf typeContent = pure SelectionField
-    | otherwise =
-      throwError $ subfieldsNotSelected selectionName typeName selectionPosition
+  TypeDefinition {typeName, typeContent = ResolverTypeContent {}} =
+    throwError $ subfieldsNotSelected selectionName typeName selectionPosition
+validateContentLeaf _ _ = pure SelectionField
 
 validateByTypeContent ::
   forall s.

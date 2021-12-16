@@ -53,7 +53,6 @@ setSelection currentType Ref {refName, refPosition} Scope {..} =
   Scope
     { fieldName = refName,
       currentTypeName = currentType,
-     -- currentTypeKind = kindOf currentType,
       position = Just refPosition,
       ..
     }

@@ -140,4 +140,4 @@ unpackVariantTypeName :: TypeName -> (TypeName, Maybe TypeName)
 unpackVariantTypeName = bimap packName (fmap packName . T.stripPrefix ".") . T.breakOn "." . unpackName
 
 packVariantTypeName :: TypeName -> TypeName -> TypeName
-packVariantTypeName typename memberName = typename <> "." <> memberName
+packVariantTypeName typename variantName = typename <> "." <> variantName

@@ -9,7 +9,6 @@ module Language.Iris.Types.Internal.AST.Type
   ( TypeRef (..),
     TypeWrapper (..),
     Nullable (..),
-    Strictness (..),
     TypeKind (..),
     Subtyping (..),
     mkTypeRef,
@@ -58,18 +57,7 @@ instance RenderGQL TypeKind where
   renderGQL RESOLVER {} = "RESOLVER"
   renderGQL LIST = "LIST"
 
---  Definitions:
---     Strictness:
---        Strict: Value (Strict) Types.
---             members: {scalar, data}
---        Lazy: Resolver (lazy) Types
---             members: resolver 
-class Strictness t where
-  isResolverType :: t -> Bool
 
-instance Strictness TypeKind where
-  isResolverType RESOLVER {} = True
-  isResolverType _ = False
 
 -- TypeWrappers
 -----------------------------------------------------------------------------------

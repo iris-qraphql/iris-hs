@@ -196,5 +196,5 @@ validateDefaultValue typeRef argName value = do
 instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
   type TypeContext (Variant cat) = TypeEntity ON_TYPE
   typeCheck Variant {..} =
-    Variant memberDescription memberName membership
+    Variant variantDescription variantName membership
       <$> traverse typeCheck memberFields

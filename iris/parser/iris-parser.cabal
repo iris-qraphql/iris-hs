@@ -227,8 +227,8 @@ library
       Language.Iris.Types.Internal.AST.Stage
       Language.Iris.Types.Internal.AST.Type
       Language.Iris.Types.Internal.AST.TypeSystem
-      Language.Iris.Types.Internal.AST.Union
       Language.Iris.Types.Internal.AST.Value
+      Language.Iris.Types.Internal.AST.Variant
       Language.Iris.Types.Internal.Config
       Language.Iris.Types.Internal.Validation
       Language.Iris.Types.Internal.Validation.Internal

@@ -96,7 +96,7 @@ import Language.Iris.Types.Internal.AST.TypeSystem
     TypeDefinition (..),
     (<:>),
   )
-import Language.Iris.Types.Internal.AST.Union
+import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.AST.Value
   ( ResolvedValue,
     Variable (..),

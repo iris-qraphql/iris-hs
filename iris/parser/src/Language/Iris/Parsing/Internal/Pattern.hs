@@ -71,11 +71,7 @@ import Text.Megaparsec
   )
 import Text.Megaparsec.Byte (string)
 
---  EnumValueDefinition: https://graphql.github.io/graphql-spec/June2018/#EnumValueDefinition
---
---  EnumValueDefinition
---    Description(opt) EnumValue Directives(Const)(opt)
---
+
 unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent cat s)) =>
   TypeName ->
@@ -87,8 +83,8 @@ parseMember ::
   TypeName ->
   Parser (Variant cat s)
 parseMember typeName = do
-  memberDescription <- optDescription
-  memberName <- parseTypeName
+  variantDescription <- optDescription
+  variantName <- parseTypeName
   fields <- optional fieldsDefinition
   pure
     Variant
@@ -96,14 +92,8 @@ parseMember typeName = do
         membership = fmap (const typeName) fields,
         ..
       }
-
 {-# INLINEABLE unionMembersDefinition #-}
 
--- Field Arguments: https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
---
--- ArgumentsDefinition:
---   ( InputValueDefinition(list) )
---
 argumentsDefinition ::
   Parse (Value s) =>
   Parser (ArgumentsDefinition s)

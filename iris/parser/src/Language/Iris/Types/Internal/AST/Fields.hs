@@ -21,7 +21,6 @@ module Language.Iris.Types.Internal.AST.Fields
     FieldDefinition (..),
     FieldsDefinition,
     FieldContent (..),
-    InputFieldsDefinition,
     DirectivesDefinition,
     DirectiveDefinition (..),
     Directives,
@@ -30,7 +29,6 @@ module Language.Iris.Types.Internal.AST.Fields
     lookupDeprecated,
     lookupDeprecatedReason,
     unsafeFromFields,
-    mkObjectField,
     mkField,
     renderArgumentValues,
     renderDirectives,
@@ -73,7 +71,6 @@ import Language.Iris.Types.Internal.AST.Error
   )
 import Language.Iris.Types.Internal.AST.Name
   ( FieldName,
-    TypeName,
     isNotSystemFieldName,
   )
 import Language.Iris.Types.Internal.AST.Stage
@@ -82,7 +79,6 @@ import Language.Iris.Types.Internal.AST.Stage
 import Language.Iris.Types.Internal.AST.Type
   ( Nullable (..),
     TypeRef (..),
-    TypeWrapper (..),
   )
 import Language.Iris.Types.Internal.AST.Role
   ( RESOLVER_TYPE,
@@ -219,11 +215,6 @@ unsafeFromFields = unsafeFromList . fmap toPair
 --
 type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
 
---  FieldDefinition
---    Description(opt) Name ArgumentsDefinition(opt) : Type Directives(Const)(opt)
---
--- InputValueDefinition
---   Description(opt) Name: Type DefaultValue(opt) Directives[Const](opt)
 
 data FieldDefinition (cat :: Role) (s :: Stage) = FieldDefinition
   { fieldDescription :: Maybe Description,
@@ -287,32 +278,6 @@ mkField fieldContent fieldName fieldType =
       fieldType,
       fieldDirectives = empty
     }
-
-mkObjectField ::
-  ArgumentsDefinition s ->
-  FieldName ->
-  TypeWrapper ->
-  TypeName ->
-  FieldDefinition RESOLVER_TYPE s
-mkObjectField args fieldName typeWrappers typeConName =
-  mkField
-    (Just $ ResolverFieldContent args)
-    fieldName
-    TypeRef {typeWrappers, typeConName}
-
--- 3.10 Input Objects: https://spec.graphql.org/June2018/#sec-Input-Objects
----------------------------------------------------------------------------
---- InputFieldsDefinition
--- { InputValueDefinition(list) }
-
-type InputFieldsDefinition s = OrdMap FieldName (InputValueDefinition s)
-
-type InputValueDefinition = FieldDefinition DATA_TYPE
-
--- 3.6.1 Field Arguments : https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
------------------------------------------------------------------------------------------------
--- ArgumentsDefinition:
---   (InputValueDefinition(list))
 
 type ArgumentsDefinition s = OrdMap FieldName (ArgumentDefinition s)
 
