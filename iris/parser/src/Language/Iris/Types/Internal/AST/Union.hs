@@ -34,12 +34,12 @@ import Language.Iris.Types.Internal.AST.Name
 import Language.Iris.Types.Internal.AST.Stage
   ( Stage,
   )
-import Language.Iris.Types.Internal.AST.TypeCategory
-  ( TypeCategory,
+import Language.Iris.Types.Internal.AST.Role
+  ( Role,
   )
 import Relude hiding (empty)
 
-data UnionMember (cat :: TypeCategory) (s :: Stage) = UnionMember
+data UnionMember (cat :: Role) (s :: Stage) = UnionMember
   { memberDescription :: Maybe Description,
     memberName :: TypeName,
     membership :: Maybe TypeName,

@@ -5,8 +5,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Language.Iris.Types.Internal.AST.TypeCategory
-  ( TypeCategory (..),
+module Language.Iris.Types.Internal.AST.Role
+  ( Role (..),
     LAZY,
     STRICT,
     ToAny (..),
@@ -14,11 +14,10 @@ module Language.Iris.Types.Internal.AST.TypeCategory
   )
 where
 
-
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
-data TypeCategory = STRICT | LAZY deriving (Show, Eq, Ord)
+data Role = STRICT | LAZY deriving (Show, Eq, Ord)
 
 type STRICT = 'STRICT
 
@@ -27,5 +26,5 @@ type LAZY = 'LAZY
 class ToAny a where
   toAny :: a k (s :: Stage) -> a LAZY s
 
-class FromAny a (k :: TypeCategory) where
+class FromAny a (k :: Role) where
   fromAny :: a LAZY (s :: Stage) -> Maybe (a k s)

@@ -107,7 +107,7 @@ checkUnused uses = failOnUnused . getUnused uses
 
 constraint ::
   KindViolation k inp =>
-  Constraint (k :: TypeCategory) ->
+  Constraint (k :: Role) ->
   inp ->
   TypeDefinition LAZY s ->
   Validator s ctx (TypeDefinition k s)

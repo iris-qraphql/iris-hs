@@ -28,7 +28,7 @@ import Language.Iris.Types.Internal.AST
     ObjectEntry (..),
     Ref (..),
     STRICT,
-    TypeCategory,
+    Role,
     TypeName,
     TypeRef (..),
     Variable (..),
@@ -185,7 +185,7 @@ instance Unknown (Directive s') ctx where
   unknown Scope {path} _ Directive {directiveName, directivePosition} =
     (("Unknown Directive " <> msg directiveName <> ".") `at` directivePosition) `withPath` path
 
-class KindViolation (t :: TypeCategory) ctx where
+class KindViolation (t :: Role) ctx where
   kindViolation :: c t -> ctx -> GQLError
 
 instance KindViolation LAZY (Fragment s) where

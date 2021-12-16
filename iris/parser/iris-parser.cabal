@@ -222,10 +222,10 @@ library
       Language.Iris.Types.Internal.AST.Fields
       Language.Iris.Types.Internal.AST.Name
       Language.Iris.Types.Internal.AST.OperationType
+      Language.Iris.Types.Internal.AST.Role
       Language.Iris.Types.Internal.AST.Selection
       Language.Iris.Types.Internal.AST.Stage
       Language.Iris.Types.Internal.AST.Type
-      Language.Iris.Types.Internal.AST.TypeCategory
       Language.Iris.Types.Internal.AST.TypeSystem
       Language.Iris.Types.Internal.AST.Union
       Language.Iris.Types.Internal.AST.Value

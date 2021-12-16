@@ -84,11 +84,11 @@ import Language.Iris.Types.Internal.AST.Type
     TypeRef (..),
     TypeWrapper (..),
   )
-import Language.Iris.Types.Internal.AST.TypeCategory
+import Language.Iris.Types.Internal.AST.Role
   ( LAZY,
     STRICT,
     ToAny (..),
-    TypeCategory,
+    Role,
     toAny,
   )
 import Language.Iris.Types.Internal.AST.Value
@@ -225,7 +225,7 @@ type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
 -- InputValueDefinition
 --   Description(opt) Name: Type DefaultValue(opt) Directives[Const](opt)
 
-data FieldDefinition (cat :: TypeCategory) (s :: Stage) = FieldDefinition
+data FieldDefinition (cat :: Role) (s :: Stage) = FieldDefinition
   { fieldDescription :: Maybe Description,
     fieldName :: FieldName,
     fieldContent :: Maybe (FieldContent cat s),
@@ -234,7 +234,7 @@ data FieldDefinition (cat :: TypeCategory) (s :: Stage) = FieldDefinition
   }
   deriving (Show, Lift, Eq)
 
-data FieldContent (cat :: TypeCategory) (s :: Stage) where
+data FieldContent (cat :: Role) (s :: Stage) where
   DataFieldContent :: FieldContent cat s
   ResolverFieldContent ::
     { fieldArgumentsDefinition :: ArgumentsDefinition s

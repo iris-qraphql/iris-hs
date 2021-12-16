@@ -28,7 +28,7 @@ module Language.Iris.Types.Internal.AST.TypeSystem
     TypeDefinition (..),
     Schema (..),
     TypeDefinitions,
-    TypeCategory,
+    Role,
     mkType,
     createScalarType,
     initTypeLib,
@@ -118,12 +118,12 @@ import Language.Iris.Types.Internal.AST.Type
   ( Strictness (..),
     TypeKind (..),
   )
-import Language.Iris.Types.Internal.AST.TypeCategory
+import Language.Iris.Types.Internal.AST.Role
   ( FromAny (..),
     LAZY,
     STRICT,
     ToAny (..),
-    TypeCategory,
+    Role,
     fromAny,
     toAny,
   )
@@ -166,7 +166,7 @@ untyped f = f . _untyped
 
 -- | used for preserving type information from untyped values
 -- see function typed
-newtype Typed (cat :: TypeCategory) (s :: Stage) a = Typed
+newtype Typed (cat :: Role) (s :: Stage) a = Typed
   { _untyped :: a
   }
 
@@ -401,7 +401,7 @@ lookupDataType name Schema {types, query, mutation, subscription} =
     <|> (subscription >>= isType name)
     <|> lookup (fst (unpackVariantTypeName name)) types
 
-data TypeDefinition (a :: TypeCategory) (s :: Stage) = TypeDefinition
+data TypeDefinition (a :: Role) (s :: Stage) = TypeDefinition
   { typeDescription :: Maybe Description,
     typeName :: TypeName,
     typeDirectives :: Directives s,
@@ -437,7 +437,7 @@ instance
 
 data
   TypeContent
-    (a :: TypeCategory)
+    (a :: Role)
     (s :: Stage)
   where
   ScalarTypeContent :: {dataScalar :: ScalarDefinition} -> TypeContent a s

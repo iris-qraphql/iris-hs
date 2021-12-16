@@ -30,7 +30,7 @@ import Language.Iris.Types.Internal.AST.Selection
     UnionTag (..),
   )
 import Language.Iris.Types.Internal.AST.Stage (RAW, VALID)
-import Language.Iris.Types.Internal.AST.TypeCategory
+import Language.Iris.Types.Internal.AST.Role
   ( LAZY,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem

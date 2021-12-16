@@ -81,7 +81,7 @@ resolveTypeMember UnionMember {memberName, membership = Just name, memberFields,
       }
 resolveTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject Nothing
 
-type Constraints m c (cat :: TypeCategory) s ctx =
+type Constraints m c (cat :: Role) s ctx =
   ( MonadError GQLError m,
     Monad m,
     MonadReader (ValidatorContext s ctx) m,

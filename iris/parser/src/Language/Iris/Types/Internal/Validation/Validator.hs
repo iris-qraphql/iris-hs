@@ -60,7 +60,7 @@ import Language.Iris.Types.Internal.AST
     STRICT,
     Schema,
     Stage,
-    TypeCategory,
+    Role,
     TypeName,
     TypeRef (..),
     VALID,
@@ -145,7 +145,7 @@ data InputSource
       }
   deriving (Show)
 
-data Constraint (a :: TypeCategory) where
+data Constraint (a :: Role) where
   ONLY_DATA :: Constraint STRICT
 
 inField :: FieldDefinition STRICT s -> InputValidator s c a -> InputValidator s c a

@@ -85,7 +85,7 @@ import Language.Iris.Types.Internal.AST.Stage
     Stage,
     VALID,
   )
-import Language.Iris.Types.Internal.AST.TypeCategory
+import Language.Iris.Types.Internal.AST.Role
   ( LAZY,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem

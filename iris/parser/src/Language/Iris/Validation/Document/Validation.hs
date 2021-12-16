@@ -33,7 +33,7 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     STRICT,
     Schema (..),
-    TypeCategory,
+    Role,
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
@@ -154,7 +154,7 @@ instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
       checkFieldContent (ResolverFieldContent args) = ResolverFieldContent <$> traverse typeCheck args
       checkFieldContent DataFieldContent = pure DataFieldContent
 
-class FieldDirectiveLocation (cat :: TypeCategory) where
+class FieldDirectiveLocation (cat :: Role) where
   directiveLocation :: Proxy cat -> DirectiveLocation
 
 instance FieldDirectiveLocation LAZY where

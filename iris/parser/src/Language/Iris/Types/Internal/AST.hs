@@ -57,7 +57,7 @@ module Language.Iris.Types.Internal.AST
     MUTATION,
     SUBSCRIPTION,
     Directive (..),
-    TypeCategory (..),
+    Role (..),
     VariableContent (..),
     TypeDefinitions,
     initTypeLib,
@@ -148,7 +148,7 @@ import Language.Iris.Types.Internal.AST.OperationType
 import Language.Iris.Types.Internal.AST.Selection
 import Language.Iris.Types.Internal.AST.Stage
 import Language.Iris.Types.Internal.AST.Type
-import Language.Iris.Types.Internal.AST.TypeCategory
+import Language.Iris.Types.Internal.AST.Role
 import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.AST.Union
 import Language.Iris.Types.Internal.AST.Value
