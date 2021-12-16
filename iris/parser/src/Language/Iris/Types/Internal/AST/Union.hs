@@ -39,27 +39,27 @@ import Language.Iris.Types.Internal.AST.Role
   )
 import Relude hiding (empty)
 
-data Variant (cat :: Role) (s :: Stage) = Variant
-  { memberDescription :: Maybe Description,
-    memberName :: TypeName,
+data Variant (r :: Role) (stage :: Stage) = Variant
+  { variantDescription :: Maybe Description,
+    variantName :: TypeName,
     membership :: Maybe TypeName,
-    memberFields :: FieldsDefinition cat s
+    memberFields :: FieldsDefinition r stage
   }
   deriving (Show, Lift, Eq)
 
 instance NameCollision GQLError (Variant c s) where
-  nameCollision Variant {memberName} =
+  nameCollision Variant {variantName} =
     "There can Be only one union variant named "
-      <> msg memberName
+      <> msg variantName
 
 type UnionTypeDefinition c s = NonEmpty (Variant c s)
 
 instance RenderGQL (Variant cat s) where
-  renderGQL Variant {memberName, memberFields} =
-    renderGQL memberName <> renderGQL memberFields
+  renderGQL Variant {variantName, memberFields} =
+    renderGQL variantName <> renderGQL memberFields
 
 instance Msg (Variant cat s) where
-  msg = msg . memberName
+  msg = msg . variantName
 
 instance KeyOf TypeName (Variant cat s) where
-  keyOf = memberName
+  keyOf = variantName
