@@ -30,7 +30,7 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     Fragments,
-    LAZY,
+    RESOLVER_TYPE,
     Position,
     RAW,
     Ref (..),
@@ -118,6 +118,6 @@ resolveSpread allowedTargets ref@Ref {refName, refPosition} =
     >>= selectKnown ref
     >>= castFragmentType (Just refName) refPosition allowedTargets
 
-selectFragmentType :: Fragment RAW -> FragmentValidator s (UnionMember LAZY VALID)
+selectFragmentType :: Fragment RAW -> FragmentValidator s (UnionMember RESOLVER_TYPE VALID)
 selectFragmentType Fragment {fragmentType, fragmentPosition} =
   withScope (setPosition fragmentPosition) $ askObjectType fragmentType

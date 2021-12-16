@@ -53,7 +53,7 @@ import Language.Iris.Types.Internal.AST
     DirectiveDefinition (..),
     DirectivesDefinition,
     GQLResult,
-    LAZY,
+    RESOLVER_TYPE,
     RawTypeDefinition (..),
     RootOperationTypeDefinition (..),
     ScalarDefinition (..),
@@ -80,7 +80,7 @@ import Text.Megaparsec
 scalarTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->
-  Parser (TypeDefinition LAZY s)
+  Parser (TypeDefinition RESOLVER_TYPE s)
 scalarTypeDefinition description =
   label "ScalarTypeDefinition" $
     TypeDefinition description
@@ -107,7 +107,7 @@ scalarTypeDefinition description =
 resolverTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->
-  Parser (TypeDefinition LAZY s)
+  Parser (TypeDefinition RESOLVER_TYPE s)
 resolverTypeDefinition description =
   label "ResolverTypeDefinition" $ do
     name <- typeDeclaration "resolver"
@@ -137,7 +137,7 @@ resolverTypeDefinition description =
 dataTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->
-  Parser (TypeDefinition LAZY s)
+  Parser (TypeDefinition RESOLVER_TYPE s)
 dataTypeDefinition description =
   label "DataTypeDefinition" $ do
     name <- typeDeclaration "data"
@@ -229,7 +229,7 @@ parseTypeSystemUnit =
 typePartition ::
   [RawTypeDefinition] ->
   ( [SchemaDefinition],
-    [TypeDefinition LAZY CONST],
+    [TypeDefinition RESOLVER_TYPE CONST],
     [DirectiveDefinition CONST]
   )
 typePartition = foldr' split ([], [], [])
@@ -237,11 +237,11 @@ typePartition = foldr' split ([], [], [])
 split ::
   RawTypeDefinition ->
   ( [SchemaDefinition],
-    [TypeDefinition LAZY CONST],
+    [TypeDefinition RESOLVER_TYPE CONST],
     [DirectiveDefinition CONST]
   ) ->
   ( [SchemaDefinition],
-    [TypeDefinition LAZY CONST],
+    [TypeDefinition RESOLVER_TYPE CONST],
     [DirectiveDefinition CONST]
   )
 split (RawSchemaDefinition schema) (schemas, types, dirs) = (schema : schemas, types, dirs)
@@ -252,10 +252,10 @@ split (RawDirectiveDefinition dir) (schemas, types, dirs) = (schemas, types, dir
 
 withSchemaDefinition ::
   ( [SchemaDefinition],
-    [TypeDefinition LAZY s],
+    [TypeDefinition RESOLVER_TYPE s],
     [DirectiveDefinition CONST]
   ) ->
-  GQLResult (Maybe SchemaDefinition, [TypeDefinition LAZY s], DirectivesDefinition CONST)
+  GQLResult (Maybe SchemaDefinition, [TypeDefinition RESOLVER_TYPE s], DirectivesDefinition CONST)
 withSchemaDefinition ([], t, dirs) = (Nothing,t,) <$> fromElems dirs
 withSchemaDefinition ([x], t, dirs) = (Just x,t,) <$> fromElems dirs
 withSchemaDefinition (x : xs, _, _) = throwErrors (nameCollision <$> (x :| xs))
@@ -270,14 +270,14 @@ typeSystemDefinition ::
   ByteString ->
   GQLResult
     ( Maybe SchemaDefinition,
-      [TypeDefinition LAZY CONST],
+      [TypeDefinition RESOLVER_TYPE CONST],
       DirectivesDefinition CONST
     )
 typeSystemDefinition =
   processParser parseRawTypeDefinitions
     >=> withSchemaDefinition . typePartition
 
-parseTypeDefinitions :: ByteString -> GQLResult [TypeDefinition LAZY CONST]
+parseTypeDefinitions :: ByteString -> GQLResult [TypeDefinition RESOLVER_TYPE CONST]
 parseTypeDefinitions =
   fmap (\d -> [td | RawTypeDefinition td <- d])
     . processParser parseRawTypeDefinitions

@@ -37,7 +37,7 @@ import Language.Iris.Types.Internal.AST
     FieldDefinition (..),
     FieldName,
     FieldsDefinition,
-    LAZY,
+    RESOLVER_TYPE,
     Name,
     DATA_TYPE,
     TypeContent (..),
@@ -117,7 +117,7 @@ instance RenderIntrospection (Value VALID) where
 
 instance
   RenderIntrospection
-    (FieldDefinition LAZY VALID)
+    (FieldDefinition RESOLVER_TYPE VALID)
   where
   render FieldDefinition {..} =
     pure $
@@ -273,7 +273,7 @@ mkObjectType ::
   Monad m =>
   TypeName ->
   Maybe Description ->
-  FieldsDefinition LAZY VALID ->
+  FieldsDefinition RESOLVER_TYPE VALID ->
   ResolverValue m
 mkObjectType = mkFieldsType (RESOLVER Nothing)
 

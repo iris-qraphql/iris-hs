@@ -28,7 +28,7 @@ import Data.Mergeable.Utils
 import Language.Iris.Types.Internal.AST
   ( Argument (..),
     FieldName,
-    LAZY,
+    RESOLVER_TYPE,
     QUERY,
     ScalarValue (..),
     Schema (..),
@@ -47,7 +47,7 @@ resolveTypes schema = mkList <$> traverse render (toList $ typeDefinitions schem
 
 renderOperation ::
   Monad m =>
-  Maybe (TypeDefinition LAZY VALID) ->
+  Maybe (TypeDefinition RESOLVER_TYPE VALID) ->
   m (ResolverValue m)
 renderOperation (Just TypeDefinition {typeName}) = pure $ mkObjectType typeName Nothing empty
 renderOperation Nothing = pure mkNull

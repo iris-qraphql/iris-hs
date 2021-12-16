@@ -54,7 +54,7 @@ import Language.Iris.Types.Internal.AST
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    LAZY,
+    RESOLVER_TYPE,
     OperationType (..),
     DATA_TYPE,
     TypeKind (..),
@@ -148,7 +148,7 @@ fieldDefinition =
 instance Parse (Value s) => Parse (FieldContent DATA_TYPE s) where
   parse = pure DataFieldContent
 
-instance Parse (Value s) => Parse (FieldContent LAZY s) where
+instance Parse (Value s) => Parse (FieldContent RESOLVER_TYPE s) where
   parse = ResolverFieldContent <$> argumentsDefinition
 
 --  FieldDefinition

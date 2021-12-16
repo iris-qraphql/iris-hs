@@ -67,7 +67,7 @@ import Language.Iris.Error.Class
 import Language.Iris.Types.Internal.AST
   ( FieldDefinition (..),
     FieldName,
-    LAZY,
+    RESOLVER_TYPE,
     Position (..),
     Ref (..),
     DATA_TYPE,
@@ -109,7 +109,7 @@ constraint ::
   KindViolation k inp =>
   Constraint (k :: Role) ->
   inp ->
-  TypeDefinition LAZY s ->
+  TypeDefinition RESOLVER_TYPE s ->
   Validator s ctx (TypeDefinition k s)
 constraint ONLY_DATA ctx x = maybe (throwError (kindViolation ONLY_DATA ctx)) pure (fromAny x)
 
@@ -165,7 +165,7 @@ selectWithDefaultValue
 
 selectType ::
   TypeName ->
-  Validator s ctx (TypeDefinition LAZY s)
+  Validator s ctx (TypeDefinition RESOLVER_TYPE s)
 selectType name = do
   ValidatorContext {scope, localContext, schema} <- Validator ask
   maybe

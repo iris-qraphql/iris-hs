@@ -63,6 +63,7 @@ import Language.Iris.Types.Internal.AST.Error
   ( GQLError,
     at,
     atPositions,
+    internal,
     msg,
   )
 import Language.Iris.Types.Internal.AST.Fields
@@ -79,14 +80,14 @@ import Language.Iris.Types.Internal.AST.Name
     isNotSystemFieldName,
   )
 import Language.Iris.Types.Internal.AST.OperationType (OperationType (..))
+import Language.Iris.Types.Internal.AST.Role
+  ( RESOLVER_TYPE,
+  )
 import Language.Iris.Types.Internal.AST.Stage
   ( ALLOW_DUPLICATES,
     RAW,
     Stage,
     VALID,
-  )
-import Language.Iris.Types.Internal.AST.Role
-  ( LAZY,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
   ( HistoryT,
@@ -364,10 +365,11 @@ instance RenderGQL (Operation VALID) where
 getOperationName :: Maybe FieldName -> TypeName
 getOperationName = maybe "AnonymousOperation" coerce
 
-getTypeVariant :: MonadError GQLError m => TypeDefinition LAZY VALID -> m (UnionMember LAZY VALID)
+getTypeVariant :: MonadError GQLError m => TypeDefinition RESOLVER_TYPE VALID -> m (UnionMember RESOLVER_TYPE VALID)
 getTypeVariant TypeDefinition {typeContent = ResolverTypeContent _ (x :| [])} = pure x
+getTypeVariant TypeDefinition {typeName} = throwError $ internal $ "operation type " <> msg typeName <> " is not object"
 
-getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (UnionMember LAZY VALID)
+getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (UnionMember RESOLVER_TYPE VALID)
 getOperationDataType Operation {operationType = Query} lib = getTypeVariant (query lib)
 getOperationDataType Operation {operationType = Mutation, operationPosition} lib =
   maybe (throwError $ mutationIsNotDefined operationPosition) getTypeVariant (mutation lib)

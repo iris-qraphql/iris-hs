@@ -58,7 +58,7 @@ import Language.Iris.Types
 import Language.Iris.Types.Internal.AST
   ( GQLError,
     GQLErrors,
-    LAZY,
+    RESOLVER_TYPE,
     Operation (..),
     OperationType (Mutation, Query, Subscription),
     Schema (..),
@@ -155,7 +155,7 @@ validateReq inputSchema config request = ResultT $
             }
         )
 
-rootType :: OperationType -> Schema s -> Maybe (TypeDefinition LAZY s)
+rootType :: OperationType -> Schema s -> Maybe (TypeDefinition RESOLVER_TYPE s)
 rootType Query = Just . AST.query
 rootType Mutation = mutation
 rootType Subscription = subscription

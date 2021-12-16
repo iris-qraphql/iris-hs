@@ -85,7 +85,7 @@ import Language.Iris.Types.Internal.AST.Type
     TypeWrapper (..),
   )
 import Language.Iris.Types.Internal.AST.Role
-  ( LAZY,
+  ( RESOLVER_TYPE,
     DATA_TYPE,
     ToAny (..),
     Role,
@@ -239,7 +239,7 @@ data FieldContent (cat :: Role) (s :: Stage) where
   ResolverFieldContent ::
     { fieldArgumentsDefinition :: ArgumentsDefinition s
     } ->
-    FieldContent LAZY s
+    FieldContent RESOLVER_TYPE s
 
 fieldArguments :: FieldDefinition c s -> ArgumentsDefinition s
 fieldArguments FieldDefinition {fieldContent = Just (ResolverFieldContent args)} = args
@@ -293,7 +293,7 @@ mkObjectField ::
   FieldName ->
   TypeWrapper ->
   TypeName ->
-  FieldDefinition LAZY s
+  FieldDefinition RESOLVER_TYPE s
 mkObjectField args fieldName typeWrappers typeConName =
   mkField
     (Just $ ResolverFieldContent args)

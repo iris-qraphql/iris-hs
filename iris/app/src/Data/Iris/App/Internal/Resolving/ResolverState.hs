@@ -48,7 +48,7 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     GQLError,
     GQLResult,
-    LAZY,
+    RESOLVER_TYPE,
     Operation,
     Schema,
     Selection (..),
@@ -71,7 +71,7 @@ data ResolverContext = ResolverContext
     schema :: Schema VALID,
     operation :: Operation VALID,
     config :: Config,
-    currentType :: TypeDefinition LAZY VALID
+    currentType :: TypeDefinition RESOLVER_TYPE VALID
   }
   deriving (Show)
 
@@ -99,7 +99,7 @@ setCurrentType name ma = do
     t
     ma
 
-fieldTypeName :: FieldName -> TypeDefinition LAZY VALID -> Maybe TypeName
+fieldTypeName :: FieldName -> TypeDefinition RESOLVER_TYPE VALID -> Maybe TypeName
 fieldTypeName name t = case typeContent t of
   (ResolverTypeContent _ (memb :| [])) -> selectOr Nothing (Just . typeConName . fieldType) name (memberFields memb)
   _ -> Nothing

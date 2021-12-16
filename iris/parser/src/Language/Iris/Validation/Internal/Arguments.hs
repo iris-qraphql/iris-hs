@@ -27,7 +27,7 @@ import Language.Iris.Types.Internal.AST
     DirectiveDefinition (..),
     FieldDefinition (..),
     DATA_TYPE,
-    LAZY,
+    RESOLVER_TYPE,
     ObjectEntry (..),
     Position (..),
     RAW,
@@ -109,7 +109,7 @@ validateArgumentValue
           <$> validateInputByTypeRef (typed fieldType field) argumentValue
 
 validateFieldArguments ::
-  FieldDefinition LAZY VALID ->
+  FieldDefinition RESOLVER_TYPE VALID ->
   Arguments RAW ->
   FragmentValidator s (Arguments VALID)
 validateFieldArguments field =

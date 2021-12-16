@@ -7,7 +7,7 @@
 
 module Language.Iris.Types.Internal.AST.Role
   ( Role (..),
-    LAZY,
+    RESOLVER_TYPE,
     DATA_TYPE,
     ToAny (..),
     FromAny (..),
@@ -17,14 +17,14 @@ where
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
-data Role = DATA_TYPE | LAZY deriving (Show, Eq, Ord)
+data Role = DATA_TYPE | RESOLVER_TYPE deriving (Show, Eq, Ord)
 
 type DATA_TYPE = 'DATA_TYPE
 
-type LAZY = 'LAZY
+type RESOLVER_TYPE = 'RESOLVER_TYPE
 
 class ToAny a where
-  toAny :: a k (s :: Stage) -> a LAZY s
+  toAny :: a k (s :: Stage) -> a RESOLVER_TYPE s
 
 class FromAny a (k :: Role) where
-  fromAny :: a LAZY (s :: Stage) -> Maybe (a k s)
+  fromAny :: a RESOLVER_TYPE (s :: Stage) -> Maybe (a k s)

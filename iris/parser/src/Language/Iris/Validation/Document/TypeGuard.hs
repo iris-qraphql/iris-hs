@@ -28,7 +28,7 @@ import Language.Iris.Types.Internal.AST
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    LAZY,
+    RESOLVER_TYPE,
     Subtyping (..),
     TypeName,
     TypeRef (..),
@@ -56,7 +56,7 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
 import Relude hiding (empty, local)
 
 validateTypeGuard ::
-  [UnionMember LAZY CONST] ->
+  [UnionMember RESOLVER_TYPE CONST] ->
   TypeName ->
   SchemaValidator (TypeEntity ON_TYPE) TypeName
 validateTypeGuard unionTypeNames typeGuardName = do
@@ -64,7 +64,7 @@ validateTypeGuard unionTypeNames typeGuardName = do
   traverse (resolveTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
-    hasCompatibleFields :: UnionMember LAZY CONST -> UnionMember LAZY CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
+    hasCompatibleFields :: UnionMember RESOLVER_TYPE CONST -> UnionMember RESOLVER_TYPE CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
     hasCompatibleFields guardType memberType =
       inTypeGuard
         (T.memberName guardType)
@@ -83,8 +83,8 @@ class StructuralCompatibility a where
   isCompatibleBy :: (t -> a) -> t -> t -> SchemaValidator ((Context a) ON_INTERFACE) ()
   isCompatibleBy f a b = f a `isCompatibleTo` f b
 
-instance StructuralCompatibility (FieldsDefinition LAZY s) where
-  type Context (FieldsDefinition LAZY s) = TypeEntity
+instance StructuralCompatibility (FieldsDefinition RESOLVER_TYPE s) where
+  type Context (FieldsDefinition RESOLVER_TYPE s) = TypeEntity
   isCompatibleTo objFields = traverse_ checkInterfaceField
     where
       checkInterfaceField interfaceField@FieldDefinition {fieldName} =
@@ -92,12 +92,12 @@ instance StructuralCompatibility (FieldsDefinition LAZY s) where
         where
           err = failImplements Missing
 
-instance StructuralCompatibility (FieldDefinition LAZY s) where
+instance StructuralCompatibility (FieldDefinition RESOLVER_TYPE s) where
   f1 `isCompatibleTo` f2 =
     isCompatibleBy fieldType f1 f2
       *> isCompatibleBy (fieldArgs . fieldContent) f1 f2
 
-fieldArgs :: Maybe (FieldContent  LAZY s) -> ArgumentsDefinition s
+fieldArgs :: Maybe (FieldContent  RESOLVER_TYPE s) -> ArgumentsDefinition s
 fieldArgs (Just (ResolverFieldContent args)) = args
 fieldArgs _ = empty
 

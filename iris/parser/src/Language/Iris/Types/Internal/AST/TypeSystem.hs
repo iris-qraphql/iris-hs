@@ -120,7 +120,7 @@ import Language.Iris.Types.Internal.AST.Type
   )
 import Language.Iris.Types.Internal.AST.Role
   ( FromAny (..),
-    LAZY,
+    RESOLVER_TYPE,
     DATA_TYPE,
     ToAny (..),
     Role,
@@ -198,9 +198,9 @@ instance Lift ScalarDefinition where
 
 data Schema (s :: Stage) = Schema
   { types :: TypeDefinitions s,
-    query :: TypeDefinition LAZY s, -- TODO: OBJECT
-    mutation :: Maybe (TypeDefinition LAZY s), -- TODO: OBJECT
-    subscription :: Maybe (TypeDefinition LAZY s), -- TODO: OBJECT
+    query :: TypeDefinition RESOLVER_TYPE s, -- TODO: OBJECT
+    mutation :: Maybe (TypeDefinition RESOLVER_TYPE s), -- TODO: OBJECT
+    subscription :: Maybe (TypeDefinition RESOLVER_TYPE s), -- TODO: OBJECT
     directiveDefinitions :: DirectivesDefinition s
   }
   deriving (Show, Lift)
@@ -221,18 +221,18 @@ instance
 
 mergeOptional ::
   (Monad m, MonadError GQLError m) =>
-  Maybe (TypeDefinition LAZY s) ->
-  Maybe (TypeDefinition LAZY s) ->
-  m (Maybe (TypeDefinition LAZY s))
+  Maybe (TypeDefinition RESOLVER_TYPE s) ->
+  Maybe (TypeDefinition RESOLVER_TYPE s) ->
+  m (Maybe (TypeDefinition RESOLVER_TYPE s))
 mergeOptional Nothing y = pure y
 mergeOptional (Just x) Nothing = pure (Just x)
 mergeOptional (Just x) (Just y) = Just <$> mergeOperation x y
 
 mergeOperation ::
   (Monad m, MonadError GQLError m) =>
-  TypeDefinition LAZY s ->
-  TypeDefinition LAZY s ->
-  m (TypeDefinition LAZY s)
+  TypeDefinition RESOLVER_TYPE s ->
+  TypeDefinition RESOLVER_TYPE s ->
+  m (TypeDefinition RESOLVER_TYPE s)
 mergeOperation
   TypeDefinition {typeContent = ResolverTypeContent Nothing (v1 :| [])}
   TypeDefinition {typeContent = ResolverTypeContent Nothing (v2 :| []), ..} = do
@@ -260,7 +260,7 @@ instance KeyOf TypeName SchemaDefinition where
 
 data RawTypeDefinition
   = RawSchemaDefinition SchemaDefinition
-  | RawTypeDefinition (TypeDefinition LAZY CONST)
+  | RawTypeDefinition (TypeDefinition RESOLVER_TYPE CONST)
   | RawDirectiveDefinition (DirectiveDefinition CONST)
   deriving (Show)
 
@@ -284,17 +284,17 @@ instance RenderGQL RootOperationTypeDefinition where
         rootOperationTypeDefinitionName
       } = renderEntry rootOperationType rootOperationTypeDefinitionName
 
-type TypeDefinitions s = SafeHashMap TypeName (TypeDefinition LAZY s)
+type TypeDefinitions s = SafeHashMap TypeName (TypeDefinition RESOLVER_TYPE s)
 
-typeDefinitions :: Schema s -> HashMap TypeName (TypeDefinition LAZY s)
+typeDefinitions :: Schema s -> HashMap TypeName (TypeDefinition RESOLVER_TYPE s)
 typeDefinitions schema@Schema {..} = toHashMap types <> HM.fromList operations
   where
     operations = map toPair $ rootTypeDefinitions schema
 
-rootTypeDefinitions :: Schema s -> [TypeDefinition LAZY s]
+rootTypeDefinitions :: Schema s -> [TypeDefinition RESOLVER_TYPE s]
 rootTypeDefinitions Schema {..} = map toAny $ catMaybes [Just query, mutation, subscription]
 
-mkSchema :: (Monad m, MonadError GQLError m) => [TypeDefinition LAZY s] -> m (Schema s)
+mkSchema :: (Monad m, MonadError GQLError m) => [TypeDefinition RESOLVER_TYPE s] -> m (Schema s)
 mkSchema types =
   traverse3
     (popByKey types)
@@ -309,9 +309,9 @@ defineSchemaWith ::
     MonadError GQLError f
   ) =>
   [TypeDefinition cat s] ->
-  ( Maybe (TypeDefinition LAZY s),
-    Maybe (TypeDefinition LAZY s),
-    Maybe (TypeDefinition LAZY s)
+  ( Maybe (TypeDefinition RESOLVER_TYPE s),
+    Maybe (TypeDefinition RESOLVER_TYPE s),
+    Maybe (TypeDefinition RESOLVER_TYPE s)
   ) ->
   f (Schema s)
 defineSchemaWith oTypes (Just query, mutation, subscription) = do
@@ -342,7 +342,7 @@ withDirectives dirs Schema {..} = do
 buildSchema ::
   (Monad m, MonadError GQLError m) =>
   ( Maybe SchemaDefinition,
-    [TypeDefinition LAZY s],
+    [TypeDefinition RESOLVER_TYPE s],
     DirectivesDefinition s
   ) ->
   m (Schema s)
@@ -359,9 +359,9 @@ traverse3 f (a1, a2, a3) = (,,) <$> f a1 <*> f a2 <*> f a3
 
 typeReference ::
   (Monad m, MonadError GQLError m) =>
-  [TypeDefinition LAZY s] ->
+  [TypeDefinition RESOLVER_TYPE s] ->
   RootOperationTypeDefinition ->
-  m (Maybe (TypeDefinition LAZY s))
+  m (Maybe (TypeDefinition RESOLVER_TYPE s))
 typeReference types rootOperation =
   popByKey types rootOperation
     >>= maybe
@@ -374,12 +374,12 @@ selectOperation ::
   ) =>
   SchemaDefinition ->
   OperationType ->
-  [TypeDefinition LAZY s] ->
-  f (Maybe (TypeDefinition LAZY s))
+  [TypeDefinition RESOLVER_TYPE s] ->
+  f (Maybe (TypeDefinition RESOLVER_TYPE s))
 selectOperation SchemaDefinition {unSchemaDefinition} operationType lib =
   selectOr (pure Nothing) (typeReference lib) operationType unSchemaDefinition
 
-initTypeLib :: TypeDefinition LAZY s -> Schema s
+initTypeLib :: TypeDefinition RESOLVER_TYPE s -> Schema s
 initTypeLib query =
   Schema
     { types = empty,
@@ -389,12 +389,12 @@ initTypeLib query =
       directiveDefinitions = empty
     }
 
-isType :: TypeName -> TypeDefinition LAZY s -> Maybe (TypeDefinition LAZY s)
+isType :: TypeName -> TypeDefinition RESOLVER_TYPE s -> Maybe (TypeDefinition RESOLVER_TYPE s)
 isType name x
   | name == typeName x = Just (toAny x)
   | otherwise = Nothing
 
-lookupDataType :: TypeName -> Schema s -> Maybe (TypeDefinition LAZY s)
+lookupDataType :: TypeName -> Schema s -> Maybe (TypeDefinition RESOLVER_TYPE s)
 lookupDataType name Schema {types, query, mutation, subscription} =
   isType name query
     <|> (mutation >>= isType name)
@@ -444,9 +444,9 @@ data
   DataTypeContent :: {dataVariants :: UnionTypeDefinition DATA_TYPE s} -> TypeContent a s
   ResolverTypeContent ::
     { resolverTypeGuard :: Maybe TypeName,
-      resolverVariants :: UnionTypeDefinition LAZY s
+      resolverVariants :: UnionTypeDefinition RESOLVER_TYPE s
     } ->
-    TypeContent LAZY s
+    TypeContent RESOLVER_TYPE s
 
 deriving instance Show (TypeContent a s)
 
@@ -473,7 +473,7 @@ instance FromAny TypeContent DATA_TYPE where
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
   fromAny _ = Nothing
 
-instance FromAny TypeContent LAZY where
+instance FromAny TypeContent RESOLVER_TYPE where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
   fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
@@ -518,9 +518,9 @@ lookupWith f key = find ((== key) . f)
 
 popByKey ::
   (MonadError GQLError m) =>
-  [TypeDefinition LAZY s] ->
+  [TypeDefinition RESOLVER_TYPE s] ->
   RootOperationTypeDefinition ->
-  m (Maybe (TypeDefinition LAZY s))
+  m (Maybe (TypeDefinition RESOLVER_TYPE s))
 popByKey types (RootOperationTypeDefinition opType name) = case lookupWith typeName name types of
   Just dt@TypeDefinition {typeContent = ResolverTypeContent {}} ->
     pure (fromAny dt)

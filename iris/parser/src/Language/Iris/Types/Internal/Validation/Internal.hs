@@ -25,7 +25,7 @@ import Control.Monad.Except (MonadError (throwError))
 import Language.Iris.Types.Internal.AST
   ( FromAny,
     GQLError,
-    LAZY,
+    RESOLVER_TYPE,
     Operation (..),
     DATA_TYPE,
     Token,
@@ -89,7 +89,7 @@ type Constraints m c (cat :: Role) s ctx =
     FromAny TypeContent cat
   )
 
-getOperationType :: Operation a -> SelectionValidator (UnionMember LAZY VALID)
+getOperationType :: Operation a -> SelectionValidator (UnionMember RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
 
 unknownType :: TypeName -> GQLError
@@ -103,7 +103,7 @@ type KindConstraint f c =
 _kindConstraint ::
   KindConstraint f k =>
   Token ->
-  TypeDefinition LAZY s ->
+  TypeDefinition RESOLVER_TYPE s ->
   f (TypeDefinition k s)
 _kindConstraint err anyType =
   maybe
@@ -112,7 +112,7 @@ _kindConstraint err anyType =
     (fromAny anyType)
 
 class KindErrors c where
-  kindConstraint :: KindConstraint f c => TypeDefinition LAZY s -> f (TypeDefinition c s)
+  kindConstraint :: KindConstraint f c => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
   constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (UnionMember c s)
 
 instance KindErrors DATA_TYPE where
@@ -135,7 +135,7 @@ lookupTypeVariant variantName variants =
     pure
     (find ((variantName ==) . memberName) variants)
 
-instance KindErrors LAZY where
+instance KindErrors RESOLVER_TYPE where
   kindConstraint = _kindConstraint " output type"
   constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
   constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =

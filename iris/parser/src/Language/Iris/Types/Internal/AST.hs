@@ -83,7 +83,7 @@ module Language.Iris.Types.Internal.AST
     ObjectEntry (..),
     UnionTag (..),
     DATA_TYPE,
-    LAZY,
+    RESOLVER_TYPE,
     TypeName,
     Token,
     Msg (..),

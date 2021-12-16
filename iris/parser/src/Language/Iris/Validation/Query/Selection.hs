@@ -37,7 +37,7 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    LAZY,
+    RESOLVER_TYPE,
     Operation (..),
     OperationType (..),
     RAW,
@@ -158,7 +158,7 @@ validateFragmentSelection f@Fragment {fragmentSelection} = do
 
 validateSelectionSet ::
   (ValidateFragmentSelection s) =>
-  UnionMember LAZY VALID ->
+  UnionMember RESOLVER_TYPE VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateSelectionSet typeDef =
@@ -167,7 +167,7 @@ validateSelectionSet typeDef =
     >=> mergeNonEmpty
 
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
-validateSelection :: ValidateFragmentSelection s => UnionMember LAZY VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
+validateSelection :: ValidateFragmentSelection s => UnionMember RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
   withScope (setSelection (memberName typeDef) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
@@ -204,7 +204,7 @@ validateSpreadSelection typeDef =
 
 validateInlineFragmentSelection ::
   ValidateFragmentSelection s =>
-  UnionMember LAZY VALID ->
+  UnionMember RESOLVER_TYPE VALID ->
   Fragment RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateInlineFragmentSelection typeDef =
@@ -212,8 +212,8 @@ validateInlineFragmentSelection typeDef =
 
 selectSelectionField ::
   Ref FieldName ->
-  UnionMember LAZY s ->
-  FragmentValidator s' (FieldDefinition LAZY s)
+  UnionMember RESOLVER_TYPE s ->
+  FragmentValidator s' (FieldDefinition RESOLVER_TYPE s)
 selectSelectionField ref UnionMember {memberFields}
   | refName ref == "__typename" =
     pure
@@ -228,7 +228,7 @@ selectSelectionField ref UnionMember {memberFields}
 
 validateSelectionContent ::
   ValidateFragmentSelection s =>
-  UnionMember LAZY VALID ->
+  UnionMember RESOLVER_TYPE VALID ->
   Ref FieldName ->
   Arguments RAW ->
   SelectionContent RAW ->
@@ -245,7 +245,7 @@ validateSelectionContent typeDef ref selectionArguments content = do
 
 validateContentLeaf ::
   Ref FieldName ->
-  TypeDefinition LAZY VALID ->
+  TypeDefinition RESOLVER_TYPE VALID ->
   FragmentValidator s' (SelectionContent s)
 validateContentLeaf
   (Ref selectionName selectionPosition)
@@ -257,7 +257,7 @@ validateContentLeaf
 validateByTypeContent ::
   forall s.
   (ValidateFragmentSelection s) =>
-  TypeDefinition LAZY VALID ->
+  TypeDefinition RESOLVER_TYPE VALID ->
   Ref FieldName ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionContent VALID)
@@ -268,7 +268,7 @@ validateByTypeContent
       . __validate typeContent
     where
       __validate ::
-        TypeContent LAZY VALID ->
+        TypeContent RESOLVER_TYPE VALID ->
         SelectionSet RAW ->
         FragmentValidator s (SelectionContent VALID)
       -- Validate UnionSelection
