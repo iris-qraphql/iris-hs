@@ -1,4 +1,4 @@
-directive @MyDirective on FIELD_DEFINITION | OBJECT
+directive @MyDirective on FIELD_DEFINITION | RESOLVER
 
 resolver Query = {
   name: String

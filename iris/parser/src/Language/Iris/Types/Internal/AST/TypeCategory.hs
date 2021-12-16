@@ -18,8 +18,7 @@ where
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
-data TypeCategory = STRICT | LAZY
-  deriving (Show, Eq, Ord)
+data TypeCategory = STRICT | LAZY deriving (Show, Eq, Ord)
 
 type STRICT = 'STRICT
 

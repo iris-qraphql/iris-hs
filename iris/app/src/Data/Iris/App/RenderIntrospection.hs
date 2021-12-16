@@ -105,7 +105,7 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
         renderContent (DataTypeContent variants) =
           mkUnionType DATA typeName typeDescription Nothing variants
         renderContent (ResolverTypeContent typeGuard variants) =
-          mkUnionType UNION typeName typeDescription typeGuard variants
+          mkUnionType (RESOLVER Nothing) typeName typeDescription typeGuard variants
 
 instance RenderIntrospection (FieldContent a VALID) where
   render (ResolverFieldContent args) = render args
@@ -275,7 +275,7 @@ mkObjectType ::
   Maybe Description ->
   FieldsDefinition LAZY VALID ->
   ResolverValue m
-mkObjectType = mkFieldsType (OBJECT Nothing)
+mkObjectType = mkFieldsType (RESOLVER Nothing)
 
 renderName ::
   ( RenderIntrospection name,

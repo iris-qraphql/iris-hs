@@ -55,7 +55,7 @@ data TypeKind
 instance RenderGQL TypeKind where
   renderGQL SCALAR = "SCALAR"
   renderGQL DATA = "DATA"
-  renderGQL RESOLVER {} = "OBJECT"
+  renderGQL RESOLVER {} = "RESOLVER"
   renderGQL LIST = "LIST"
 
 --  Definitions:

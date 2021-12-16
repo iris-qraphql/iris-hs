@@ -220,8 +220,8 @@ parseDirectiveLocation =
               [ DATA,
                 SCALAR
               ]
-            <> [ string "OBJECT"
-                   $> TYPE_DIRECTIVE (OBJECT Nothing)
+            <> [ string "RESOLVER"
+                   $> TYPE_DIRECTIVE (RESOLVER Nothing)
                ]
         )
     )
