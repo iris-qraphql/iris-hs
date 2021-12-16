@@ -61,7 +61,7 @@ import Language.Iris.Types.Internal.AST
     SchemaDefinition (..),
     TypeContent (..),
     TypeDefinition (..),
-    UnionMember (..),
+    Variant (..),
     Value,
     buildSchema,
   )
@@ -117,7 +117,7 @@ resolverTypeDefinition description =
       <$> optionalDirectives
       <*> (content name <|> pure (typeVariant name  empty))
   where
-    typeVariant n = ResolverTypeContent Nothing . (:| []) . UnionMember Nothing n Nothing
+    typeVariant n = ResolverTypeContent Nothing . (:| []) . Variant Nothing n Nothing
     content name = do
       tyGuard <- typeGuard
       equal
@@ -151,7 +151,7 @@ dataTypeDefinition description =
                  )
           )
   where
-    typeVariant name = DataTypeContent . (:| []) . UnionMember Nothing name Nothing
+    typeVariant name = DataTypeContent . (:| []) . Variant Nothing name Nothing
 {-# INLINEABLE dataTypeDefinition #-}
 
 -- 3.13 DirectiveDefinition

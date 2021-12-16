@@ -38,7 +38,7 @@ import Language.Iris.Types.Internal.AST
     TypeDefinition (..),
     TypeRef (..),
     Typed (..),
-    UnionMember (..),
+    Variant (..),
     VALID,
     Value,
     kindOf,
@@ -193,8 +193,8 @@ validateDefaultValue typeRef argName value = do
   Field fName _ (TypeEntity _ typeName) <- asks (local . localContext)
   startInput (SourceInputField typeName fName argName) (validateInputByTypeRef (Typed typeRef) value)
 
-instance FieldDirectiveLocation cat => TypeCheck (UnionMember cat) where
-  type TypeContext (UnionMember cat) = TypeEntity ON_TYPE
-  typeCheck UnionMember {..} =
-    UnionMember memberDescription memberName membership
+instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
+  type TypeContext (Variant cat) = TypeEntity ON_TYPE
+  typeCheck Variant {..} =
+    Variant memberDescription memberName membership
       <$> traverse typeCheck memberFields

@@ -32,7 +32,7 @@ import Language.Iris.Types.Internal.AST
     Subtyping (..),
     TypeName,
     TypeRef (..),
-    UnionMember (..),
+    Variant (..),
   )
 import Language.Iris.Types.Internal.Validation
   ( ValidatorContext (localContext),
@@ -56,7 +56,7 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
 import Relude hiding (empty, local)
 
 validateTypeGuard ::
-  [UnionMember RESOLVER_TYPE CONST] ->
+  [Variant RESOLVER_TYPE CONST] ->
   TypeName ->
   SchemaValidator (TypeEntity ON_TYPE) TypeName
 validateTypeGuard unionTypeNames typeGuardName = do
@@ -64,7 +64,7 @@ validateTypeGuard unionTypeNames typeGuardName = do
   traverse (resolveTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
-    hasCompatibleFields :: UnionMember RESOLVER_TYPE CONST -> UnionMember RESOLVER_TYPE CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
+    hasCompatibleFields :: Variant RESOLVER_TYPE CONST -> Variant RESOLVER_TYPE CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
     hasCompatibleFields guardType memberType =
       inTypeGuard
         (T.memberName guardType)

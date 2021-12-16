@@ -38,7 +38,7 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
-    UnionMember (..),
+    Variant (..),
   )
 import Relude hiding (optional)
 

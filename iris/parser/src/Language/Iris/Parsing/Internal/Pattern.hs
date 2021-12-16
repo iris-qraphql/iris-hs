@@ -59,7 +59,7 @@ import Language.Iris.Types.Internal.AST
     DATA_TYPE,
     TypeKind (..),
     TypeName,
-    UnionMember (..),
+    Variant (..),
     UnionTypeDefinition,
     Value,
   )
@@ -80,18 +80,18 @@ unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent cat s)) =>
   TypeName ->
   Parser (UnionTypeDefinition cat s)
-unionMembersDefinition typeName = label "UnionMember" $ pipe (parseMember typeName)
+unionMembersDefinition typeName = label "Variant" $ pipe (parseMember typeName)
 
 parseMember ::
   (Parse (Value s), Parse (FieldContent cat s)) =>
   TypeName ->
-  Parser (UnionMember cat s)
+  Parser (Variant cat s)
 parseMember typeName = do
   memberDescription <- optDescription
   memberName <- parseTypeName
   fields <- optional fieldsDefinition
   pure
-    UnionMember
+    Variant
       { memberFields = fromMaybe empty fields,
         membership = fmap (const typeName) fields,
         ..

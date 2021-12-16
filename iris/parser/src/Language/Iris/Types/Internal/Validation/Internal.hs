@@ -31,7 +31,7 @@ import Language.Iris.Types.Internal.AST
     Token,
     TypeName,
     TypeRef,
-    UnionMember (..),
+    Variant (..),
     VALID,
     fromAny,
     getOperationDataType,
@@ -64,22 +64,22 @@ __askType name =
       . lookupDataType name
     >>= kindConstraint
 
-askObjectType :: Constraints m c cat s ctx => TypeName -> m (UnionMember cat s)
+askObjectType :: Constraints m c cat s ctx => TypeName -> m (Variant cat s)
 askObjectType name = case unpackVariantTypeName name of
   (tName, variantName) -> __askType tName >>= constraintObject variantName
 
 resolveTypeMember ::
   Constraints m c cat s ctx =>
-  UnionMember cat s ->
-  m (UnionMember cat s)
-resolveTypeMember UnionMember {memberName, membership = Just name, memberFields, ..} = do
+  Variant cat s ->
+  m (Variant cat s)
+resolveTypeMember Variant {memberName, membership = Just name, memberFields, ..} = do
   pure
-    UnionMember
+    Variant
       { memberName = packVariantTypeName name memberName,
         membership = Just name,
         ..
       }
-resolveTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject Nothing
+resolveTypeMember Variant {memberName} = __askType memberName >>= constraintObject Nothing
 
 type Constraints m c (cat :: Role) s ctx =
   ( MonadError GQLError m,
@@ -89,7 +89,7 @@ type Constraints m c (cat :: Role) s ctx =
     FromAny TypeContent cat
   )
 
-getOperationType :: Operation a -> SelectionValidator (UnionMember RESOLVER_TYPE VALID)
+getOperationType :: Operation a -> SelectionValidator (Variant RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
 
 unknownType :: TypeName -> GQLError
@@ -113,7 +113,7 @@ _kindConstraint err anyType =
 
 class KindErrors c where
   kindConstraint :: KindConstraint f c => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
-  constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (UnionMember c s)
+  constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (Variant c s)
 
 instance KindErrors DATA_TYPE where
   kindConstraint = _kindConstraint " data type"
@@ -124,11 +124,11 @@ instance KindErrors DATA_TYPE where
         typeContent = DataTypeContent typeFields
       } =
       case toList typeFields of
-        [UnionMember {..}] -> pure (UnionMember {..})
+        [Variant {..}] -> pure (Variant {..})
         _ -> throwError (violation "data object" typeName)
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
-lookupTypeVariant :: MonadError GQLError m => TypeName -> UnionTypeDefinition cat s -> m (UnionMember cat s)
+lookupTypeVariant :: MonadError GQLError m => TypeName -> UnionTypeDefinition cat s -> m (Variant cat s)
 lookupTypeVariant variantName variants =
   maybe
     (noVariant variantName)

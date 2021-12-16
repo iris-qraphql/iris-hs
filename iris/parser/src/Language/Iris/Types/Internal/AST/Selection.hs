@@ -365,11 +365,11 @@ instance RenderGQL (Operation VALID) where
 getOperationName :: Maybe FieldName -> TypeName
 getOperationName = maybe "AnonymousOperation" coerce
 
-getTypeVariant :: MonadError GQLError m => TypeDefinition RESOLVER_TYPE VALID -> m (UnionMember RESOLVER_TYPE VALID)
+getTypeVariant :: MonadError GQLError m => TypeDefinition RESOLVER_TYPE VALID -> m (Variant RESOLVER_TYPE VALID)
 getTypeVariant TypeDefinition {typeContent = ResolverTypeContent _ (x :| [])} = pure x
 getTypeVariant TypeDefinition {typeName} = throwError $ internal $ "operation type " <> msg typeName <> " is not object"
 
-getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (UnionMember RESOLVER_TYPE VALID)
+getOperationDataType :: MonadError GQLError m => Operation s -> Schema VALID -> m (Variant RESOLVER_TYPE VALID)
 getOperationDataType Operation {operationType = Query} lib = getTypeVariant (query lib)
 getOperationDataType Operation {operationType = Mutation, operationPosition} lib =
   maybe (throwError $ mutationIsNotDefined operationPosition) getTypeVariant (mutation lib)

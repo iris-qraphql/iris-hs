@@ -19,7 +19,7 @@ import Data.Mergeable.Utils
     fromElems,
     selectOr,
   )
-import Language.Iris.Types.Internal.AST (UnionMember (..), mergeNonEmpty, startHistory)
+import Language.Iris.Types.Internal.AST (Variant (..), mergeNonEmpty, startHistory)
 import Language.Iris.Types.Internal.AST.Base (Position (..))
 import Language.Iris.Types.Internal.AST.Name (TypeName)
 import Language.Iris.Types.Internal.AST.Role
@@ -58,7 +58,7 @@ splitFragment ::
   ( Fragment RAW ->
     FragmentValidator s (SelectionSet VALID)
   ) ->
-  [UnionMember RESOLVER_TYPE VALID] ->
+  [Variant RESOLVER_TYPE VALID] ->
   Selection RAW ->
   FragmentValidator s (Either UnionTag (Selection RAW))
 splitFragment _ _ x@Selection {} = pure (Right x)
@@ -72,7 +72,7 @@ splitFragment f types (InlineFragment fragment@Fragment {fragmentType}) =
 exploreFragments ::
   (ValidateFragmentSelection s) =>
   (Fragment RAW -> FragmentValidator s (SelectionSet VALID)) ->
-  [UnionMember RESOLVER_TYPE VALID] ->
+  [Variant RESOLVER_TYPE VALID] ->
   SelectionSet RAW ->
   FragmentValidator s ([UnionTag], SelectionSet RAW)
 exploreFragments validateFragment types selectionSet = do
@@ -126,11 +126,11 @@ joinClusters selSet typedSelections
     mkUnionTag :: (TypeName, [SelectionSet VALID]) -> FragmentValidator s UnionTag
     mkUnionTag (typeName, fragments) = UnionTag typeName <$> mergeNonEmpty (selSet :| fragments)
 
-mkUnionRootType :: FragmentValidator s (UnionMember RESOLVER_TYPE VALID)
+mkUnionRootType :: FragmentValidator s (Variant RESOLVER_TYPE VALID)
 mkUnionRootType = do
   memberName <- asksScope currentTypeName
   pure
-    UnionMember
+    Variant
       { memberDescription = Nothing,
         memberName,
         membership = Nothing,
@@ -140,7 +140,7 @@ mkUnionRootType = do
 validateUnionSelection ::
   ValidateFragmentSelection s =>
   (Fragment RAW -> FragmentValidator s (SelectionSet VALID)) ->
-  (UnionMember RESOLVER_TYPE VALID -> SelectionSet RAW -> FragmentValidator s (SelectionSet VALID)) ->
+  (Variant RESOLVER_TYPE VALID -> SelectionSet RAW -> FragmentValidator s (SelectionSet VALID)) ->
   Maybe TypeName ->
   UnionTypeDefinition RESOLVER_TYPE VALID ->
   SelectionSet RAW ->

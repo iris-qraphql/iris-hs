@@ -56,7 +56,7 @@ import Language.Iris.Types.Internal.AST
     TypeDefinition (..),
     TypeName,
     TypeRef (typeConName),
-    UnionMember (memberFields),
+    Variant (memberFields),
     VALID,
     at,
     internal,

@@ -128,7 +128,7 @@ import Language.Iris.Types.Internal.AST.Role
     toAny,
   )
 import Language.Iris.Types.Internal.AST.Union
-  ( UnionMember (..),
+  ( Variant (..),
     UnionTypeDefinition,
   )
 import Language.Iris.Types.Internal.AST.Value
@@ -152,11 +152,11 @@ type HistoryT = ReaderT [Ref FieldName]
 (<:>) :: (Merge (HistoryT m) a, Monad m) => a -> a -> m a
 x <:> y = startHistory (merge x y)
 
-type StrictUnionContent k s = [UnionMember k s]
+type StrictUnionContent k s = [Variant k s]
 
 -- used for preserving type information from untyped values
 -- e.g
--- unionType :: UnionMember DATA_TYPE VALID -> Typed DATA_TYPE VALID TypeName
+-- unionType :: Variant DATA_TYPE VALID -> Typed DATA_TYPE VALID TypeName
 -- unionType = typed memberName
 typed :: (a c s -> b) -> a c s -> Typed c s b
 typed f = Typed . f
@@ -568,6 +568,6 @@ instance RenderGQL (TypeDefinition a s) where
       __render DataTypeContent {dataVariants} = "data " <> renderGQL typeName <> renderVariants typeName dataVariants
       __render ResolverTypeContent {resolverVariants} = "resolver " <> renderGQL typeName <> renderVariants typeName resolverVariants
 
-renderVariants :: TypeName -> NonEmpty (UnionMember cat s) -> Rendering
-renderVariants typeName (UnionMember {memberFields, memberName} :| []) | typeName == memberName = " =" <> renderGQL memberFields
+renderVariants :: TypeName -> NonEmpty (Variant cat s) -> Rendering
+renderVariants typeName (Variant {memberFields, memberName} :| []) | typeName == memberName = " =" <> renderGQL memberFields
 renderVariants _ xs = " = " <> renderMembers xs

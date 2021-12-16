@@ -96,7 +96,7 @@ module Language.Iris.Types.Internal.AST
     fieldArguments,
     mkType,
     mkObjectField,
-    UnionMember (..),
+    Variant (..),
     RawTypeDefinition (..),
     RootOperationTypeDefinition (..),
     UnionSelection,

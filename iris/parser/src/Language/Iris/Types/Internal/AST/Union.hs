@@ -11,7 +11,7 @@
 
 module Language.Iris.Types.Internal.AST.Union
   ( UnionTypeDefinition,
-    UnionMember (..),
+    Variant (..),
   )
 where
 
@@ -39,7 +39,7 @@ import Language.Iris.Types.Internal.AST.Role
   )
 import Relude hiding (empty)
 
-data UnionMember (cat :: Role) (s :: Stage) = UnionMember
+data Variant (cat :: Role) (s :: Stage) = Variant
   { memberDescription :: Maybe Description,
     memberName :: TypeName,
     membership :: Maybe TypeName,
@@ -47,19 +47,19 @@ data UnionMember (cat :: Role) (s :: Stage) = UnionMember
   }
   deriving (Show, Lift, Eq)
 
-instance NameCollision GQLError (UnionMember c s) where
-  nameCollision UnionMember {memberName} =
+instance NameCollision GQLError (Variant c s) where
+  nameCollision Variant {memberName} =
     "There can Be only one union variant named "
       <> msg memberName
 
-type UnionTypeDefinition c s = NonEmpty (UnionMember c s)
+type UnionTypeDefinition c s = NonEmpty (Variant c s)
 
-instance RenderGQL (UnionMember cat s) where
-  renderGQL UnionMember {memberName, memberFields} =
+instance RenderGQL (Variant cat s) where
+  renderGQL Variant {memberName, memberFields} =
     renderGQL memberName <> renderGQL memberFields
 
-instance Msg (UnionMember cat s) where
+instance Msg (Variant cat s) where
   msg = msg . memberName
 
-instance KeyOf TypeName (UnionMember cat s) where
+instance KeyOf TypeName (Variant cat s) where
   keyOf = memberName

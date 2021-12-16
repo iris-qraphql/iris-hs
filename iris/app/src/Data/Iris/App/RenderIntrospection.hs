@@ -46,7 +46,7 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef (..),
     TypeWrapper (BaseType, TypeList),
-    UnionMember (..),
+    Variant (..),
     UnionTypeDefinition,
     VALID,
     Value (..),

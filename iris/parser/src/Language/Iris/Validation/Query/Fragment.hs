@@ -37,7 +37,7 @@ import Language.Iris.Types.Internal.AST
     SelectionSet,
     Stage,
     TypeName,
-    UnionMember,
+    Variant,
     UnionTag (..),
     VALID,
   )
@@ -118,6 +118,6 @@ resolveSpread allowedTargets ref@Ref {refName, refPosition} =
     >>= selectKnown ref
     >>= castFragmentType (Just refName) refPosition allowedTargets
 
-selectFragmentType :: Fragment RAW -> FragmentValidator s (UnionMember RESOLVER_TYPE VALID)
+selectFragmentType :: Fragment RAW -> FragmentValidator s (Variant RESOLVER_TYPE VALID)
 selectFragmentType Fragment {fragmentType, fragmentPosition} =
   withScope (setPosition fragmentPosition) $ askObjectType fragmentType

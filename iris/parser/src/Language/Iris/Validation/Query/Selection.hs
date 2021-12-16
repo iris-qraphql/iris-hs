@@ -47,7 +47,7 @@ import Language.Iris.Types.Internal.AST
     SelectionSet,
     TypeContent (..),
     TypeDefinition (..),
-    UnionMember (..),
+    Variant (..),
     UnionTag (..),
     VALID,
     at,
@@ -158,7 +158,7 @@ validateFragmentSelection f@Fragment {fragmentSelection} = do
 
 validateSelectionSet ::
   (ValidateFragmentSelection s) =>
-  UnionMember RESOLVER_TYPE VALID ->
+  Variant RESOLVER_TYPE VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateSelectionSet typeDef =
@@ -167,7 +167,7 @@ validateSelectionSet typeDef =
     >=> mergeNonEmpty
 
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
-validateSelection :: ValidateFragmentSelection s => UnionMember RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
+validateSelection :: ValidateFragmentSelection s => Variant RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
   withScope (setSelection (memberName typeDef) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
@@ -196,7 +196,7 @@ validateSelection typeDef (InlineFragment fragment@Fragment {fragmentDirectives}
 
 validateSpreadSelection ::
   ValidateFragmentSelection s =>
-  UnionMember a VALID ->
+  Variant a VALID ->
   Ref FragmentName ->
   FragmentValidator s (SelectionSet VALID)
 validateSpreadSelection typeDef =
@@ -204,7 +204,7 @@ validateSpreadSelection typeDef =
 
 validateInlineFragmentSelection ::
   ValidateFragmentSelection s =>
-  UnionMember RESOLVER_TYPE VALID ->
+  Variant RESOLVER_TYPE VALID ->
   Fragment RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateInlineFragmentSelection typeDef =
@@ -212,9 +212,9 @@ validateInlineFragmentSelection typeDef =
 
 selectSelectionField ::
   Ref FieldName ->
-  UnionMember RESOLVER_TYPE s ->
+  Variant RESOLVER_TYPE s ->
   FragmentValidator s' (FieldDefinition RESOLVER_TYPE s)
-selectSelectionField ref UnionMember {memberFields}
+selectSelectionField ref Variant {memberFields}
   | refName ref == "__typename" =
     pure
       FieldDefinition
@@ -228,7 +228,7 @@ selectSelectionField ref UnionMember {memberFields}
 
 validateSelectionContent ::
   ValidateFragmentSelection s =>
-  UnionMember RESOLVER_TYPE VALID ->
+  Variant RESOLVER_TYPE VALID ->
   Ref FieldName ->
   Arguments RAW ->
   SelectionContent RAW ->

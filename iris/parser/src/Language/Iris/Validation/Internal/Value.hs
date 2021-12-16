@@ -36,7 +36,7 @@ import Language.Iris.Types.Internal.AST
     TypeRef (..),
     TypeWrapper (..),
     Typed (..),
-    UnionMember (..),
+    Variant (..),
     UnionTypeDefinition,
     VALID,
     ValidValue,
@@ -155,7 +155,7 @@ validateUnwrapped ::
   InputValidator schemaS ctx ValidValue
 validateUnwrapped (DataTypeContent variants) (Object conName fields) =
   case toList variants of
-    [UnionMember {memberFields}] ->
+    [Variant {memberFields}] ->
       Object conName <$> validateInputObject memberFields fields
     _ -> validateStrictUnionType variants (Object conName fields)
 validateUnwrapped (DataTypeContent tags) value =
