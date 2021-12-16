@@ -35,7 +35,6 @@ import Language.Iris.Types.Internal.AST
     FieldsDefinition,
     GQLError,
     Schema (..),
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
@@ -103,7 +102,7 @@ instance Stitching (TypeDefinition cat s) where
       <*> prop stitch typeDirectives x y
       <*> prop stitch typeContent x y
 
-instance Stitching (TypeContent TRUE cat s) where
+instance Stitching (TypeContent cat s) where
   stitch (ResolverTypeContent Nothing (v1 :| [])) (ResolverTypeContent Nothing (v2 :| [])) = do
     fields <- stitch (memberFields v1) (memberFields v2)
     pure $ ResolverTypeContent Nothing ((v1 {memberFields = fields}) :| [])

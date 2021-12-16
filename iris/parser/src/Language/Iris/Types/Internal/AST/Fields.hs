@@ -11,7 +11,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Language.Iris.Types.Internal.AST.Fields
@@ -51,6 +50,8 @@ import Data.Mergeable.Utils
     toPair,
     unsafeFromList,
   )
+import Instances.TH.Lift ()
+import Language.Haskell.TH.Syntax (Lift (..))
 import Language.Iris.Rendering.RenderGQL
   ( RenderGQL (..),
     Rendering,
@@ -63,7 +64,6 @@ import Language.Iris.Rendering.RenderGQL
 import Language.Iris.Types.Internal.AST.Base
   ( Description,
     Position,
-    TRUE,
   )
 import Language.Iris.Types.Internal.AST.DirectiveLocation (DirectiveLocation)
 import Language.Iris.Types.Internal.AST.Error
@@ -90,14 +90,11 @@ import Language.Iris.Types.Internal.AST.TypeCategory
     ToAny (..),
     TypeCategory,
     toAny,
-    type (<=?),
   )
 import Language.Iris.Types.Internal.AST.Value
   ( ScalarValue (..),
     Value (..),
   )
-import Instances.TH.Lift ()
-import Language.Haskell.TH.Syntax (Lift (..))
 import Relude hiding (empty, intercalate)
 
 -- scalar
@@ -205,7 +202,7 @@ argumentStringValue _ = Just "can't read deprecated Reason Value"
 instance ToAny FieldDefinition where
   toAny FieldDefinition {fieldContent, ..} = FieldDefinition {fieldContent = toAny <$> fieldContent, ..}
 
-instance ToAny (FieldContent TRUE) where
+instance ToAny FieldContent where
   toAny (ResolverFieldContent x) = ResolverFieldContent x
   toAny DataFieldContent = DataFieldContent
 
@@ -231,28 +228,28 @@ type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
 data FieldDefinition (cat :: TypeCategory) (s :: Stage) = FieldDefinition
   { fieldDescription :: Maybe Description,
     fieldName :: FieldName,
-    fieldContent :: Maybe (FieldContent TRUE cat s),
+    fieldContent :: Maybe (FieldContent cat s),
     fieldType :: TypeRef,
     fieldDirectives :: Directives s
   }
   deriving (Show, Lift, Eq)
 
-data FieldContent (bool :: Bool) (cat :: TypeCategory) (s :: Stage) where
-  DataFieldContent :: FieldContent (STRICT <=? cat) cat s
+data FieldContent (cat :: TypeCategory) (s :: Stage) where
+  DataFieldContent :: FieldContent cat s
   ResolverFieldContent ::
     { fieldArgumentsDefinition :: ArgumentsDefinition s
     } ->
-    FieldContent (LAZY <=? cat) cat s
+    FieldContent LAZY s
 
 fieldArguments :: FieldDefinition c s -> ArgumentsDefinition s
 fieldArguments FieldDefinition {fieldContent = Just (ResolverFieldContent args)} = args
 fieldArguments _ = empty
 
-deriving instance Eq (FieldContent bool cat s)
+deriving instance Eq (FieldContent cat s)
 
-deriving instance Show (FieldContent bool cat s)
+deriving instance Show (FieldContent cat s)
 
-deriving instance Lift (FieldContent bool cat s)
+deriving instance Lift (FieldContent cat s)
 
 instance KeyOf FieldName (FieldDefinition cat s) where
   keyOf = fieldName
@@ -278,7 +275,7 @@ fieldVisibility :: FieldDefinition cat s -> Bool
 fieldVisibility = isNotSystemFieldName . fieldName
 
 mkField ::
-  Maybe (FieldContent TRUE cat s) ->
+  Maybe (FieldContent cat s) ->
   FieldName ->
   TypeRef ->
   FieldDefinition cat s

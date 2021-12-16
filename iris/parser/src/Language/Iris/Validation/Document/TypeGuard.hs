@@ -30,7 +30,6 @@ import Language.Iris.Types.Internal.AST
     FieldsDefinition,
     LAZY,
     Subtyping (..),
-    TRUE,
     TypeName,
     TypeRef (..),
     UnionMember (..),
@@ -98,7 +97,7 @@ instance StructuralCompatibility (FieldDefinition LAZY s) where
     isCompatibleBy fieldType f1 f2
       *> isCompatibleBy (fieldArgs . fieldContent) f1 f2
 
-fieldArgs :: Maybe (FieldContent TRUE LAZY s) -> ArgumentsDefinition s
+fieldArgs :: Maybe (FieldContent  LAZY s) -> ArgumentsDefinition s
 fieldArgs (Just (ResolverFieldContent args)) = args
 fieldArgs _ = empty
 

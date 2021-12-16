@@ -87,7 +87,6 @@ import Language.Iris.Rendering.RenderGQL
 import Language.Iris.Types.Internal.AST.Base
   ( Description,
     Ref,
-    TRUE,
     Token,
   )
 import Language.Iris.Types.Internal.AST.Error
@@ -127,8 +126,6 @@ import Language.Iris.Types.Internal.AST.TypeCategory
     TypeCategory,
     fromAny,
     toAny,
-    type (<=!),
-    type (<=?),
   )
 import Language.Iris.Types.Internal.AST.Union
   ( UnionMember (..),
@@ -408,7 +405,7 @@ data TypeDefinition (a :: TypeCategory) (s :: Stage) = TypeDefinition
   { typeDescription :: Maybe Description,
     typeName :: TypeName,
     typeDirectives :: Directives s,
-    typeContent :: TypeContent TRUE a s
+    typeContent :: TypeContent a s
   }
   deriving (Show, Lift, Eq)
 
@@ -431,60 +428,57 @@ instance ToAny TypeDefinition where
   toAny TypeDefinition {typeContent, ..} = TypeDefinition {typeContent = toAny typeContent, ..}
 
 instance
-  (FromAny (TypeContent TRUE) cat) =>
+  (FromAny TypeContent cat) =>
   FromAny TypeDefinition cat
   where
   fromAny TypeDefinition {typeContent, ..} = bla <$> fromAny typeContent
     where
       bla x = TypeDefinition {typeContent = x, ..}
 
-type TypeContentOfKind r a s = TypeContent (r <=? a) a s
-
 data
   TypeContent
-    (b :: Bool)
     (a :: TypeCategory)
     (s :: Stage)
   where
-  ScalarTypeContent :: {dataScalar :: ScalarDefinition} -> TypeContentOfKind STRICT a s
-  DataTypeContent :: {dataVariants :: UnionTypeDefinition STRICT s} -> TypeContentOfKind STRICT a s
+  ScalarTypeContent :: {dataScalar :: ScalarDefinition} -> TypeContent a s
+  DataTypeContent :: {dataVariants :: UnionTypeDefinition STRICT s} -> TypeContent a s
   ResolverTypeContent ::
     { resolverTypeGuard :: Maybe TypeName,
       resolverVariants :: UnionTypeDefinition LAZY s
     } ->
-    TypeContentOfKind LAZY a s
+    TypeContent LAZY s
 
-deriving instance Show (TypeContent a b s)
+deriving instance Show (TypeContent a s)
 
-deriving instance Eq (TypeContent a b s)
+deriving instance Eq (TypeContent a s)
 
-deriving instance Lift (TypeContent a b s)
+deriving instance Lift (TypeContent a s)
 
-indexOf :: TypeContent b a s -> Int
+indexOf :: TypeContent a s -> Int
 indexOf ScalarTypeContent {} = 0
 indexOf DataTypeContent {} = 1
 indexOf ResolverTypeContent {} = 3
 
-instance Strictness (TypeContent TRUE k s) where
+instance Strictness (TypeContent k s) where
   isResolverType ResolverTypeContent {} = True
   isResolverType _ = False
 
-instance ToAny (TypeContent TRUE) where
+instance ToAny TypeContent where
   toAny ScalarTypeContent {..} = ScalarTypeContent {..}
   toAny DataTypeContent {..} = DataTypeContent {..}
   toAny ResolverTypeContent {..} = ResolverTypeContent {..}
 
-instance FromAny (TypeContent TRUE) STRICT where
+instance FromAny TypeContent STRICT where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
   fromAny _ = Nothing
 
-instance FromAny (TypeContent TRUE) LAZY where
+instance FromAny TypeContent LAZY where
   fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
   fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
 
-mkType :: TypeName -> TypeContent TRUE a s -> TypeDefinition a s
+mkType :: TypeName -> TypeContent a s -> TypeDefinition a s
 mkType typeName typeContent =
   TypeDefinition
     { typeName,
@@ -493,10 +487,10 @@ mkType typeName typeContent =
       typeContent
     }
 
-createScalarType :: (STRICT <=! a) => TypeName -> TypeDefinition a s
+createScalarType :: TypeName -> TypeDefinition a s
 createScalarType typeName = mkType typeName $ ScalarTypeContent (ScalarDefinition pure)
 
-isLeaf :: TypeContent TRUE a s -> Bool
+isLeaf :: TypeContent a s -> Bool
 isLeaf ScalarTypeContent {} = True
 isLeaf DataTypeContent {} = True
 isLeaf _ = False
@@ -506,7 +500,7 @@ kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
   where
     __kind ScalarTypeContent {} = SCALAR
     __kind DataTypeContent {} = DATA
-    __kind ResolverTypeContent {} = OBJECT (toOperationType typeName)
+    __kind ResolverTypeContent {} = RESOLVER (toOperationType typeName)
 
 defineType ::
   ( Monad m,

@@ -30,7 +30,6 @@ import Language.Iris.Types.Internal.AST
     STRICT,
     ScalarDefinition (..),
     ScalarValue (..),
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
@@ -57,7 +56,7 @@ import Language.Iris.Types.Internal.Validation
     selectKnown,
     selectWithDefaultValue,
   )
-import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember, lookupTypeVariant)
+import Language.Iris.Types.Internal.Validation.Internal (lookupTypeVariant, resolveTypeMember)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -152,7 +151,7 @@ validateWrapped _ _ entryValue = violation Nothing entryValue
 
 validateUnwrapped ::
   ValidateWithDefault ctx schemaS valueS =>
-  TypeContent TRUE STRICT schemaS ->
+  TypeContent STRICT schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 validateUnwrapped (DataTypeContent variants) (Object conName fields) =

@@ -57,7 +57,6 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     OperationType (..),
     STRICT,
-    TRUE,
     TypeKind (..),
     TypeName,
     UnionMember (..),
@@ -78,13 +77,15 @@ import Text.Megaparsec.Byte (string)
 --    Description(opt) EnumValue Directives(Const)(opt)
 --
 unionMembersDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  TypeName -> Parser (UnionTypeDefinition cat s)
+  (Parse (Value s), Parse (FieldContent cat s)) =>
+  TypeName ->
+  Parser (UnionTypeDefinition cat s)
 unionMembersDefinition typeName = label "UnionMember" $ pipe (parseMember typeName)
 
 parseMember ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  TypeName -> Parser (UnionMember cat s)
+  (Parse (Value s), Parse (FieldContent cat s)) =>
+  TypeName ->
+  Parser (UnionMember cat s)
 parseMember typeName = do
   memberDescription <- optDescription
   memberName <- parseTypeName
@@ -127,13 +128,13 @@ argumentsDefinition =
 --    { FieldDefinition(list) }
 --
 fieldsDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
+  (Parse (Value s), Parse (FieldContent cat s)) =>
   Parser (FieldsDefinition cat s)
 fieldsDefinition = label "FieldsDefinition" $ setOf fieldDefinition
 {-# INLINEABLE fieldsDefinition #-}
 
 fieldDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
+  (Parse (Value s), Parse (FieldContent cat s)) =>
   Parser (FieldDefinition cat s)
 fieldDefinition =
   label "FieldDefinition" $
@@ -144,10 +145,10 @@ fieldDefinition =
       <*> (colon *> parseType)
       <*> optionalDirectives
 
-instance Parse (Value s) => Parse (FieldContent TRUE STRICT s) where
+instance Parse (Value s) => Parse (FieldContent STRICT s) where
   parse = pure DataFieldContent
 
-instance Parse (Value s) => Parse (FieldContent TRUE LAZY s) where
+instance Parse (Value s) => Parse (FieldContent LAZY s) where
   parse = ResolverFieldContent <$> argumentsDefinition
 
 --  FieldDefinition

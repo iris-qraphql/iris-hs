@@ -52,7 +52,6 @@ setSelection :: TypeName -> Ref FieldName -> Scope -> Scope
 setSelection currentType Ref {refName, refPosition} Scope {..} =
   Scope
     { fieldName = refName,
-      -- path = path <> [unpackName refName],
       currentTypeName = currentType,
      -- currentTypeKind = kindOf currentType,
       position = Just refPosition,

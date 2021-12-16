@@ -28,7 +28,6 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     Operation (..),
     STRICT,
-    TRUE,
     Token,
     TypeName,
     TypeRef,
@@ -56,7 +55,6 @@ askType = untyped (__askType . typeConName)
 
 noVariant :: MonadError GQLError m => TypeName -> m a
 noVariant = throwError . violation "can't find variant"
-
 
 __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
@@ -88,7 +86,7 @@ type Constraints m c (cat :: TypeCategory) s ctx =
     Monad m,
     MonadReader (ValidatorContext s ctx) m,
     KindErrors cat,
-    FromAny (TypeContent TRUE) cat
+    FromAny TypeContent cat
   )
 
 getOperationType :: Operation a -> SelectionValidator (UnionMember LAZY VALID)

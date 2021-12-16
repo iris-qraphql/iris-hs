@@ -45,7 +45,6 @@ import Language.Iris.Types.Internal.AST
     Selection (..),
     SelectionContent (..),
     SelectionSet,
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
     UnionMember (..),
@@ -269,7 +268,7 @@ validateByTypeContent
       . __validate typeContent
     where
       __validate ::
-        TypeContent TRUE LAZY VALID ->
+        TypeContent LAZY VALID ->
         SelectionSet RAW ->
         FragmentValidator s (SelectionContent VALID)
       -- Validate UnionSelection

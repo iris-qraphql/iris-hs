@@ -47,17 +47,15 @@ import Relude hiding
 -----------------------------------------------------------------------------------
 data TypeKind
   = SCALAR
-  | OBJECT (Maybe OperationType)
-  | UNION
+  | RESOLVER (Maybe OperationType)
   | DATA
   | LIST
   deriving (Eq, Show, Lift)
 
 instance RenderGQL TypeKind where
   renderGQL SCALAR = "SCALAR"
-  renderGQL OBJECT {} = "OBJECT"
-  renderGQL UNION = "UNION"
   renderGQL DATA = "DATA"
+  renderGQL RESOLVER {} = "OBJECT"
   renderGQL LIST = "LIST"
 
 --  Definitions:
@@ -70,8 +68,7 @@ class Strictness t where
   isResolverType :: t -> Bool
 
 instance Strictness TypeKind where
-  isResolverType (OBJECT _) = True
-  isResolverType UNION = True
+  isResolverType RESOLVER {} = True
   isResolverType _ = False
 
 -- TypeWrappers

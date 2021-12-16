@@ -12,9 +12,7 @@ module Language.Iris.Types.Internal.AST.Base
   ( Ref (..),
     Position (..),
     Description,
-    Token,
-    TRUE,
-    FALSE,
+    Token
   )
 where
 
@@ -31,10 +29,6 @@ import Relude hiding
     decodeUtf8,
     intercalate,
   )
-
-type TRUE = 'True
-
-type FALSE = 'False
 
 -- Strings
 type Token = Text

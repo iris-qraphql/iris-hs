@@ -33,7 +33,6 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     STRICT,
     Schema (..),
-    TRUE,
     TypeCategory,
     TypeContent (..),
     TypeDefinition (..),
@@ -124,8 +123,8 @@ instance TypeCheck (TypeDefinition cat) where
           <$> validateDirectives (TYPE_DIRECTIVE $ kindOf t) typeDirectives
           <*> typeCheck typeContent
 
-instance TypeCheck (TypeContent TRUE cat) where
-  type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
+instance TypeCheck (TypeContent cat) where
+  type TypeContext (TypeContent cat) = TypeEntity ON_TYPE
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
   typeCheck DataTypeContent {dataVariants} =
     DataTypeContent <$> traverse typeCheck dataVariants
@@ -151,7 +150,7 @@ instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
           <*> validateDirectives (directiveLocation (Proxy @cat)) fieldDirectives
       )
     where
-      checkFieldContent :: FieldContent TRUE cat CONST -> SchemaValidator (Field ON_TYPE) (FieldContent TRUE cat VALID)
+      checkFieldContent :: FieldContent cat CONST -> SchemaValidator (Field ON_TYPE) (FieldContent cat VALID)
       checkFieldContent (ResolverFieldContent args) = ResolverFieldContent <$> traverse typeCheck args
       checkFieldContent DataFieldContent = pure DataFieldContent
 

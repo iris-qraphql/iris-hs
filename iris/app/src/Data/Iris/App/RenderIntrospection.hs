@@ -40,7 +40,6 @@ import Language.Iris.Types.Internal.AST
     LAZY,
     Name,
     STRICT,
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
     TypeKind (..),
@@ -108,7 +107,7 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
         renderContent (ResolverTypeContent typeGuard variants) =
           mkUnionType UNION typeName typeDescription typeGuard variants
 
-instance RenderIntrospection (FieldContent TRUE a VALID) where
+instance RenderIntrospection (FieldContent a VALID) where
   render (ResolverFieldContent args) = render args
   render _ = pure ""
 
@@ -177,8 +176,7 @@ description = ("description",) . render
 
 renderTypeName :: TypeKind -> TypeName
 renderTypeName SCALAR = "__Type.Scalar"
-renderTypeName OBJECT {} = "__Type.ADT"
-renderTypeName UNION = "__Type.ADT"
+renderTypeName RESOLVER {} = "__Type.ADT"
 renderTypeName DATA = "__Type.ADT"
 renderTypeName LIST = "__Type.Series"
 
