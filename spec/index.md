@@ -146,6 +146,10 @@ on tuples. For output tuples we will use GraphqL spread to determine which field
 
 TODO: Tuples: `(A,B)`
 
+### No Explicit Schema Definition
+
+in graphql you can define schema, with custom types as query. However in iris for simplicity only Types with coresponding names : `Query`, `Mutation`, `Subscription` will be selected as coresponding operations.
+
 ## Introspection
 
 ### Schema

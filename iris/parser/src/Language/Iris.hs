@@ -19,7 +19,6 @@ module Language.Iris
     parseRequest,
     parseRequestWith,
     parseSchema,
-    parseTypeDefinitions,
     render,
     validateRequest,
   )
@@ -36,7 +35,6 @@ import Language.Iris.Parser
   ( parseRequest,
     parseRequestWith,
     parseSchema,
-    parseTypeDefinitions,
   )
 import Language.Iris.Rendering.RenderGQL (RenderGQL (..), render)
 import Language.Iris.Schema.Schema (internalSchema)

@@ -44,11 +44,6 @@ import Text.Megaparsec
     label,
   )
 
--- Variables :  https://graphql.github.io/graphql-spec/June2018/#VariableDefinition
---
---  VariableDefinition
---    Variable : Type DefaultValue(opt)
---
 variableDefinition :: Parser (Variable RAW)
 variableDefinition =
   label "VariableDefinition" $
@@ -58,13 +53,6 @@ variableDefinition =
       <*> parseType
       <*> (DefaultValue <$> optional parseDefaultValue)
 
--- Operations : https://graphql.github.io/graphql-spec/June2018/#sec-Language.Operations
---
--- OperationDefinition
---   OperationType Name(opt) VariableDefinitions(opt) Directives(opt) SelectionSet
---
---   OperationType: one of
---     query, mutation,    subscription
 parseOperationDefinition :: Parser (Operation RAW)
 parseOperationDefinition =
   label "OperationDefinition" $

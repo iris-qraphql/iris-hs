@@ -60,7 +60,7 @@ import Language.Iris.Types.Internal.AST
     TypeKind (..),
     TypeName,
     Variant (..),
-    UnionTypeDefinition,
+    Variants,
     Value,
   )
 import Relude hiding (ByteString, empty, many)
@@ -75,7 +75,7 @@ import Text.Megaparsec.Byte (string)
 unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent cat s)) =>
   TypeName ->
-  Parser (UnionTypeDefinition cat s)
+  Parser (Variants cat s)
 unionMembersDefinition typeName = label "Variant" $ pipe (parseMember typeName)
 
 parseMember ::

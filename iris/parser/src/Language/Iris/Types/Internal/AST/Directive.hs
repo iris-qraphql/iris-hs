@@ -1,17 +1,17 @@
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Language.Iris.Types.Internal.AST.DirectiveLocation
+module Language.Iris.Types.Internal.AST.Directive
   ( DirectiveLocation (..),
   )
 where
 
-import Language.Iris.Types.Internal.AST.Error (Msg (..))
 import Language.Haskell.TH.Syntax (Lift)
+import Language.Iris.Rendering.RenderGQL (render)
+import Language.Iris.Types.Internal.AST.Error (Msg (..))
+import Language.Iris.Types.Internal.AST.Type (TypeKind)
 import Relude hiding (Show, show)
 import Prelude (Show (..))
-import Language.Iris.Types.Internal.AST.Type (TypeKind)
-import Language.Iris.Rendering.RenderGQL (render)
 
 data DirectiveLocation
   = QUERY
@@ -31,3 +31,4 @@ data DirectiveLocation
 instance Msg DirectiveLocation where
   msg (TYPE_DIRECTIVE x) = msg (render x)
   msg x = msg (show x)
+

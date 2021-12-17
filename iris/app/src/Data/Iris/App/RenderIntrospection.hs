@@ -45,13 +45,12 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef (..),
     TypeWrapper (BaseType, TypeList),
-    UnionTypeDefinition,
     VALID,
     Value (..),
     Variant (..),
+    Variants,
     fieldVisibility,
-    lookupDeprecated,
-    lookupDeprecatedReason,
+    lookupDeprecation,
     unpackName,
   )
 import Relude
@@ -164,7 +163,7 @@ renderParameters value = ("parameters", pure $ mkList (maybeToList value))
 renderDeprecated :: Monad m => Directives s -> (FieldName, m (ResolverValue m))
 renderDeprecated dirs =
   ( "deprecation",
-    render (lookupDeprecated dirs >>= lookupDeprecatedReason)
+    render (lookupDeprecation dirs)
   )
 
 description :: Monad m => Maybe Description -> (FieldName, m (ResolverValue m))
@@ -217,7 +216,7 @@ mkUnionType ::
   TypeName ->
   Maybe Description ->
   Maybe TypeName ->
-  UnionTypeDefinition t VALID ->
+  Variants t VALID ->
   ResolverValue m
 mkUnionType kind role name desc typeGuard variants =
   mkVariants

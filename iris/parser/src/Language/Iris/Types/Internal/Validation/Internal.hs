@@ -28,30 +28,30 @@ import Language.Iris.Types.Internal.AST
     GQLError,
     Operation (..),
     RESOLVER_TYPE,
-    Token,
+    Role,
+    TypeContent (..),
+    TypeDefinition (..),
     TypeName,
     TypeRef,
     VALID,
     Variant (..),
+    Variants,
     fromAny,
     getOperationDataType,
     internal,
+    lookupDataType,
     msg,
     typeConName,
   )
 import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
-import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Validator
   ( SelectionValidator,
     ValidatorContext (schema),
   )
 import Relude hiding (empty)
 
-askType ::
-  Constraints m c cat s ctx =>
-  Typed cat s TypeRef ->
-  m (TypeDefinition cat s)
-askType = untyped (__askType . typeConName)
+askType :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
+askType = __askType . typeConName
 
 noVariant :: MonadError GQLError m => TypeName -> m a
 noVariant = throwError . violation "can't find variant"
@@ -102,7 +102,7 @@ type KindConstraint f c =
 
 _kindConstraint ::
   KindConstraint f k =>
-  Token ->
+  Text ->
   TypeDefinition RESOLVER_TYPE s ->
   f (TypeDefinition k s)
 _kindConstraint err anyType =
@@ -128,7 +128,7 @@ instance KindErrors DATA_TYPE where
         _ -> throwError (violation "data object" typeName)
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
-lookupTypeVariant :: MonadError GQLError m => TypeName -> UnionTypeDefinition cat s -> m (Variant cat s)
+lookupTypeVariant :: MonadError GQLError m => TypeName -> Variants cat s -> m (Variant cat s)
 lookupTypeVariant name variants = maybe (noVariant name) pure (find ((name ==) . variantName) variants)
 
 instance KindErrors RESOLVER_TYPE where
@@ -139,7 +139,7 @@ instance KindErrors RESOLVER_TYPE where
   constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::
-  Token ->
+  Text ->
   TypeName ->
   GQLError
 violation kind typeName =

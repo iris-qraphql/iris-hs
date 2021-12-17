@@ -47,14 +47,14 @@ import Language.Iris.Types.Internal.AST
     SelectionSet,
     TypeContent (..),
     TypeDefinition (..),
+    TypeRef (..),
     UnionTag (..),
     VALID,
     Variant (..),
     at,
     mergeNonEmpty,
-    mkTypeRef,
+    mkBaseType,
     msg,
-    typed,
     __typename,
   )
 import Language.Iris.Types.Internal.Validation
@@ -219,7 +219,7 @@ selectSelectionField ref Variant {memberFields}
       FieldDefinition
         { fieldDescription = Nothing,
           fieldName = "__typename",
-          fieldType = mkTypeRef "String",
+          fieldType = TypeRef {typeConName = "String", typeWrappers = mkBaseType},
           fieldContent = Nothing,
           fieldDirectives = empty
         }
@@ -234,7 +234,7 @@ validateSelectionContent ::
   FragmentValidator s (Arguments VALID, SelectionContent VALID)
 validateSelectionContent typeDef ref selectionArguments content = do
   fieldDef <- selectSelectionField ref typeDef
-  fieldTypeDef <- askType (typed fieldType fieldDef)
+  fieldTypeDef <- askType (fieldType fieldDef)
   validArgs <- validateFieldArguments fieldDef selectionArguments
   validContent <- validateContent fieldTypeDef content
   pure (validArgs, validContent)

@@ -2,7 +2,6 @@
 
 module Language.Iris.Parser
   ( parseSchema,
-    parseTypeDefinitions,
     parseRequest,
     parseRequestWith,
   )
@@ -11,9 +10,6 @@ where
 import Data.ByteString.Lazy (ByteString)
 import Data.Mergeable.Utils
   ( sortErrors,
-  )
-import Language.Iris.Parsing.Document.TypeSystem
-  ( parseTypeDefinitions,
   )
 import qualified Language.Iris.Parsing.Document.TypeSystem as P
   ( parseSchema,

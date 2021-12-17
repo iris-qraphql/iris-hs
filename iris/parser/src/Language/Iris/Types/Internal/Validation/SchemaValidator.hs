@@ -38,7 +38,7 @@ import Language.Iris.Types.Internal.AST
     mkBaseType,
   )
 import Language.Iris.Types.Internal.AST.Type (TypeKind (..))
-import Language.Iris.Types.Internal.AST.TypeSystem (Schema)
+import Language.Iris.Types.Internal.AST.Schema (Schema)
 import Language.Iris.Types.Internal.Config (Config)
 import Language.Iris.Types.Internal.Validation
   ( Scope (..),

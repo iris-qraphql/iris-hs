@@ -33,8 +33,8 @@ import Language.Iris.Types.Internal.AST.Selection
     UnionTag (..),
   )
 import Language.Iris.Types.Internal.AST.Stage (RAW, VALID)
-import Language.Iris.Types.Internal.AST.TypeSystem
-  ( UnionTypeDefinition,
+import Language.Iris.Types.Internal.AST.Variant
+  ( Variants,
   )
 import Language.Iris.Types.Internal.Validation.Internal
   ( askObjectType,
@@ -142,7 +142,7 @@ validateUnionSelection ::
   (Fragment RAW -> FragmentValidator s (SelectionSet VALID)) ->
   (Variant RESOLVER_TYPE VALID -> SelectionSet RAW -> FragmentValidator s (SelectionSet VALID)) ->
   Maybe TypeName ->
-  UnionTypeDefinition RESOLVER_TYPE VALID ->
+  Variants RESOLVER_TYPE VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionContent VALID)
 validateUnionSelection validateFragment validate guardName members inputSelectionSet = do

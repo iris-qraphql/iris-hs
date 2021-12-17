@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Language.Iris.Types.Internal.AST.Type
@@ -11,7 +10,6 @@ module Language.Iris.Types.Internal.AST.Type
     Nullable (..),
     TypeKind (..),
     Subtyping (..),
-    mkTypeRef,
     mkBaseType,
     mkMaybeType,
   )
@@ -57,10 +55,6 @@ instance RenderGQL TypeKind where
   renderGQL RESOLVER {} = "RESOLVER"
   renderGQL LIST = "LIST"
 
-
-
--- TypeWrappers
------------------------------------------------------------------------------------
 data TypeWrapper
   = TypeList !TypeWrapper !Bool
   | BaseType !Bool
@@ -111,9 +105,6 @@ data TypeRef = TypeRef
   }
   deriving (Show, Eq, Lift)
 
-mkTypeRef :: TypeName -> TypeRef
-mkTypeRef typeConName = TypeRef {typeConName, typeWrappers = mkBaseType}
-
 instance Subtyping TypeRef where
   isSubtype t1 t2 =
     typeConName t1 == typeConName t2
@@ -134,14 +125,10 @@ instance Msg TypeRef where
 
 class Nullable a where
   isNullable :: a -> Bool
-  toNullable :: a -> a
 
 instance Nullable TypeWrapper where
   isNullable (TypeList _ nonNull) = not nonNull
   isNullable (BaseType nonNull) = not nonNull
-  toNullable (TypeList t _) = TypeList t False
-  toNullable BaseType {} = BaseType False
 
 instance Nullable TypeRef where
   isNullable = isNullable . typeWrappers
-  toNullable TypeRef {..} = TypeRef {typeWrappers = toNullable typeWrappers, ..}

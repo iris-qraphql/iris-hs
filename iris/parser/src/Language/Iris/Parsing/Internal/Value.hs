@@ -46,9 +46,6 @@ import Text.Megaparsec.Byte
   )
 import Text.Megaparsec.Byte.Lexer (scientific)
 
--- '-'
-
-
 valueNull :: Parser (Value a)
 valueNull = string "null" $> Null
 {-# INLINE valueNull #-}

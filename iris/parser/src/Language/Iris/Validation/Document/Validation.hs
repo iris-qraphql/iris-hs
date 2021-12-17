@@ -24,6 +24,7 @@ import Language.Iris.Schema.Schema
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     CONST,
+    DATA_TYPE,
     DirectiveDefinition (..),
     DirectiveLocation (..),
     FieldContent (..),
@@ -31,16 +32,14 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     GQLResult,
     RESOLVER_TYPE,
-    DATA_TYPE,
-    Schema (..),
     Role,
+    Schema (..),
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
-    Typed (..),
-    Variant (..),
     VALID,
     Value,
+    Variant (..),
     kindOf,
     (<:>),
   )
@@ -191,7 +190,7 @@ validateDefaultValue ::
   SchemaValidator (Field ON_TYPE) (Value VALID)
 validateDefaultValue typeRef argName value = do
   Field fName _ (TypeEntity _ typeName) <- asks (local . localContext)
-  startInput (SourceInputField typeName fName argName) (validateInputByTypeRef (Typed typeRef) value)
+  startInput (SourceInputField typeName fName argName) (validateInputByTypeRef typeRef value)
 
 instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
   type TypeContext (Variant cat) = TypeEntity ON_TYPE

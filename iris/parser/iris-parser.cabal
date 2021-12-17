@@ -217,12 +217,13 @@ library
       Language.Iris.Types.GQLScalar
       Language.Iris.Types.ID
       Language.Iris.Types.Internal.AST.Base
-      Language.Iris.Types.Internal.AST.DirectiveLocation
+      Language.Iris.Types.Internal.AST.Directive
       Language.Iris.Types.Internal.AST.Error
       Language.Iris.Types.Internal.AST.Fields
       Language.Iris.Types.Internal.AST.Name
       Language.Iris.Types.Internal.AST.OperationType
       Language.Iris.Types.Internal.AST.Role
+      Language.Iris.Types.Internal.AST.Schema
       Language.Iris.Types.Internal.AST.Selection
       Language.Iris.Types.Internal.AST.Stage
       Language.Iris.Types.Internal.AST.Type

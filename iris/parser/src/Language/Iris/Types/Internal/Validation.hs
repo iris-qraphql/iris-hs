@@ -65,19 +65,21 @@ import Language.Iris.Error.Class
     Unused (..),
   )
 import Language.Iris.Types.Internal.AST
-  ( FieldDefinition (..),
+  ( DATA_TYPE,
+    FieldDefinition (..),
     FieldName,
-    RESOLVER_TYPE,
     Position (..),
+    RESOLVER_TYPE,
     Ref (..),
-    DATA_TYPE,
+    Role,
+    TypeDefinition (..),
     TypeName,
     Value (..),
     fromAny,
     isNullable,
+    lookupDataType,
     withPath,
   )
-import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Internal
   ( askType,
     getOperationType,

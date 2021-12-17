@@ -16,7 +16,7 @@ module Language.Iris.Schema.Schema
 where
 
 import Language.Iris.Schema.DSL (dsl)
-import Language.Iris.Types.Internal.AST.TypeSystem (Schema)
+import Language.Iris.Types.Internal.AST.Schema (Schema)
 
 internalSchema :: Schema s
 internalSchema =

@@ -35,7 +35,6 @@ import Language.Iris.Types.Internal.AST
     Value (..),
     VariableDefinitions,
     fieldArguments,
-    typed,
   )
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
@@ -106,7 +105,7 @@ validateArgumentValue
         Argument
           argumentPosition
           argumentName
-          <$> validateInputByTypeRef (typed fieldType field) argumentValue
+          <$> validateInputByTypeRef (fieldType field) argumentValue
 
 validateFieldArguments ::
   FieldDefinition RESOLVER_TYPE VALID ->

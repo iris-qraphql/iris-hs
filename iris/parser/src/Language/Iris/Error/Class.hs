@@ -35,7 +35,6 @@ import Language.Iris.Types.Internal.AST
     VariableDefinitions,
     at,
     atPositions,
-    getOperationName,
     msg,
     withPath,
   )
@@ -57,8 +56,8 @@ instance Unused (Variable s) where
     OperationContext {operationName}
     Variable {variableName, variablePosition} =
       ( "Variable " <> msg ("$" <> variableName)
-          <> " is never used in operation "
-          <> msg (getOperationName operationName)
+          <> " is never used in operation"
+            <> msg (maybe "" (" " <>) operationName)
           <> "."
       )
         `at` variablePosition
@@ -119,8 +118,8 @@ instance MissingRequired (VariableDefinitions s) (OperationContext s1 s2) where
     _ =
       ( ( "Variable "
             <> msg refName
-            <> " is not defined by operation "
-            <> msg (getOperationName operationName)
+            <> " is not defined by operation"
+            <> msg (maybe "" (" " <>) operationName)
             <> "."
         )
           `at` refPosition

@@ -26,13 +26,10 @@ module Language.Iris.Types.Internal.AST.Fields
     Directives,
     Directive (..),
     fieldVisibility,
-    lookupDeprecated,
-    lookupDeprecatedReason,
-    unsafeFromFields,
-    mkField,
     renderArgumentValues,
     renderDirectives,
     fieldArguments,
+    lookupDeprecation,
   )
 where
 
@@ -45,8 +42,6 @@ import Data.Mergeable.Utils
   ( Empty (..),
     KeyOf (..),
     selectOr,
-    toPair,
-    unsafeFromList,
   )
 import Instances.TH.Lift ()
 import Language.Haskell.TH.Syntax (Lift (..))
@@ -63,7 +58,7 @@ import Language.Iris.Types.Internal.AST.Base
   ( Description,
     Position,
   )
-import Language.Iris.Types.Internal.AST.DirectiveLocation (DirectiveLocation)
+import Language.Iris.Types.Internal.AST.Directive (DirectiveLocation)
 import Language.Iris.Types.Internal.AST.Error
   ( GQLError,
     at,
@@ -71,7 +66,14 @@ import Language.Iris.Types.Internal.AST.Error
   )
 import Language.Iris.Types.Internal.AST.Name
   ( FieldName,
-    isNotSystemFieldName,
+    isNotSystemName,
+  )
+import Language.Iris.Types.Internal.AST.Role
+  ( DATA_TYPE,
+    RESOLVER_TYPE,
+    Role,
+    ToAny (..),
+    toAny,
   )
 import Language.Iris.Types.Internal.AST.Stage
   ( Stage,
@@ -80,21 +82,12 @@ import Language.Iris.Types.Internal.AST.Type
   ( Nullable (..),
     TypeRef (..),
   )
-import Language.Iris.Types.Internal.AST.Role
-  ( RESOLVER_TYPE,
-    DATA_TYPE,
-    ToAny (..),
-    Role,
-    toAny,
-  )
 import Language.Iris.Types.Internal.AST.Value
   ( ScalarValue (..),
     Value (..),
   )
 import Relude hiding (empty, intercalate)
 
--- scalar
-------------------------------------------------------------------
 data Argument (valid :: Stage) = Argument
   { argumentPosition :: Position,
     argumentName :: FieldName,
@@ -122,8 +115,6 @@ renderArgumentValues = renderArguments . filter notNull . toList
     notNull Argument {argumentValue = Null} = False
     notNull _ = True
 
--- directive
-------------------------------------------------------------------
 data Directive (s :: Stage) = Directive
   { directivePosition :: Position,
     directiveName :: FieldName,
@@ -176,25 +167,6 @@ type DirectivesDefinition s = OrdMap FieldName (DirectiveDefinition s)
 instance KeyOf FieldName (DirectiveDefinition s) where
   keyOf = directiveDefinitionName
 
--- instance IsMap FieldName (ArgumentDefinition s) (DirectiveDefinition s) where
---   lookup key DirectiveDefinition {directiveDefinitionArgs} = lookup key directiveDefinitionArgs
-
-lookupDeprecated :: Directives s -> Maybe (Directive s)
-lookupDeprecated = lookup "deprecated"
-
-lookupDeprecatedReason :: Directive s -> Maybe Description
-lookupDeprecatedReason Directive {directiveArgs} =
-  selectOr
-    Nothing
-    argumentStringValue
-    ("reason" :: FieldName)
-    directiveArgs
-
-argumentStringValue :: Argument s -> Maybe Description
-argumentStringValue Argument {argumentValue = Null} = Nothing
-argumentStringValue Argument {argumentValue = (Scalar (String x))} = Just x
-argumentStringValue _ = Just "can't read deprecated Reason Value"
-
 instance ToAny FieldDefinition where
   toAny FieldDefinition {fieldContent, ..} = FieldDefinition {fieldContent = toAny <$> fieldContent, ..}
 
@@ -202,19 +174,7 @@ instance ToAny FieldContent where
   toAny (ResolverFieldContent x) = ResolverFieldContent x
   toAny DataFieldContent = DataFieldContent
 
-unsafeFromFields :: [FieldDefinition cat s] -> FieldsDefinition cat s
-unsafeFromFields = unsafeFromList . fmap toPair
-
--- 3.6 Objects : https://graphql.github.io/graphql-spec/June2018/#sec-Objects
-------------------------------------------------------------------------------
---  ObjectTypeDefinition:
---    Description(opt) type Name Directives(Const)(opt) FieldsDefinition(opt)
-
---  FieldsDefinition
---    { FieldDefinition(list) }
---
 type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
-
 
 data FieldDefinition (cat :: Role) (s :: Stage) = FieldDefinition
   { fieldDescription :: Maybe Description,
@@ -260,24 +220,9 @@ instance RenderGQL (FieldsDefinition cat s) where
 
 instance Nullable (FieldDefinition cat s) where
   isNullable = isNullable . fieldType
-  toNullable field = field {fieldType = toNullable (fieldType field)}
 
 fieldVisibility :: FieldDefinition cat s -> Bool
-fieldVisibility = isNotSystemFieldName . fieldName
-
-mkField ::
-  Maybe (FieldContent cat s) ->
-  FieldName ->
-  TypeRef ->
-  FieldDefinition cat s
-mkField fieldContent fieldName fieldType =
-  FieldDefinition
-    { fieldName,
-      fieldContent,
-      fieldDescription = Nothing,
-      fieldType,
-      fieldDirectives = empty
-    }
+fieldVisibility = isNotSystemName . fieldName
 
 type ArgumentsDefinition s = OrdMap FieldName (ArgumentDefinition s)
 
@@ -299,3 +244,14 @@ instance KeyOf FieldName (ArgumentDefinition s) where
 instance NameCollision GQLError (ArgumentDefinition s) where
   nameCollision ArgumentDefinition {argument} =
     "There can Be only One argument Named " <> msg (fieldName argument)
+
+lookupDeprecation :: Directives s -> Maybe Description
+lookupDeprecation = fmap readReason . lookup "deprecated"
+
+readReason :: Directive s -> Description
+readReason = selectOr "" argumentStringValue "reason" . directiveArgs
+
+argumentStringValue :: Argument s -> Description
+argumentStringValue Argument {argumentValue = Null} = ""
+argumentStringValue Argument {argumentValue = (Scalar (String x))} = x
+argumentStringValue _ = "can't read deprecated Reason Value"

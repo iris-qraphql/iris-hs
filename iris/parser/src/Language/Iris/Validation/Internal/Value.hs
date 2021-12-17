@@ -20,6 +20,7 @@ import Language.Iris.Error.Data (typeViolation)
 import Language.Iris.Error.Variable (incompatibleVariableType)
 import Language.Iris.Types.Internal.AST
   ( CONST,
+    DATA_TYPE,
     FieldDefinition (..),
     FieldName,
     FieldsDefinition,
@@ -27,7 +28,6 @@ import Language.Iris.Types.Internal.AST
     Object,
     ObjectEntry (..),
     Ref (..),
-    DATA_TYPE,
     ScalarDefinition (..),
     ScalarValue (..),
     TypeContent (..),
@@ -35,20 +35,17 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef (..),
     TypeWrapper (..),
-    Typed (..),
-    Variant (..),
-    UnionTypeDefinition,
     VALID,
     ValidValue,
     Value (..),
     Variable (..),
     VariableContent (..),
+    Variant (..),
+    Variants,
     atPositions,
     isNullable,
     isSubtype,
     msg,
-    typed,
-    untyped,
   )
 import Language.Iris.Types.Internal.AST.Name (__typename)
 import Language.Iris.Types.Internal.Validation
@@ -93,7 +90,7 @@ checkTypeCompatibility valueType ref var@Variable {variableValue = ValidVariable
 
 validateInputByTypeRef ::
   ValidateWithDefault c schemaS s =>
-  Typed DATA_TYPE schemaS TypeRef ->
+  TypeRef ->
   Value s ->
   Validator schemaS (InputContext c) (Value VALID)
 validateInputByTypeRef
@@ -101,7 +98,7 @@ validateInputByTypeRef
   value = do
     inputTypeDef <- askType ref
     validateInputByType
-      (untyped typeWrappers ref)
+      (typeWrappers ref)
       inputTypeDef
       value
 
@@ -113,7 +110,7 @@ validateValueByField ::
 validateValueByField field =
   inField field
     . validateInputByTypeRef
-      (typed fieldType field)
+      (fieldType field)
 
 -- Validate data Values
 validateInputByType ::
@@ -244,7 +241,7 @@ isInt _ = False
 
 validateStrictUnionType ::
   ValidateWithDefault ctx schemaS s =>
-  UnionTypeDefinition DATA_TYPE schemaS ->
+  Variants DATA_TYPE schemaS ->
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateStrictUnionType inputUnion (Object (Just conName) rawFields) =

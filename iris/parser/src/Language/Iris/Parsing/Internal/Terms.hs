@@ -61,7 +61,6 @@ import Language.Iris.Types.Internal.AST
     TypeWrapper (..),
     packName,
   )
-import qualified Language.Iris.Types.Internal.AST as AST
 import Language.Iris.Types.Internal.AST.Name (Name)
 import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
@@ -153,7 +152,7 @@ brackets = between (symbol 91) (symbol 93)
 -- 2.1.9 Names
 -- https://spec.graphql.org/draft/#Name
 -- Name
-name :: Parser AST.Token
+name :: Parser Text
 name =
   label "Name" $
     fromLBS <$> do
@@ -208,7 +207,7 @@ optDescription :: Parser (Maybe Description)
 optDescription = optional parseString
 {-# INLINE optDescription #-}
 
-parseString :: Parser AST.Token
+parseString :: Parser Text
 parseString = label "String" $ fromLBS <$> parseStringBS
 {-# INLINE parseString #-}
 

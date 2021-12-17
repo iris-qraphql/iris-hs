@@ -24,7 +24,6 @@ module Language.Iris.Types.Internal.AST.Selection
     Variable (..),
     VariableDefinitions,
     DefaultValue,
-    getOperationName,
     getOperationDataType,
     splitSystemSelection,
   )
@@ -77,12 +76,13 @@ import Language.Iris.Types.Internal.AST.Name
     FragmentName,
     TypeName,
     intercalate,
-    isNotSystemFieldName,
+    isNotSystemName,
   )
 import Language.Iris.Types.Internal.AST.OperationType (OperationType (..))
 import Language.Iris.Types.Internal.AST.Role
   ( RESOLVER_TYPE,
   )
+import Language.Iris.Types.Internal.AST.Schema (Schema (..))
 import Language.Iris.Types.Internal.AST.Stage
   ( ALLOW_DUPLICATES,
     RAW,
@@ -91,17 +91,16 @@ import Language.Iris.Types.Internal.AST.Stage
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
   ( HistoryT,
-    Schema (..),
     TypeContent (..),
     TypeDefinition (..),
     (<:>),
   )
-import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.AST.Value
   ( ResolvedValue,
     Variable (..),
     VariableDefinitions,
   )
+import Language.Iris.Types.Internal.AST.Variant
 import Relude hiding (intercalate, show)
 import Prelude (show)
 
@@ -221,7 +220,7 @@ type UnionSelection (s :: Stage) = MergeMap (ALLOW_DUPLICATES s) TypeName UnionT
 type SelectionSet (s :: Stage) = MergeMap (ALLOW_DUPLICATES s) FieldName (Selection s)
 
 splitSystemSelection :: SelectionSet s -> (Maybe (SelectionSet s), Maybe (SelectionSet s))
-splitSystemSelection = partition (not . isNotSystemFieldName . selectionName)
+splitSystemSelection = partition (not . isNotSystemName . selectionName)
 
 data Selection (s :: Stage) where
   Selection ::
@@ -361,9 +360,6 @@ instance RenderGQL (Operation VALID) where
         <> renderDirectives operationDirectives
         <> renderSelectionSet operationSelection
         <> newline
-
-getOperationName :: Maybe FieldName -> TypeName
-getOperationName = maybe "AnonymousOperation" coerce
 
 getTypeVariant :: MonadError GQLError m => TypeDefinition RESOLVER_TYPE VALID -> m (Variant RESOLVER_TYPE VALID)
 getTypeVariant TypeDefinition {typeContent = ResolverTypeContent _ (x :| [])} = pure x
