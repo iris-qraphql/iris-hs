@@ -108,6 +108,9 @@ module Language.Iris.Types.Internal.AST
     HistoryT,
     (<:>),
     mergeNonEmpty,
+    lookupTypeVariant,
+    getVariantName,
+    variantTypeName,
   )
 where
 
@@ -121,14 +124,14 @@ import Language.Iris.Types.Internal.AST.Error
 import Language.Iris.Types.Internal.AST.Fields
 import Language.Iris.Types.Internal.AST.Name
 import Language.Iris.Types.Internal.AST.OperationType
+import Language.Iris.Types.Internal.AST.Role
+import Language.Iris.Types.Internal.AST.Schema
 import Language.Iris.Types.Internal.AST.Selection
 import Language.Iris.Types.Internal.AST.Stage
 import Language.Iris.Types.Internal.AST.Type
-import Language.Iris.Types.Internal.AST.Role
 import Language.Iris.Types.Internal.AST.TypeSystem
-import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.AST.Value
-import Language.Iris.Types.Internal.AST.Schema
+import Language.Iris.Types.Internal.AST.Variant
 import Prelude (Show)
 
 type Variables = SafeHashMap FieldName ResolvedValue

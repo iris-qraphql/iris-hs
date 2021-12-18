@@ -15,7 +15,7 @@ import qualified Data.HashMap.Lazy as HM
 import Data.Iris.App.Internal.Resolving.ResolverState
   ( ResolverContext (..),
     askFieldTypeName,
-    updateCurrentType,
+    setCurrentType,
   )
 import Data.Iris.App.Internal.Resolving.Types
   ( NamedResolver (..),
@@ -40,7 +40,6 @@ import Language.Iris.Types.Internal.AST
     Selection (..),
     SelectionContent (..),
     SelectionSet,
-    TypeDefinition (..),
     TypeName,
     UnionTag (unionTagSelection),
     VALID,
@@ -68,7 +67,7 @@ resolveSelection rmap (ResList xs) selection =
   List <$> traverse (flip (resolveSelection rmap) selection) xs
 -- Object -----------------
 resolveSelection rmap (ResObject name fields) SelectionField = resolveData rmap (name, fields)
-resolveSelection rmap (ResObject tyName obj) sel = withObject tyName (resolveObject rmap obj) sel
+resolveSelection rmap (ResObject tyName obj) sel = setCurrentType tyName $ resolveResolver (\t s -> resolveObject tyName rmap obj s) sel
 -- SCALARS
 resolveSelection _ ResNull _ = pure Null
 resolveSelection _ (ResScalar x) SelectionField = pure $ Scalar x
@@ -76,25 +75,22 @@ resolveSelection _ ResScalar {} _ =
   throwError (internal "scalar Resolver should only receive SelectionField")
 resolveSelection rmap (ResRef ref) sel = ref >>= flip (resolveRef rmap) sel
 
-withObject ::
+resolveResolver ::
   ( Monad m,
     MonadError GQLError m,
     MonadReader ResolverContext m
   ) =>
-  Maybe TypeName ->
-  (SelectionSet VALID -> m value) ->
+  (Maybe TypeName -> SelectionSet VALID -> m value) ->
   SelectionContent VALID ->
   m value
-withObject __typename f = updateCurrentType __typename . checkContent
-  where
-    checkContent (SelectionSet selection) = f selection
-    checkContent (UnionSelection interface unionSel) = do
-      typename <- asks (typeName . currentType)
-      selection <- selectOr (pure interface) ((interface <:>) . unionTagSelection) typename unionSel
-      f selection
-    checkContent SelectionField = do
-      sel <- asks currentSelection
-      throwError $ subfieldsNotSelected (selectionName sel) "" (selectionPosition sel)
+resolveResolver f (SelectionSet selection) = f Nothing selection
+resolveResolver f (UnionSelection interface unionSel) = do
+  typename <- asks currentTypeName
+  selection <- selectOr (pure interface) ((interface <:>) . unionTagSelection) typename unionSel
+  f (Just typename) selection
+resolveResolver _ SelectionField = do
+  sel <- asks currentSelection
+  throwError $ subfieldsNotSelected (selectionName sel) "" (selectionPosition sel)
 
 resolveRef ::
   ( MonadError GQLError m,
@@ -107,7 +103,7 @@ resolveRef ::
 resolveRef rmap ref selection = do
   namedResolver <- getNamedResolverBy ref rmap
   case namedResolver of
-    NamedObjectResolver res -> withObject (Just (resolverTypeName ref)) (resolveObject rmap res) selection
+    NamedObjectResolver res -> setCurrentType (Just $ resolverTypeName ref) $ resolveResolver (\t -> resolveObject t rmap res) selection
     NamedUnionResolver unionRef -> resolveSelection rmap (ResRef $ pure unionRef) selection
 
 getNamedResolverBy ::
@@ -123,17 +119,20 @@ resolveObject ::
   ( MonadReader ResolverContext m,
     MonadError GQLError m
   ) =>
+  Maybe TypeName ->
   ResolverMap m ->
   ObjectTypeResolver m ->
   SelectionSet VALID ->
   m ValidValue
-resolveObject rmap drv =
-  -- TODO: typename
-  fmap (Object Nothing) . fromElems <=< traverse resolver . toList
+resolveObject typeName rmap drv =
+  setCurrentType typeName
+    . fmap (Object typeName)
+    . fromElems
+    <=< traverse resolver . toList
   where
     resolver currentSelection = do
       t <- askFieldTypeName (selectionName currentSelection)
-      updateCurrentType t $
+      setCurrentType t $
         local (\ctx -> ctx {currentSelection}) $
           ObjectEntry (keyOf currentSelection)
             <$> runFieldResolver rmap currentSelection drv
@@ -145,7 +144,7 @@ resolverDataField :: (MonadReader ResolverContext m, MonadError GQLError m) => R
 resolverDataField rmap (key, value) = do
   t <- askFieldTypeName key
   res <- value
-  updateCurrentType t $ ObjectEntry key <$> resolveSelection rmap res SelectionField
+  setCurrentType t $ ObjectEntry key <$> resolveSelection rmap res SelectionField
 
 runFieldResolver ::
   ( Monad m,
@@ -158,7 +157,7 @@ runFieldResolver ::
   m ValidValue
 runFieldResolver rmap Selection {selectionName, selectionContent}
   | selectionName == __typename =
-    const (Scalar . String . unpackName <$> asks (typeName . currentType))
+    const (Scalar . String . unpackName <$> asks currentTypeName)
   | otherwise =
     maybe (pure Null) (>>= \x -> resolveSelection rmap x selectionContent)
       . HM.lookup selectionName

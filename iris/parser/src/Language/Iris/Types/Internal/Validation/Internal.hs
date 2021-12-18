@@ -17,7 +17,6 @@ module Language.Iris.Types.Internal.Validation.Internal
     resolveTypeMember,
     getOperationType,
     askObjectType,
-    lookupTypeVariant,
   )
 where
 
@@ -34,8 +33,6 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef,
     VALID,
-    Variant (..),
-    Variants,
     fromAny,
     getOperationDataType,
     internal,
@@ -44,6 +41,7 @@ import Language.Iris.Types.Internal.AST
     typeConName,
   )
 import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
+import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.Validation.Validator
   ( SelectionValidator,
     ValidatorContext (schema),
@@ -53,16 +51,9 @@ import Relude hiding (empty)
 askType :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
 askType = __askType . typeConName
 
-noVariant :: MonadError GQLError m => TypeName -> m a
-noVariant = throwError . violation "can't find variant"
-
 __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
-__askType name =
-  asks schema
-    >>= maybe (throwError (unknownType name)) pure
-      . lookupDataType name
-    >>= kindConstraint
+__askType name = asks schema >>= lookupDataType name >>= kindConstraint
 
 askObjectType :: Constraints m c cat s ctx => TypeName -> m (Variant cat s)
 askObjectType name = case unpackVariantTypeName name of
@@ -91,9 +82,6 @@ type Constraints m c (cat :: Role) s ctx =
 
 getOperationType :: Operation a -> SelectionValidator (Variant RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
-
-unknownType :: TypeName -> GQLError
-unknownType name = internal $ "Type \"" <> msg name <> "\" can't found in Schema."
 
 type KindConstraint f c =
   ( MonadError GQLError f,
@@ -128,14 +116,11 @@ instance KindErrors DATA_TYPE where
         _ -> throwError (violation "data object" typeName)
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
-lookupTypeVariant :: MonadError GQLError m => TypeName -> Variants cat s -> m (Variant cat s)
-lookupTypeVariant name variants = maybe (noVariant name) pure (find ((name ==) . variantName) variants)
-
 instance KindErrors RESOLVER_TYPE where
   kindConstraint = _kindConstraint " output type"
   constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
   constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
-    lookupTypeVariant variantName variants
+    lookupTypeVariant (Just variantName) variants
   constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::

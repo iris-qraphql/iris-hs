@@ -168,12 +168,7 @@ selectWithDefaultValue
 selectType ::
   TypeName ->
   Validator s ctx (TypeDefinition RESOLVER_TYPE s)
-selectType name = do
-  ValidatorContext {scope, localContext, schema} <- Validator ask
-  maybe
-    (throwError $ unknown scope localContext name)
-    pure
-    (lookupDataType name schema)
+selectType name = lookupDataType name =<< asks schema
 
 selectKnown ::
   ( IsMap k c,

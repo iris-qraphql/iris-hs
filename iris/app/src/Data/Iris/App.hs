@@ -58,19 +58,14 @@ import Language.Iris.Types
 import Language.Iris.Types.Internal.AST
   ( GQLError,
     GQLErrors,
-    RESOLVER_TYPE,
     Operation (..),
-    OperationType (Mutation, Query, Subscription),
     Schema (..),
     Selection (..),
     SelectionContent (..),
-    TypeDefinition,
     VALID,
     Value,
-    toAny,
     (<:>),
   )
-import qualified Language.Iris.Types.Internal.AST as AST
 import Relude hiding (ByteString, empty)
 
 mkApp :: ValidateSchema s => Schema s -> RootResolverValue e m -> App e m
@@ -138,11 +133,7 @@ validateReq inputSchema config request = ResultT $
             { schema,
               config,
               operation,
-              currentType =
-                toAny $
-                  fromMaybe
-                    (AST.query schema)
-                    (rootType (operationType operation) schema),
+              currentTypeName = fromString $ show $ operationType operation,
               currentSelection =
                 Selection
                   { selectionName = "Root",
@@ -154,11 +145,6 @@ validateReq inputSchema config request = ResultT $
                   }
             }
         )
-
-rootType :: OperationType -> Schema s -> Maybe (TypeDefinition RESOLVER_TYPE s)
-rootType Query = Just . AST.query
-rootType Mutation = mutation
-rootType Subscription = subscription
 
 stateless ::
   Functor m =>

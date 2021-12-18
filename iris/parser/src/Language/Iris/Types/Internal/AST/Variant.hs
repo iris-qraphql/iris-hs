@@ -13,9 +13,12 @@ module Language.Iris.Types.Internal.AST.Variant
   ( Variants,
     Variant (..),
     renderVariants,
+    lookupTypeVariant,
+    variantTypeName,
   )
 where
 
+import Control.Monad.Except (MonadError (throwError))
 import Data.Mergeable (NameCollision (..))
 import Data.Mergeable.Utils (KeyOf (..))
 import Language.Haskell.TH.Syntax (Lift (..))
@@ -44,6 +47,17 @@ import Language.Iris.Types.Internal.AST.Stage
 import Relude hiding (empty, intercalate)
 
 type Variants c s = NonEmpty (Variant c s)
+
+variantTypeName :: Variant a s -> TypeName
+variantTypeName Variant {membership, variantName} = maybe variantName (<> "." <> variantName) membership
+
+noVariant :: MonadError GQLError m => TypeName -> m a
+noVariant name = throwError $ "Can't find variant " <> msg name <> "."
+
+lookupTypeVariant :: MonadError GQLError m => Maybe TypeName -> Variants cat s -> m (Variant cat s)
+lookupTypeVariant (Just name) variants = maybe (noVariant name) pure (find ((name ==) . variantName) variants)
+lookupTypeVariant Nothing (x :| []) = pure x
+lookupTypeVariant Nothing _ = throwError "type should have only one variant"
 
 renderVariants :: TypeName -> NonEmpty (Variant cat s) -> Rendering
 renderVariants typeName (Variant {memberFields, variantName} :| []) | typeName == variantName = " =" <> renderGQL memberFields

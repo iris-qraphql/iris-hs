@@ -24,6 +24,7 @@ module Language.Iris.Types.Internal.AST.Name
     unpackVariantTypeName,
     packVariantTypeName,
     isNotSystemName,
+    getVariantName,
   )
 where
 
@@ -131,3 +132,6 @@ unpackVariantTypeName = bimap packName (fmap packName . T.stripPrefix ".") . T.b
 
 packVariantTypeName :: TypeName -> TypeName -> TypeName
 packVariantTypeName typename variantName = typename <> "." <> variantName
+
+getVariantName :: TypeName -> Maybe TypeName
+getVariantName = snd . unpackVariantTypeName

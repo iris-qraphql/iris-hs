@@ -78,9 +78,9 @@ import Relude hiding
 
 data Schema (s :: Stage) = Schema
   { types :: TypeDefinitions s,
-    query :: TypeDefinition RESOLVER_TYPE s, -- TODO: OBJECT
-    mutation :: Maybe (TypeDefinition RESOLVER_TYPE s), -- TODO: OBJECT
-    subscription :: Maybe (TypeDefinition RESOLVER_TYPE s), -- TODO: OBJECT
+    query :: TypeDefinition RESOLVER_TYPE s, 
+    mutation :: Maybe (TypeDefinition RESOLVER_TYPE s), 
+    subscription :: Maybe (TypeDefinition RESOLVER_TYPE s), 
     directiveDefinitions :: DirectivesDefinition s
   }
   deriving (Show, Lift)
@@ -110,16 +110,21 @@ typeDefinitions schema@Schema {..} = toHashMap types <> HM.fromList (map toPair 
 rootTypeDefinitions :: Schema s -> [TypeDefinition RESOLVER_TYPE s]
 rootTypeDefinitions Schema {..} = map toAny $ catMaybes [Just query, mutation, subscription]
 
-lookupDataType :: TypeName -> Schema s -> Maybe (TypeDefinition RESOLVER_TYPE s)
+lookupDataType :: MonadError GQLError m => TypeName -> Schema s -> m (TypeDefinition RESOLVER_TYPE s)
 lookupDataType name Schema {types, query, mutation, subscription} =
-  isType name query
-    <|> (mutation >>= isType name)
-    <|> (subscription >>= isType name)
-    <|> lookup (fst (unpackVariantTypeName name)) types
+  maybe
+    -- TODO: use type class unknown
+    (throwError $ "Unknown type " <> msg name <> ".")
+    pure
+    ( isType name query
+        <|> (mutation >>= isType name)
+        <|> (subscription >>= isType name)
+        <|> lookup (fst (unpackVariantTypeName name)) types
+    )
 
 isType :: TypeName -> TypeDefinition RESOLVER_TYPE s -> Maybe (TypeDefinition RESOLVER_TYPE s)
 isType name x
-  | name == typeName x = Just (toAny x)
+  | name == typeName x = pure (toAny x)
   | otherwise = Nothing
 
 mkSchema :: MonadError GQLError m => [TypeDefinition RESOLVER_TYPE s] -> DirectivesDefinition s -> m (Schema s)

@@ -100,10 +100,7 @@ data SubscriptionField (a :: Type) where
     } ->
     SubscriptionField a
 
---
--- GraphQL Field Resolver
---
----------------------------------------------------------------
+
 data Resolver (o :: OperationType) event (m :: Type -> Type) value where
   ResolverQ :: {runResolverQ :: ResolverStateT () m value} -> Resolver QUERY event m value
   ResolverM :: {runResolverM :: ResolverStateT event m value} -> Resolver MUTATION event m value

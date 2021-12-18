@@ -45,6 +45,7 @@ import Language.Iris.Types.Internal.AST
     atPositions,
     isNullable,
     isSubtype,
+    lookupTypeVariant,
     msg,
   )
 import Language.Iris.Types.Internal.AST.Name (__typename)
@@ -53,7 +54,7 @@ import Language.Iris.Types.Internal.Validation
     selectKnown,
     selectWithDefaultValue,
   )
-import Language.Iris.Types.Internal.Validation.Internal (lookupTypeVariant, resolveTypeMember)
+import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -245,7 +246,7 @@ validateStrictUnionType ::
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateStrictUnionType inputUnion (Object (Just conName) rawFields) =
-  case lookupTypeVariant conName inputUnion of
+  case lookupTypeVariant (Just conName) inputUnion of
     Left _ -> violation (Just $ msg conName <> " is not possible union type") (Object (Just conName) rawFields)
     Right memberTypeRef -> do
       fields <- memberFields <$> resolveTypeMember memberTypeRef
