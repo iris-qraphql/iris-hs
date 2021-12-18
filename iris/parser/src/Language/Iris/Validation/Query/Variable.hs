@@ -28,7 +28,7 @@ import Language.Iris.Types.Internal.AST
     RawValue,
     Ref (..),
     ResolvedValue,
-    STRICT,
+    DATA_TYPE,
     Selection (..),
     SelectionContent (..),
     SelectionSet,
@@ -157,7 +157,7 @@ lookupAndValidateValueOnBody
       checkType ::
         Maybe ResolvedValue ->
         DefaultValue ->
-        TypeDefinition STRICT VALID ->
+        TypeDefinition DATA_TYPE VALID ->
         BaseValidator ValidValue
       checkType (Just variable) Nothing varType = validator varType False variable
       checkType (Just variable) (Just defValue) varType =
@@ -172,7 +172,7 @@ lookupAndValidateValueOnBody
           returnNull :: BaseValidator ValidValue
           returnNull = selectOr (pure Null) (validator varType False) variableName bodyVariables
       -----------------------------------------------------------------------------------------------
-      validator :: TypeDefinition STRICT VALID -> Bool -> ResolvedValue -> BaseValidator ValidValue
+      validator :: TypeDefinition DATA_TYPE VALID -> Bool -> ResolvedValue -> BaseValidator ValidValue
       validator varTypeDef isDefaultValue varValue =
         startInput
           (SourceVariable var isDefaultValue)

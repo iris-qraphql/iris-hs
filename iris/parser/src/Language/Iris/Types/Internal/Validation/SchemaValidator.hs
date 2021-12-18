@@ -35,10 +35,9 @@ import Language.Iris.Types.Internal.AST
     GQLResult,
     Name (unpackName),
     TypeName,
-    mkBaseType,
+    mkBaseType, DirectiveLocation (RESOLVER),
   )
-import Language.Iris.Types.Internal.AST.Type (TypeKind (..))
-import Language.Iris.Types.Internal.AST.TypeSystem (Schema)
+import Language.Iris.Types.Internal.AST.Schema (Schema)
 import Language.Iris.Types.Internal.Config (Config)
 import Language.Iris.Types.Internal.Validation
   ( Scope (..),
@@ -106,7 +105,7 @@ initialScope =
   Scope
     { position = Nothing,
       currentTypeName = "Root",
-      currentTypeKind = OBJECT Nothing,
+      currentTypeKind = RESOLVER,
       currentTypeWrappers = mkBaseType,
       kind = TYPE,
       fieldName = "Root",

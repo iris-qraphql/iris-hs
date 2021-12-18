@@ -33,6 +33,7 @@ module Language.Iris.Parsing.Internal.Terms
 where
 
 import Data.ByteString.Lazy.Internal (ByteString)
+import qualified Data.List.NonEmpty as NE
 import Data.Mergeable.IsMap (FromList)
 import Data.Mergeable.Utils
   ( Empty (..),
@@ -60,7 +61,6 @@ import Language.Iris.Types.Internal.AST
     TypeWrapper (..),
     packName,
   )
-import qualified Language.Iris.Types.Internal.AST as AST
 import Language.Iris.Types.Internal.AST.Name (Name)
 import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
@@ -126,8 +126,8 @@ equal :: Parser ()
 equal = symbol EQUAL
 {-# INLINE equal #-}
 
-pipe :: Parser a -> Parser [a]
-pipe x = x `sepBy1` symbol PIPE
+pipe :: Parser a -> Parser (NonEmpty a)
+pipe x = NE.fromList <$> x `sepBy1` symbol PIPE
 {-# INLINE pipe #-}
 
 symPipe :: Parser ()
@@ -152,7 +152,7 @@ brackets = between (symbol 91) (symbol 93)
 -- 2.1.9 Names
 -- https://spec.graphql.org/draft/#Name
 -- Name
-name :: Parser AST.Token
+name :: Parser Text
 name =
   label "Name" $
     fromLBS <$> do
@@ -207,7 +207,7 @@ optDescription :: Parser (Maybe Description)
 optDescription = optional parseString
 {-# INLINE optDescription #-}
 
-parseString :: Parser AST.Token
+parseString :: Parser Text
 parseString = label "String" $ fromLBS <$> parseStringBS
 {-# INLINE parseString #-}
 

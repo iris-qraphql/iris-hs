@@ -19,7 +19,7 @@ module Language.Iris.Parsing.Internal.Pattern
 where
 
 import Data.ByteString.Lazy.Internal (ByteString)
-import Data.Mergeable.Utils (fromElems)
+import Data.Mergeable.Utils (empty, fromElems)
 import Language.Iris.Parsing.Internal.Arguments
   ( maybeArguments,
   )
@@ -48,23 +48,21 @@ import Language.Iris.Parsing.Internal.Value
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
+    DATA_TYPE,
     Directive (..),
     DirectiveLocation (..),
     Directives,
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    LAZY,
     OperationType (..),
-    STRICT,
-    TRUE,
-    TypeKind (..),
+    RESOLVER_TYPE,
     TypeName,
-    UnionMember (UnionMember),
-    UnionTypeDefinition,
     Value,
+    Variant (..),
+    Variants,
   )
-import Relude hiding (ByteString, many)
+import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
   ( choice,
     label,
@@ -72,30 +70,29 @@ import Text.Megaparsec
   )
 import Text.Megaparsec.Byte (string)
 
---  EnumValueDefinition: https://graphql.github.io/graphql-spec/June2018/#EnumValueDefinition
---
---  EnumValueDefinition
---    Description(opt) EnumValue Directives(Const)(opt)
---
 unionMembersDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  Parser (UnionTypeDefinition cat s)
-unionMembersDefinition =
-  label "UnionMember" $
-    lift . fromElems
-      =<< pipe
-        ( UnionMember
-            <$> optDescription
-            <*> parseTypeName
-            <*> optional fieldsDefinition
-        )
+  (Parse (Value s), Parse (FieldContent cat s)) =>
+  TypeName ->
+  Parser (Variants cat s)
+unionMembersDefinition typeName = label "Variant" $ pipe (parseMember typeName)
+
+parseMember ::
+  (Parse (Value s), Parse (FieldContent cat s)) =>
+  TypeName ->
+  Parser (Variant cat s)
+parseMember typeName = do
+  variantDescription <- optDescription
+  variantName <- parseTypeName
+  fields <- optional fieldsDefinition
+  pure
+    Variant
+      { memberFields = fromMaybe empty fields,
+        membership = fmap (const typeName) fields,
+        ..
+      }
+
 {-# INLINEABLE unionMembersDefinition #-}
 
--- Field Arguments: https://graphql.github.io/graphql-spec/June2018/#sec-Field-Arguments
---
--- ArgumentsDefinition:
---   ( InputValueDefinition(list) )
---
 argumentsDefinition ::
   Parse (Value s) =>
   Parser (ArgumentsDefinition s)
@@ -120,14 +117,14 @@ argumentsDefinition =
 --    { FieldDefinition(list) }
 --
 fieldsDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
+  (Parse (Value s), Parse (FieldContent cat s)) =>
   Parser (FieldsDefinition cat s)
 fieldsDefinition = label "FieldsDefinition" $ setOf fieldDefinition
 {-# INLINEABLE fieldsDefinition #-}
 
 fieldDefinition ::
-  (Parse (Value s), Parse (FieldContent TRUE cat s)) =>
-  Parser (FieldDefinition  cat s)
+  (Parse (Value s), Parse (FieldContent cat s)) =>
+  Parser (FieldDefinition cat s)
 fieldDefinition =
   label "FieldDefinition" $
     FieldDefinition
@@ -137,10 +134,10 @@ fieldDefinition =
       <*> (colon *> parseType)
       <*> optionalDirectives
 
-instance Parse (Value s) => Parse (FieldContent TRUE STRICT s) where
+instance Parse (Value s) => Parse (FieldContent DATA_TYPE s) where
   parse = pure DataFieldContent
 
-instance Parse (Value s) => Parse (FieldContent TRUE LAZY s) where
+instance Parse (Value s) => Parse (FieldContent RESOLVER_TYPE s) where
   parse = ResolverFieldContent <$> argumentsDefinition
 
 --  FieldDefinition
@@ -201,21 +198,14 @@ parseDirectiveLocation =
               INLINE_FRAGMENT,
               ARGUMENT_DEFINITION,
               DATA_FIELD_DEFINITION,
-              SCHEMA,
               QUERY,
               MUTATION,
               SUBSCRIPTION,
-              FIELD
+              FIELD,
+              DATA,
+              SCALAR,
+              RESOLVER
             ]
-            <> map
-              (fmap TYPE_DIRECTIVE . toKeyword)
-              [ UNION,
-                DATA,
-                SCALAR
-              ]
-            <> [ string "OBJECT"
-                   $> TYPE_DIRECTIVE (OBJECT Nothing)
-               ]
         )
     )
     <* ignoredTokens

@@ -1,6 +1,0 @@
-[
-  {
-    "message": "offset=84:\nunexpected 'b'\nexpecting '#', '}', IgnoredTokens, or OperationType\n",
-    "locations": [{ "line": 8, "column": 3 }]
-  }
-]

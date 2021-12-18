@@ -10,8 +10,10 @@ resolver Query = {
   deity(name: String?): Deity
 }
 
-schema {
-  query: Query
-  mutation: Query
-  subscription: Query
+resolver Mutation = {
+  deity(name: String?): Deity
+}
+
+resolver Subscription = {
+  deity(name: String?): Deity
 }

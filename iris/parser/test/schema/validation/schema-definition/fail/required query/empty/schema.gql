@@ -1,5 +1,0 @@
-resolver MyType = {
-  name: String
-}
-
-schema {}

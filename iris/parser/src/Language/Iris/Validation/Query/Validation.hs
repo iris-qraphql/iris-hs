@@ -16,9 +16,8 @@ import Language.Iris.Types.Internal.AST
     GQLResult,
     Operation (..),
     Schema (..),
-    TypeKind (..),
     VALID,
-    mkBaseType,
+    mkBaseType, DirectiveLocation (RESOLVER),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation
@@ -104,7 +103,7 @@ validateRequest
         Scope
           { kind = SELECTION,
             currentTypeName = "Root",
-            currentTypeKind = OBJECT Nothing,
+            currentTypeKind = RESOLVER,
             currentTypeWrappers = mkBaseType,
             fieldName = "Root",
             position = Just operationPosition,

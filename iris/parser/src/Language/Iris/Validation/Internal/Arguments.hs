@@ -26,8 +26,8 @@ import Language.Iris.Types.Internal.AST
     CONST,
     DirectiveDefinition (..),
     FieldDefinition (..),
-    STRICT,
-    LAZY,
+    DATA_TYPE,
+    RESOLVER_TYPE,
     ObjectEntry (..),
     Position (..),
     RAW,
@@ -35,7 +35,6 @@ import Language.Iris.Types.Internal.AST
     Value (..),
     VariableDefinitions,
     fieldArguments,
-    typed,
   )
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
@@ -86,7 +85,7 @@ validateArgument
       argument
       requestArgs
 
-toArgument :: FieldDefinition STRICT s -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
+toArgument :: FieldDefinition DATA_TYPE s -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
 toArgument
   FieldDefinition {fieldName}
   value = mkArg . fromMaybe (Position 0 0) <$> asksScope position
@@ -95,7 +94,7 @@ toArgument
 
 validateArgumentValue ::
   (ValidateWithDefault ctx schemaS valueS) =>
-  FieldDefinition STRICT schemaS ->
+  FieldDefinition DATA_TYPE schemaS ->
   Argument valueS ->
   Validator schemaS ctx (Argument VALID)
 validateArgumentValue
@@ -106,10 +105,10 @@ validateArgumentValue
         Argument
           argumentPosition
           argumentName
-          <$> validateInputByTypeRef (typed fieldType field) argumentValue
+          <$> validateInputByTypeRef (fieldType field) argumentValue
 
 validateFieldArguments ::
-  FieldDefinition LAZY VALID ->
+  FieldDefinition RESOLVER_TYPE VALID ->
   Arguments RAW ->
   FragmentValidator s (Arguments VALID)
 validateFieldArguments field =

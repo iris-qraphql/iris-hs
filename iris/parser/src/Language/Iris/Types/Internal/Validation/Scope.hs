@@ -18,16 +18,16 @@ where
 import Language.Iris.Rendering.RenderGQL (RenderGQL, render)
 import Language.Iris.Types.Internal.AST
   ( Directive (..),
+    DirectiveLocation (..),
     FieldName,
     GQLError,
     Msg (msg),
     Position,
     Ref (..),
     TypeDefinition (..),
-    TypeKind,
     TypeName,
     TypeWrapper,
-    kindOf,
+    toLocation,
   )
 import Relude
 
@@ -40,7 +40,7 @@ data ScopeKind
 data Scope = Scope
   { position :: Maybe Position,
     currentTypeName :: TypeName,
-    currentTypeKind :: TypeKind,
+    currentTypeKind :: DirectiveLocation,
     currentTypeWrappers :: TypeWrapper,
     fieldName :: FieldName,
     kind :: ScopeKind,
@@ -48,13 +48,11 @@ data Scope = Scope
   }
   deriving (Show)
 
-setSelection :: TypeDefinition a s -> Ref FieldName -> Scope -> Scope
+setSelection :: TypeName -> Ref FieldName -> Scope -> Scope
 setSelection currentType Ref {refName, refPosition} Scope {..} =
   Scope
     { fieldName = refName,
-      -- path = path <> [unpackName refName],
-      currentTypeName = typeName currentType,
-      currentTypeKind = kindOf currentType,
+      currentTypeName = currentType,
       position = Just refPosition,
       ..
     }
@@ -75,10 +73,10 @@ setDirective Directive {..} Scope {..} =
     }
 
 setType :: TypeDefinition c s -> TypeWrapper -> Scope -> Scope
-setType t wrappers Scope {..} =
+setType TypeDefinition {typeName, typeContent} wrappers Scope {..} =
   Scope
-    { currentTypeName = typeName t,
-      currentTypeKind = kindOf t,
+    { currentTypeName = typeName,
+      currentTypeKind = toLocation typeContent,
       currentTypeWrappers = wrappers,
       ..
     }
@@ -94,7 +92,7 @@ renderScope
       "Scope"
       ( "referenced by type "
           <> render currentTypeName
-          <> " of kind "
+          <> " on location "
           <> render currentTypeKind
           <> " in field "
           <> render fieldName

@@ -56,19 +56,16 @@ import Language.Iris.Types
     renderResponse,
   )
 import Language.Iris.Types.Internal.AST
-  ( (<:>),
-    GQLError,
+  ( GQLError,
     GQLErrors,
     Operation (..),
-    OperationType (Mutation, Query, Subscription),
     Schema (..),
     Selection (..),
     SelectionContent (..),
     VALID,
     Value,
-    toAny,
+    (<:>),
   )
-import qualified Language.Iris.Types.Internal.AST as AST
 import Relude hiding (ByteString, empty)
 
 mkApp :: ValidateSchema s => Schema s -> RootResolverValue e m -> App e m
@@ -124,39 +121,30 @@ validateReq ::
   Config ->
   GQLRequest ->
   ResponseStream event m ResolverContext
-validateReq inputSchema config request = ResultT
-  $ pure
-  $ do
-    validSchema <- validateSchema True config inputSchema
-    schema <- internalSchema <:> validSchema
-    operation <- parseRequestWith config validSchema request
-    pure
-      ( [],
-        ResolverContext
-          { schema,
-            config,
-            operation,
-            currentType =
-              toAny $
-                fromMaybe
-                  (AST.query schema)
-                  (rootType (operationType operation) schema),
-            currentSelection =
-              Selection
-                { selectionName = "Root",
-                  selectionArguments = empty,
-                  selectionPosition = operationPosition operation,
-                  selectionAlias = Nothing,
-                  selectionContent = SelectionSet (operationSelection operation),
-                  selectionDirectives = empty
-                }
-          }
-      )
-
-rootType :: OperationType -> Schema s -> Maybe (AST.TypeDefinition AST.OBJECT s)
-rootType Query = Just . AST.query
-rootType Mutation = mutation
-rootType Subscription = subscription
+validateReq inputSchema config request = ResultT $
+  pure $
+    do
+      validSchema <- validateSchema True config inputSchema
+      schema <- internalSchema <:> validSchema
+      operation <- parseRequestWith config validSchema request
+      pure
+        ( [],
+          ResolverContext
+            { schema,
+              config,
+              operation,
+              currentTypeName = fromString $ show $ operationType operation,
+              currentSelection =
+                Selection
+                  { selectionName = "Root",
+                    selectionArguments = empty,
+                    selectionPosition = operationPosition operation,
+                    selectionAlias = Nothing,
+                    selectionContent = SelectionSet (operationSelection operation),
+                    selectionDirectives = empty
+                  }
+            }
+        )
 
 stateless ::
   Functor m =>

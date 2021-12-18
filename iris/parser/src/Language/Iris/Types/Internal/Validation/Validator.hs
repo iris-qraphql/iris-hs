@@ -56,12 +56,11 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     Fragments,
     GQLResult,
-    OBJECT,
     RAW,
-    STRICT,
+    DATA_TYPE,
     Schema,
     Stage,
-    TypeCategory,
+    Role,
     TypeName,
     TypeRef (..),
     VALID,
@@ -146,11 +145,10 @@ data InputSource
       }
   deriving (Show)
 
-data Constraint (a :: TypeCategory) where
-  ONLY_OBJECT :: Constraint OBJECT
-  ONLY_DATA :: Constraint STRICT
+data Constraint (a :: Role) where
+  ONLY_DATA :: Constraint DATA_TYPE
 
-inField :: FieldDefinition STRICT s -> InputValidator s c a -> InputValidator s c a
+inField :: FieldDefinition DATA_TYPE s -> InputValidator s c a -> InputValidator s c a
 inField
   FieldDefinition
     { fieldName,

@@ -15,11 +15,12 @@ module Language.Iris.Validation.Internal.Value
 where
 
 import Control.Monad.Except (throwError)
-import Data.Mergeable.IsMap (member, selectBy)
+import Data.Mergeable.IsMap (member)
 import Language.Iris.Error.Data (typeViolation)
 import Language.Iris.Error.Variable (incompatibleVariableType)
 import Language.Iris.Types.Internal.AST
   ( CONST,
+    DATA_TYPE,
     FieldDefinition (..),
     FieldName,
     FieldsDefinition,
@@ -27,37 +28,33 @@ import Language.Iris.Types.Internal.AST
     Object,
     ObjectEntry (..),
     Ref (..),
-    STRICT,
     ScalarDefinition (..),
     ScalarValue (..),
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
     TypeRef (..),
     TypeWrapper (..),
-    Typed (..),
-    UnionMember (..),
-    UnionTypeDefinition,
     VALID,
     ValidValue,
     Value (..),
     Variable (..),
     VariableContent (..),
+    Variant (..),
+    Variants,
     atPositions,
     isNullable,
     isSubtype,
+    lookupTypeVariant,
     msg,
-    typed,
-    untyped,
   )
 import Language.Iris.Types.Internal.AST.Name (__typename)
 import Language.Iris.Types.Internal.Validation
   ( askType,
-    askTypeMember,
     selectKnown,
     selectWithDefaultValue,
   )
+import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -94,7 +91,7 @@ checkTypeCompatibility valueType ref var@Variable {variableValue = ValidVariable
 
 validateInputByTypeRef ::
   ValidateWithDefault c schemaS s =>
-  Typed STRICT schemaS TypeRef ->
+  TypeRef ->
   Value s ->
   Validator schemaS (InputContext c) (Value VALID)
 validateInputByTypeRef
@@ -102,25 +99,25 @@ validateInputByTypeRef
   value = do
     inputTypeDef <- askType ref
     validateInputByType
-      (untyped typeWrappers ref)
+      (typeWrappers ref)
       inputTypeDef
       value
 
 validateValueByField ::
   ValidateWithDefault c schemaS s =>
-  FieldDefinition STRICT schemaS ->
+  FieldDefinition DATA_TYPE schemaS ->
   Value s ->
   Validator schemaS (InputContext c) (Value VALID)
 validateValueByField field =
   inField field
     . validateInputByTypeRef
-      (typed fieldType field)
+      (fieldType field)
 
 -- Validate data Values
 validateInputByType ::
   ValidateWithDefault ctx schemaS valueS =>
   TypeWrapper ->
-  TypeDefinition STRICT schemaS ->
+  TypeDefinition DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 validateInputByType tyWrappers typeDef =
@@ -130,7 +127,7 @@ validateInputByType tyWrappers typeDef =
 validateWrapped ::
   ValidateWithDefault ctx schemaS valueS =>
   TypeWrapper ->
-  TypeDefinition STRICT schemaS ->
+  TypeDefinition DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
 -- Validate Null. value = null ?
@@ -144,7 +141,6 @@ validateWrapped wrappers _ Null
 validateWrapped (TypeList wrappers _) tyCont (List list) =
   List <$> traverse (validateInputByType wrappers tyCont) list
 {-- 2. VALIDATE TYPES, all wrappers are already Processed --}
-{-- VALIDATE OBJECT--}
 validateWrapped BaseType {} TypeDefinition {typeContent} entryValue =
   validateUnwrapped typeContent entryValue
 {-- 3. THROW ERROR: on invalid values --}
@@ -152,21 +148,22 @@ validateWrapped _ _ entryValue = violation Nothing entryValue
 
 validateUnwrapped ::
   ValidateWithDefault ctx schemaS valueS =>
-  TypeContent TRUE STRICT schemaS ->
+  TypeContent DATA_TYPE schemaS ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
-validateUnwrapped (StrictTypeContent parentFields) (Object conName fields) =
-  Object conName <$> validateInputObject parentFields fields
-validateUnwrapped (StrictUnionContent tags) value =
+validateUnwrapped (DataTypeContent variants) (Object conName fields) =
+  case toList variants of
+    [Variant {memberFields}] ->
+      Object conName <$> validateInputObject memberFields fields
+    _ -> validateStrictUnionType variants (Object conName fields)
+validateUnwrapped (DataTypeContent tags) value =
   validateStrictUnionType tags value
 validateUnwrapped (ScalarTypeContent dataScalar) value =
   validateScalar dataScalar value
-validateUnwrapped _ value = violation Nothing value
 
--- INPUT Object
 validateInputObject ::
   ValidateWithDefault ctx schemaS valueS =>
-  FieldsDefinition STRICT schemaS ->
+  FieldsDefinition DATA_TYPE schemaS ->
   Object valueS ->
   InputValidator schemaS ctx (Object VALID)
 validateInputObject fieldsDef object =
@@ -176,7 +173,7 @@ validateInputObject fieldsDef object =
 class ValidateWithDefault c schemaS s where
   validateWithDefault ::
     Object s ->
-    FieldDefinition STRICT schemaS ->
+    FieldDefinition DATA_TYPE schemaS ->
     Validator schemaS (InputContext c) (ObjectEntry VALID)
 
 instance ValidateWithDefault c VALID s where
@@ -243,23 +240,16 @@ isInt :: ScalarValue -> Bool
 isInt Int {} = True
 isInt _ = False
 
-isPossibleInputUnion :: UnionTypeDefinition STRICT s -> TypeName -> Either GQLError (UnionMember STRICT s)
-isPossibleInputUnion tags name =
-  selectBy
-    (msg name <> " is not possible union type")
-    name
-    tags
-
 validateStrictUnionType ::
   ValidateWithDefault ctx schemaS s =>
-  UnionTypeDefinition STRICT schemaS ->
+  Variants DATA_TYPE schemaS ->
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateStrictUnionType inputUnion (Object (Just conName) rawFields) =
-  case isPossibleInputUnion inputUnion conName of
-    Left message -> violation (Just $ msg message) (Object (Just conName) rawFields)
+  case lookupTypeVariant (Just conName) inputUnion of
+    Left _ -> violation (Just $ msg conName <> " is not possible union type") (Object (Just conName) rawFields)
     Right memberTypeRef -> do
-      fields <- strictObjectFields . typeContent <$> askTypeMember memberTypeRef
+      fields <- memberFields <$> resolveTypeMember memberTypeRef
       Object (Just conName) <$> validateInputObject fields rawFields
 validateStrictUnionType _ (Object Nothing fields)
   | member __typename fields =

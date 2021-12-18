@@ -1,0 +1,12 @@
+resolver MyType1 = {
+  name: String
+}
+
+data Query = {
+  name: String
+}
+
+resolver Mutation = MyType1 | Query
+
+data Subscription = MyType1 | Enum1 {} 
+

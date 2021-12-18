@@ -1,0 +1,5 @@
+[
+  { "message": "\"Mutation\" type must be an object if provided!" },
+  { "message": "\"Query\" type must be an object if provided!" },
+  { "message": "\"Subscription\" type must be an object if provided!" }
+]

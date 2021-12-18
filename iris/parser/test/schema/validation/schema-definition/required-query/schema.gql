@@ -2,6 +2,6 @@ resolver MyType = {
   name: String
 }
 
-schema {
-  mutation: MyType
+resolver query = {
+  name: String
 }

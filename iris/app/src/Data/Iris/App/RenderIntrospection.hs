@@ -37,22 +37,19 @@ import Language.Iris.Types.Internal.AST
     FieldDefinition (..),
     FieldName,
     FieldsDefinition,
-    LAZY,
-    STRICT,
-    TRUE,
+    Name,
+    RESOLVER_TYPE,
     TypeContent (..),
     TypeDefinition (..),
-    TypeKind (..),
     TypeName,
     TypeRef (..),
     TypeWrapper (BaseType, TypeList),
-    UnionMember (..),
-    UnionTypeDefinition,
     VALID,
     Value (..),
+    Variant (..),
+    Variants,
     fieldVisibility,
-    lookupDeprecated,
-    lookupDeprecatedReason,
+    lookupDeprecation,
     unpackName,
   )
 import Relude
@@ -60,10 +57,7 @@ import Relude
 class RenderIntrospection a where
   render :: (Monad m) => a -> m (ResolverValue m)
 
-instance RenderIntrospection TypeName where
-  render = pure . mkString . unpackName
-
-instance RenderIntrospection FieldName where
+instance RenderIntrospection (Name t) where
   render = pure . mkString . unpackName
 
 instance RenderIntrospection Description where
@@ -79,25 +73,17 @@ instance RenderIntrospection a => RenderIntrospection (Maybe a) where
 instance RenderIntrospection Bool where
   render = pure . mkBoolean
 
-instance RenderIntrospection TypeKind where
-  render = pure . mkString . fromLBS . GQL.render
 
 instance RenderIntrospection (DirectiveDefinition VALID) where
-  render
-    DirectiveDefinition
-      { directiveDefinitionName,
-        directiveDefinitionDescription,
-        directiveDefinitionLocations,
-        directiveDefinitionArgs
-      } =
-      pure $
-        mkObject
-          (Just "__Directive")
-          [ renderName directiveDefinitionName,
-            description directiveDefinitionDescription,
-            ("locations", render directiveDefinitionLocations),
-            ("args", render directiveDefinitionArgs)
-          ]
+  render DirectiveDefinition {..} =
+    pure $
+      mkObject
+        (Just "__Directive")
+        [ renderName directiveDefinitionName,
+          description directiveDefinitionDescription,
+          ("locations", render (toList directiveDefinitionLocations)),
+          ("args", render directiveDefinitionArgs)
+        ]
 
 instance RenderIntrospection DirectiveLocation where
   render locations = pure $ mkString (pack $ show locations)
@@ -110,17 +96,13 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
         typeContent
       } = pure $ renderContent typeContent
       where
-        renderContent ScalarTypeContent {} = mkType SCALAR typeName typeDescription []
-        renderContent (StrictUnionContent variants) =
-          mkUnionType DATA typeName typeDescription Nothing variants
-        renderContent (StrictTypeContent inputFields) =
-          mkFieldsType DATA typeName typeDescription inputFields
-        renderContent (LazyTypeContent objectFields) =
-          mkFieldsType (OBJECT Nothing) typeName typeDescription objectFields
-        renderContent (LazyUnionContent typeGuard variants) =
-          mkUnionType UNION typeName typeDescription typeGuard variants
+        renderContent ScalarTypeContent {} = mkType "__Type.Scalar" typeName typeDescription []
+        renderContent (DataTypeContent variants) =
+          mkUnionType "__Type.ADT" "DATA" typeName typeDescription Nothing variants
+        renderContent (ResolverTypeContent typeGuard variants) =
+          mkUnionType "__Type.ADT" "RESOLVER" typeName typeDescription typeGuard variants
 
-instance RenderIntrospection (FieldContent TRUE a VALID) where
+instance RenderIntrospection (FieldContent a VALID) where
   render (ResolverFieldContent args) = render args
   render _ = pure ""
 
@@ -128,34 +110,31 @@ instance RenderIntrospection (Value VALID) where
   render Null = pure mkNull
   render x = pure $ mkString $ fromLBS $ GQL.render x
 
-instance
-  RenderIntrospection
-    (FieldDefinition LAZY VALID)
-  where
+instance RenderIntrospection (FieldDefinition a VALID) where
   render FieldDefinition {..} =
     pure $
       mkObject
         (Just "__Field")
         [ renderName fieldName,
           description fieldDescription,
-          type' fieldType,
+          renderType fieldType,
           ("args", maybe (pure $ mkList []) render fieldContent),
           renderDeprecated fieldDirectives
         ]
 
-instance RenderIntrospection (ArgumentsDefinition VALID) where
-  render = fmap mkList . traverse (render . argument) . toList
-
-instance RenderIntrospection (FieldDefinition STRICT VALID) where
-  render FieldDefinition {..} =
+instance RenderIntrospection (ArgumentDefinition VALID) where
+  render ArgumentDefinition {argument = FieldDefinition {..}} =
     pure $
       mkObject
         (Just "__Argument")
         [ renderName fieldName,
           description fieldDescription,
-          type' fieldType,
+          renderType fieldType,
           ("defaultValue", render fieldContent)
         ]
+
+instance RenderIntrospection (ArgumentsDefinition VALID) where
+  render = fmap mkList . traverse render . toList
 
 instance RenderIntrospection TypeRef where
   render TypeRef {typeConName, typeWrappers} = pure $ renderWrapper typeWrappers
@@ -170,38 +149,33 @@ __TypeRef :: Monad m => TypeName -> Bool -> Maybe (ResolverValue m) -> ResolverV
 __TypeRef name isRequired value =
   mkObject
     (Just "__TypeRef")
-    ( [ renderName name,
-        ("required", render isRequired)
-      ]
-        <> maybeToList (("parameter",) . pure <$> value)
-    )
+    [ renderName name,
+      ("required", render isRequired),
+      renderParameters value
+    ]
+
+renderParameters :: Monad m => Maybe (ResolverValue m) -> (FieldName, m (ResolverValue m))
+renderParameters value = ("parameters", pure $ mkList (maybeToList value))
 
 renderDeprecated :: Monad m => Directives s -> (FieldName, m (ResolverValue m))
 renderDeprecated dirs =
   ( "deprecation",
-    render (lookupDeprecated dirs >>= lookupDeprecatedReason)
+    render (lookupDeprecation dirs)
   )
 
 description :: Monad m => Maybe Description -> (FieldName, m (ResolverValue m))
 description = ("description",) . render
 
-renderTypeName :: IsString p => TypeKind -> p
-renderTypeName SCALAR = "__Type.Scalar"
-renderTypeName OBJECT {} = "__Type.ADT"
-renderTypeName UNION = "__Type.ADT"
-renderTypeName DATA = "__Type.ADT"
-renderTypeName LIST = "__Type.Collection"
-
 mkType ::
   (Monad m) =>
-  TypeKind ->
+  TypeName ->
   TypeName ->
   Maybe Description ->
   [(FieldName, m (ResolverValue m))] ->
   ResolverValue m
-mkType kind name desc etc =
+mkType __type name desc etc =
   mkObject
-    (Just $ renderTypeName kind)
+    (Just __type)
     ( [ renderName name,
         description desc
       ]
@@ -210,18 +184,21 @@ mkType kind name desc etc =
 
 mkFieldsType ::
   (RenderIntrospection (FieldDefinition t VALID), Monad m) =>
-  TypeKind ->
+  TypeName ->
+  TypeName ->
   TypeName ->
   Maybe Description ->
   FieldsDefinition t VALID ->
   ResolverValue m
-mkFieldsType kind name desc fields =
+mkFieldsType kind role name desc fields =
   mkVariants
     kind
+    role
     name
     desc
     Nothing
-    [ ( name,
+    [ ( Nothing,
+        name,
         Just $
           render $
             filter fieldVisibility $
@@ -231,57 +208,66 @@ mkFieldsType kind name desc fields =
 
 mkUnionType ::
   (Monad m) =>
-  TypeKind ->
+  TypeName ->
+  TypeName ->
   TypeName ->
   Maybe Description ->
   Maybe TypeName ->
-  UnionTypeDefinition t VALID ->
+  Variants t VALID ->
   ResolverValue m
-mkUnionType kind name desc typeGuard variants =
-  mkVariants kind name desc typeGuard (map (\x -> (memberName x, Nothing)) (toList variants))
+mkUnionType kind role name desc typeGuard variants =
+  mkVariants
+    kind
+    role
+    name
+    desc
+    typeGuard
+    ( map
+        (\x -> (if null (memberFields x) then Just name else Nothing, variantName x, Nothing))
+        (toList variants)
+    )
 
 mkVariants ::
   (Monad m) =>
-  TypeKind ->
+  TypeName ->
+  TypeName ->
   TypeName ->
   Maybe Description ->
   Maybe TypeName ->
-  [(TypeName, Maybe (m (ResolverValue m)))] ->
+  [(Maybe TypeName, TypeName, Maybe (m (ResolverValue m)))] ->
   ResolverValue m
 mkVariants
-  kind
+  __type
+  role
   name
   desc
   typeGuard
   variants =
     mkType
-      kind
+      __type
       name
       desc
-      ( [ ("role", render ((if kind == DATA then "DATA" else "RESOLVER") :: TypeName)),
-          ("variants", pure $ mkList $ map mkVariant variants)
-        ]
-          <> optionalField "guard" typeGuard
-      )
-    where
-      mkVariant (variantName, fields) =
-        mkObject
-          (Just "__Variant")
-          [ renderName variantName,
-            ("namespace", if null fields then render name else pure mkNull),
-            ("fields", fromMaybe (pure mkNull) fields)
-          ]
+      [ ("role", render role),
+        ("variants", pure $ mkList $ map renderVariant variants),
+        ("guard", render typeGuard)
+      ]
 
-optionalField :: (RenderIntrospection a, Monad m) => FieldName -> Maybe a -> [(FieldName, m (ResolverValue m))]
-optionalField name v = maybeToList ((name,) . render <$> v)
+renderVariant :: Monad m => (Maybe TypeName, TypeName, Maybe (m (ResolverValue m))) -> ResolverValue m
+renderVariant (namespace, variantName, fields) =
+  mkObject
+    (Just "__Variant")
+    [ renderName variantName,
+      ("namespace", render namespace),
+      ("fields", fromMaybe (pure mkNull) fields)
+    ]
 
 mkObjectType ::
   Monad m =>
   TypeName ->
   Maybe Description ->
-  FieldsDefinition LAZY VALID ->
+  FieldsDefinition RESOLVER_TYPE VALID ->
   ResolverValue m
-mkObjectType = mkFieldsType (OBJECT Nothing)
+mkObjectType = mkFieldsType "__Type.ADT" "RESOLVER"
 
 renderName ::
   ( RenderIntrospection name,
@@ -291,5 +277,5 @@ renderName ::
   (FieldName, m (ResolverValue m))
 renderName = ("name",) . render
 
-type' :: Monad m => TypeRef -> (FieldName, m (ResolverValue m))
-type' = ("type",) . render
+renderType :: Monad m => TypeRef -> (FieldName, m (ResolverValue m))
+renderType = ("type",) . render

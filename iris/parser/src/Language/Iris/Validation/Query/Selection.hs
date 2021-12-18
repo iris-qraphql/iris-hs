@@ -37,27 +37,25 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    LAZY,
-    OBJECT,
     Operation (..),
     OperationType (..),
     RAW,
+    RESOLVER_TYPE,
     Ref (..),
     Selection (..),
     SelectionContent (..),
     SelectionSet,
-    TRUE,
     TypeContent (..),
     TypeDefinition (..),
+    TypeRef (..),
     UnionTag (..),
     VALID,
-    __typename,
+    Variant (..),
     at,
-    isLeaf,
     mergeNonEmpty,
-    mkTypeRef,
+    mkBaseType,
     msg,
-    typed,
+    __typename,
   )
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
@@ -159,7 +157,7 @@ validateFragmentSelection f@Fragment {fragmentSelection} = do
 
 validateSelectionSet ::
   (ValidateFragmentSelection s) =>
-  TypeDefinition OBJECT VALID ->
+  Variant RESOLVER_TYPE VALID ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateSelectionSet typeDef =
@@ -168,9 +166,9 @@ validateSelectionSet typeDef =
     >=> mergeNonEmpty
 
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
-validateSelection :: ValidateFragmentSelection s => TypeDefinition OBJECT VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
+validateSelection :: ValidateFragmentSelection s => Variant RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
-  withScope (setSelection typeDef selectionRef) $
+  withScope (setSelection (variantName typeDef) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
   where
     selectionRef = Ref selectionName selectionPosition
@@ -187,56 +185,56 @@ validateSelection typeDef sel@Selection {..} =
               }
           )
 validateSelection typeDef (Spread dirs ref) =
-  processSelectionDirectives FRAGMENT_SPREAD dirs
-    $ const
-    $ validateSpreadSelection typeDef ref
+  processSelectionDirectives FRAGMENT_SPREAD dirs $
+    const $
+      validateSpreadSelection typeDef ref
 validateSelection typeDef (InlineFragment fragment@Fragment {fragmentDirectives}) =
-  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives
-    $ const
-    $ validateInlineFragmentSelection typeDef fragment
+  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives $
+    const $
+      validateInlineFragmentSelection typeDef fragment
 
 validateSpreadSelection ::
   ValidateFragmentSelection s =>
-  TypeDefinition a VALID ->
+  Variant a VALID ->
   Ref FragmentName ->
   FragmentValidator s (SelectionSet VALID)
 validateSpreadSelection typeDef =
-  fmap unionTagSelection . validateSpread validateFragmentSelection [typeName typeDef]
+  fmap unionTagSelection . validateSpread validateFragmentSelection [variantName typeDef]
 
 validateInlineFragmentSelection ::
   ValidateFragmentSelection s =>
-  TypeDefinition OBJECT VALID ->
+  Variant RESOLVER_TYPE VALID ->
   Fragment RAW ->
   FragmentValidator s (SelectionSet VALID)
 validateInlineFragmentSelection typeDef =
-  fmap fragmentSelection . validateFragment validateFragmentSelection [typeName typeDef]
+  fmap fragmentSelection . validateFragment validateFragmentSelection [variantName typeDef]
 
 selectSelectionField ::
   Ref FieldName ->
-  TypeDefinition OBJECT s ->
-  FragmentValidator s' (FieldDefinition LAZY s)
-selectSelectionField ref TypeDefinition {typeContent}
-  | refName ref == "__typename" =
+  Variant RESOLVER_TYPE s ->
+  FragmentValidator s' (FieldDefinition RESOLVER_TYPE s)
+selectSelectionField ref Variant {memberFields}
+  | refName ref == __typename =
     pure
       FieldDefinition
         { fieldDescription = Nothing,
-          fieldName = "__typename",
-          fieldType = mkTypeRef "String",
+          fieldName = __typename,
+          fieldType = TypeRef {typeConName = "String", typeWrappers = mkBaseType},
           fieldContent = Nothing,
           fieldDirectives = empty
         }
-  | otherwise = selectKnown ref (lazyObjectFields typeContent)
+  | otherwise = selectKnown ref memberFields
 
 validateSelectionContent ::
   ValidateFragmentSelection s =>
-  TypeDefinition OBJECT VALID ->
+  Variant RESOLVER_TYPE VALID ->
   Ref FieldName ->
   Arguments RAW ->
   SelectionContent RAW ->
   FragmentValidator s (Arguments VALID, SelectionContent VALID)
 validateSelectionContent typeDef ref selectionArguments content = do
   fieldDef <- selectSelectionField ref typeDef
-  fieldTypeDef <- askType (typed fieldType fieldDef)
+  fieldTypeDef <- askType (fieldType fieldDef)
   validArgs <- validateFieldArguments fieldDef selectionArguments
   validContent <- validateContent fieldTypeDef content
   pure (validArgs, validContent)
@@ -246,45 +244,43 @@ validateSelectionContent typeDef ref selectionArguments content = do
 
 validateContentLeaf ::
   Ref FieldName ->
-  TypeDefinition LAZY VALID ->
+  TypeDefinition RESOLVER_TYPE VALID ->
   FragmentValidator s' (SelectionContent s)
 validateContentLeaf
   (Ref selectionName selectionPosition)
-  TypeDefinition {typeName, typeContent}
-    | isLeaf typeContent = pure SelectionField
-    | otherwise =
-      throwError $ subfieldsNotSelected selectionName typeName selectionPosition
+  TypeDefinition {typeName, typeContent = ResolverTypeContent {}} =
+    throwError $ subfieldsNotSelected selectionName typeName selectionPosition
+validateContentLeaf _ _ = pure SelectionField
 
 validateByTypeContent ::
   forall s.
   (ValidateFragmentSelection s) =>
-  TypeDefinition LAZY VALID ->
+  TypeDefinition RESOLVER_TYPE VALID ->
   Ref FieldName ->
   SelectionSet RAW ->
   FragmentValidator s (SelectionContent VALID)
 validateByTypeContent
-  typeDef@TypeDefinition {typeContent, ..}
+  TypeDefinition {typeContent, ..}
   currentSelectionRef =
-    withScope (setSelection typeDef currentSelectionRef)
+    withScope (setSelection typeName currentSelectionRef)
       . __validate typeContent
     where
       __validate ::
-        TypeContent TRUE LAZY VALID ->
+        TypeContent RESOLVER_TYPE VALID ->
         SelectionSet RAW ->
         FragmentValidator s (SelectionContent VALID)
       -- Validate UnionSelection
-      __validate LazyUnionContent {unionTypeGuardName, unionMembers} =
+      __validate ResolverTypeContent {resolverVariants = (resolverVariant :| [])} =
+        fmap SelectionSet . validateSelectionSet resolverVariant
+      __validate ResolverTypeContent {resolverTypeGuard, resolverVariants} =
         validateUnionSelection
           validateFragmentSelection
           validateSelectionSet
-          unionTypeGuardName
-          unionMembers
-      -- Validate Regular selection set
-      __validate LazyTypeContent {..} =
-        fmap SelectionSet . validateSelectionSet (TypeDefinition {typeContent = LazyTypeContent {..}, ..})
+          resolverTypeGuard
+          resolverVariants
       __validate _ =
-        const
-          $ throwError
-          $ hasNoSubfields
-            currentSelectionRef
-            typeName
+        const $
+          throwError $
+            hasNoSubfields
+              currentSelectionRef
+              typeName

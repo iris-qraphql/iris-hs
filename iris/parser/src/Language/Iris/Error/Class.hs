@@ -23,19 +23,18 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    OBJECT,
+    RESOLVER_TYPE,
     Object,
     ObjectEntry (..),
     Ref (..),
-    STRICT,
-    TypeCategory,
+    DATA_TYPE,
+    Role,
     TypeName,
     TypeRef (..),
     Variable (..),
     VariableDefinitions,
     at,
     atPositions,
-    getOperationName,
     msg,
     withPath,
   )
@@ -57,8 +56,8 @@ instance Unused (Variable s) where
     OperationContext {operationName}
     Variable {variableName, variablePosition} =
       ( "Variable " <> msg ("$" <> variableName)
-          <> " is never used in operation "
-          <> msg (getOperationName operationName)
+          <> " is never used in operation"
+            <> msg (maybe "" (" " <>) operationName)
           <> "."
       )
         `at` variablePosition
@@ -119,8 +118,8 @@ instance MissingRequired (VariableDefinitions s) (OperationContext s1 s2) where
     _ =
       ( ( "Variable "
             <> msg refName
-            <> " is not defined by operation "
-            <> msg (getOperationName operationName)
+            <> " is not defined by operation"
+            <> msg (maybe "" (" " <>) operationName)
             <> "."
         )
           `at` refPosition
@@ -185,10 +184,10 @@ instance Unknown (Directive s') ctx where
   unknown Scope {path} _ Directive {directiveName, directivePosition} =
     (("Unknown Directive " <> msg directiveName <> ".") `at` directivePosition) `withPath` path
 
-class KindViolation (t :: TypeCategory) ctx where
+class KindViolation (t :: Role) ctx where
   kindViolation :: c t -> ctx -> GQLError
 
-instance KindViolation OBJECT (Fragment s) where
+instance KindViolation RESOLVER_TYPE (Fragment s) where
   kindViolation _ Fragment {fragmentName, fragmentType, fragmentPosition} =
     ( "Fragment "
         <> msg fragmentName
@@ -198,7 +197,7 @@ instance KindViolation OBJECT (Fragment s) where
     )
       `at` fragmentPosition
 
-instance KindViolation STRICT (Variable s) where
+instance KindViolation DATA_TYPE (Variable s) where
   kindViolation
     _
     Variable

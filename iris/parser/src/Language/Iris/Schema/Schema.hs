@@ -16,7 +16,7 @@ module Language.Iris.Schema.Schema
 where
 
 import Language.Iris.Schema.DSL (dsl)
-import Language.Iris.Types.Internal.AST.TypeSystem (Schema)
+import Language.Iris.Types.Internal.AST.Schema (Schema)
 
 internalSchema :: Schema s
 internalSchema =
@@ -64,10 +64,10 @@ resolver __Type
         name: String
         description: String?
       } 
-    | Collection {
+    | Series {
         name: String
         description: String?
-        parameter: __TypeRef 
+        parameters: [__TypeRef] 
       }
     | ADT {
         role: __Role?
@@ -88,7 +88,7 @@ resolver __Variant = {
 data __TypeRef = {
   name: String
   required: Boolean 
-  parameter: __TypeRef?
+  parameters: [__TypeRef]
 }
 
 resolver __Field = {

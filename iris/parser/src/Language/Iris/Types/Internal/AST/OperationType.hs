@@ -10,7 +10,6 @@ module Language.Iris.Types.Internal.AST.OperationType
     QUERY,
     MUTATION,
     SUBSCRIPTION,
-    toOperationType,
   )
 where
 
@@ -49,13 +48,6 @@ data OperationType
 
 instance RenderGQL OperationType where
   renderGQL = fromString . fmap toLower . show
-
-toOperationType :: TypeName -> Maybe OperationType
-toOperationType "Subscription" = Just Subscription
-toOperationType "Mutation" = Just Mutation
-toOperationType "Query" = Just Query
-toOperationType _ = Nothing
-{-# INLINE toOperationType #-}
 
 instance Msg OperationType where
   msg Query = msg ("query" :: TypeName)

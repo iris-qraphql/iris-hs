@@ -26,7 +26,7 @@ module Data.Iris.App.Internal.Resolving.ResolverState
     runResolverStateM,
     runResolverState,
     runResolverStateValueM,
-    updateCurrentType,
+    setCurrentType,
     askFieldTypeName,
   )
 where
@@ -48,8 +48,8 @@ import Language.Iris.Types.Internal.AST
     FieldName,
     GQLError,
     GQLResult,
-    LAZY,
     Operation,
+    RESOLVER_TYPE,
     Schema,
     Selection (..),
     TypeContent (..),
@@ -57,10 +57,13 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef (typeConName),
     VALID,
+    Variant (..),
     at,
+    getVariantName,
     internal,
     isInternal,
     lookupDataType,
+    lookupTypeVariant,
     msg,
   )
 import Relude
@@ -70,41 +73,33 @@ data ResolverContext = ResolverContext
     schema :: Schema VALID,
     operation :: Operation VALID,
     config :: Config,
-    currentType :: TypeDefinition LAZY VALID
+    currentTypeName :: TypeName
   }
   deriving (Show)
 
-updateCurrentType ::
+setCurrentType ::
   ( MonadReader ResolverContext m,
     MonadError GQLError m
   ) =>
   Maybe TypeName ->
   m a ->
   m a
-updateCurrentType = maybe id setCurrentType
+setCurrentType Nothing = id
+setCurrentType (Just name) = local (\ctx -> ctx {currentTypeName = name})
 
-setCurrentType ::
-  ( MonadReader ResolverContext m,
-    MonadError GQLError m
-  ) =>
-  TypeName ->
-  m a ->
-  m a
-setCurrentType name ma = do
-  t <- asks (lookupDataType name . schema)
-  maybe
-    (const $ throwError $ internal "Unknown type \"" <> msg name <> "\".")
-    (\currentType -> local (\ctx -> ctx {currentType}))
-    t
-    ma
-
-fieldTypeName :: FieldName -> TypeDefinition LAZY VALID -> Maybe TypeName
-fieldTypeName name t = case typeContent t of
-  (LazyTypeContent fs) -> selectOr Nothing (Just . typeConName . fieldType) name fs
-  _ -> Nothing
-
-askFieldTypeName :: MonadReader ResolverContext m => FieldName -> m (Maybe TypeName)
-askFieldTypeName name = asks (fieldTypeName name . currentType)
+askFieldTypeName :: (MonadReader ResolverContext m, MonadError GQLError m) => FieldName -> m (Maybe TypeName)
+askFieldTypeName fieldName = do
+  name <- asks currentTypeName
+  t <- asks schema >>= lookupDataType name
+  case typeContent t of
+    ResolverTypeContent _ vs ->
+      catchError
+        (fieldTypeName <$> lookupTypeVariant (getVariantName name) vs)
+        (const $ pure Nothing)
+    _ -> pure Nothing
+  where
+    fieldTypeName :: Variant RESOLVER_TYPE VALID -> Maybe TypeName
+    fieldTypeName = selectOr Nothing (Just . typeConName . fieldType) fieldName . memberFields
 
 type ResolverState = ResolverStateT () Identity
 
@@ -138,10 +133,10 @@ instance (Monad m) => MonadError GQLError (ResolverStateT e m) where
   throwError err = do
     ctx <- asks id
     let f = if isInternal err then renderInternalResolverError ctx else resolverFailureMessage ctx
-    ResolverStateT
-      $ lift
-      $ throwError
-      $ f err
+    ResolverStateT $
+      lift $
+        throwError $
+          f err
   catchError (ResolverStateT mx) f = ResolverStateT $ catchError mx (_runResolverStateT . f)
 
 instance (Monad m) => PushEvents e (ResolverStateT e m) where
@@ -202,9 +197,9 @@ renderContext
     { currentSelection,
       schema,
       operation,
-      currentType
+      currentTypeName
     } =
-    renderSection "Current Type" (typeName currentType)
+    renderSection "Current Type" currentTypeName
       <> renderSection "Current Selection" currentSelection
       <> renderSection "OperationDefinition" operation
       <> renderSection "SchemaDefinition" schema

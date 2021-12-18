@@ -1,6 +1,0 @@
-[
-  {
-    "message": "offset=49:\nunexpected 'Q'\nexpecting '#', '}', or OperationType\n",
-    "locations": [{ "line": 6, "column": 3 }]
-  }
-]

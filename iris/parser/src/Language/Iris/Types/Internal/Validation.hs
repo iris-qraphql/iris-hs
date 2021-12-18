@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -18,7 +17,6 @@ module Language.Iris.Types.Internal.Validation
     OperationContext (..),
     runValidator,
     askType,
-    askTypeMember,
     selectRequired,
     selectKnown,
     Constraint (..),
@@ -46,7 +44,6 @@ module Language.Iris.Types.Internal.Validation
     setPosition,
     setSelection,
     ValidatorContext (..),
-    askObjectType,
   )
 where
 
@@ -68,23 +65,23 @@ import Language.Iris.Error.Class
     Unused (..),
   )
 import Language.Iris.Types.Internal.AST
-  ( FieldDefinition (..),
+  ( DATA_TYPE,
+    FieldDefinition (..),
     FieldName,
-    LAZY,
     Position (..),
+    RESOLVER_TYPE,
     Ref (..),
-    STRICT,
+    Role,
+    TypeDefinition (..),
     TypeName,
     Value (..),
     fromAny,
     isNullable,
+    lookupDataType,
     withPath,
   )
-import Language.Iris.Types.Internal.AST.TypeSystem
 import Language.Iris.Types.Internal.Validation.Internal
-  ( askObjectType,
-    askType,
-    askTypeMember,
+  ( askType,
     getOperationType,
   )
 import Language.Iris.Types.Internal.Validation.Validator
@@ -112,14 +109,11 @@ checkUnused uses = failOnUnused . getUnused uses
 
 constraint ::
   KindViolation k inp =>
-  Constraint (k :: TypeCategory) ->
+  Constraint (k :: Role) ->
   inp ->
-  TypeDefinition LAZY s ->
+  TypeDefinition RESOLVER_TYPE s ->
   Validator s ctx (TypeDefinition k s)
-constraint ONLY_OBJECT _ TypeDefinition {typeContent = LazyTypeContent {lazyObjectFields}, ..} =
-  pure TypeDefinition {typeContent = LazyTypeContent {lazyObjectFields}, ..}
 constraint ONLY_DATA ctx x = maybe (throwError (kindViolation ONLY_DATA ctx)) pure (fromAny x)
-constraint target ctx _ = throwError (kindViolation target ctx)
 
 selectRequired ::
   ( IsMap FieldName c,
@@ -144,7 +138,7 @@ selectWithDefaultValue ::
   (Value s -> Validator s ctx validValue) ->
   (a -> Validator s ctx validValue) ->
   Maybe (Value s) ->
-  FieldDefinition STRICT s ->
+  FieldDefinition DATA_TYPE s ->
   c a ->
   Validator s ctx validValue
 selectWithDefaultValue
@@ -173,13 +167,8 @@ selectWithDefaultValue
 
 selectType ::
   TypeName ->
-  Validator s ctx (TypeDefinition LAZY s)
-selectType name = do
-  ValidatorContext {scope, localContext, schema} <- Validator ask
-  maybe
-    (throwError $ unknown scope localContext name)
-    pure
-    (lookupDataType name schema)
+  Validator s ctx (TypeDefinition RESOLVER_TYPE s)
+selectType name = lookupDataType name =<< asks schema
 
 selectKnown ::
   ( IsMap k c,

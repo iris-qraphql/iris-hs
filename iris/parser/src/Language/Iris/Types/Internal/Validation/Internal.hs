@@ -14,103 +14,74 @@
 
 module Language.Iris.Types.Internal.Validation.Internal
   ( askType,
-    askTypeMember,
+    resolveTypeMember,
     getOperationType,
     askObjectType,
-    __askType,
   )
 where
 
 import Control.Monad.Except (MonadError (throwError))
-import Data.Mergeable.Utils.Empty
 import Language.Iris.Types.Internal.AST
-  ( FieldsDefinition,
+  ( DATA_TYPE,
     FromAny,
     GQLError,
-    IS_OBJECT,
-    LAZY,
-    OBJECT,
     Operation (..),
-    STRICT,
-    TRUE,
-    Token,
+    RESOLVER_TYPE,
+    Role,
+    TypeContent (..),
+    TypeDefinition (..),
     TypeName,
     TypeRef,
-    UnionMember (..),
     VALID,
     fromAny,
     getOperationDataType,
     internal,
+    lookupDataType,
     msg,
     typeConName,
   )
-import Language.Iris.Types.Internal.AST.Name (packVariantTypeName)
-import Language.Iris.Types.Internal.AST.TypeSystem
+import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
+import Language.Iris.Types.Internal.AST.Variant
 import Language.Iris.Types.Internal.Validation.Validator
-  ( Scope (currentTypeName),
-    SelectionValidator,
+  ( SelectionValidator,
     ValidatorContext (schema),
-    asksScope,
   )
 import Relude hiding (empty)
 
-askType ::
-  Constraints m c cat s ctx =>
-  Typed cat s TypeRef ->
-  m (TypeDefinition cat s)
-askType = untyped (__askType . typeConName)
+askType :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
+askType = __askType . typeConName
 
 __askType ::
   Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
-__askType name =
-  asks schema
-    >>= maybe (throwError (unknownType name)) pure . lookupDataType name
-    >>= kindConstraint
+__askType name = asks schema >>= lookupDataType name >>= kindConstraint
 
-askTypeMember ::
+askObjectType :: Constraints m c cat s ctx => TypeName -> m (Variant cat s)
+askObjectType name = case unpackVariantTypeName name of
+  (tName, variantName) -> __askType tName >>= constraintObject variantName
+
+resolveTypeMember ::
   Constraints m c cat s ctx =>
-  UnionMember cat s ->
-  m (TypeDefinition (IS_OBJECT cat) s)
-askTypeMember UnionMember {memberName, memberFields = Just fields} = do
-  typename <- asksScope currentTypeName
+  Variant cat s ->
+  m (Variant cat s)
+resolveTypeMember Variant {variantName, membership = Just name, memberFields, ..} = do
   pure
-    TypeDefinition
-      { typeDescription = Nothing,
-        typeName = packVariantTypeName typename memberName,
-        typeDirectives = empty,
-        typeContent = packMember fields
+    Variant
+      { variantName = packVariantTypeName name variantName,
+        membership = Just name,
+        ..
       }
-askTypeMember UnionMember {memberName} = __askType memberName >>= constraintObject
+resolveTypeMember Variant {variantName} = __askType variantName >>= constraintObject Nothing
 
-class PackMember cat where
-  packMember :: FieldsDefinition cat s -> TypeContent TRUE (IS_OBJECT cat) s
-
-instance PackMember LAZY where
-  packMember = LazyTypeContent
-
-instance PackMember STRICT where
-  packMember = StrictTypeContent
-
-askObjectType ::
-  Constraints m c cat s ctx =>
-  TypeName ->
-  m (TypeDefinition (IS_OBJECT cat) s)
-askObjectType = __askType >=> constraintObject
-
-type Constraints m c cat s ctx =
+type Constraints m c (cat :: Role) s ctx =
   ( MonadError GQLError m,
     Monad m,
     MonadReader (ValidatorContext s ctx) m,
     KindErrors cat,
-    FromAny (TypeContent TRUE) cat,
-    PackMember cat
+    FromAny TypeContent cat
   )
 
-getOperationType :: Operation a -> SelectionValidator (TypeDefinition OBJECT VALID)
+getOperationType :: Operation a -> SelectionValidator (Variant RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
-
-unknownType :: TypeName -> GQLError
-unknownType name = internal $ "Type \"" <> msg name <> "\" can't found in Schema."
 
 type KindConstraint f c =
   ( MonadError GQLError f,
@@ -119,8 +90,8 @@ type KindConstraint f c =
 
 _kindConstraint ::
   KindConstraint f k =>
-  Token ->
-  TypeDefinition LAZY s ->
+  Text ->
+  TypeDefinition RESOLVER_TYPE s ->
   f (TypeDefinition k s)
 _kindConstraint err anyType =
   maybe
@@ -129,28 +100,31 @@ _kindConstraint err anyType =
     (fromAny anyType)
 
 class KindErrors c where
-  kindConstraint :: KindConstraint f c => TypeDefinition LAZY s -> f (TypeDefinition c s)
-  constraintObject ::
-    ( Applicative f,
-      MonadError GQLError f
-    ) =>
-    TypeDefinition c s ->
-    f (TypeDefinition (IS_OBJECT c) s)
+  kindConstraint :: KindConstraint f c => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
+  constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (Variant c s)
 
-instance KindErrors STRICT where
+instance KindErrors DATA_TYPE where
   kindConstraint = _kindConstraint " data type"
-  constraintObject TypeDefinition {typeContent = StrictTypeContent {..}, ..} = pure TypeDefinition {typeContent = StrictTypeContent {..}, ..}
-  constraintObject TypeDefinition {typeName} = throwError (violation "data object" typeName)
+  constraintObject
+    _
+    TypeDefinition
+      { typeName,
+        typeContent = DataTypeContent typeFields
+      } =
+      case toList typeFields of
+        [Variant {..}] -> pure (Variant {..})
+        _ -> throwError (violation "data object" typeName)
+  constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
-instance KindErrors LAZY where
+instance KindErrors RESOLVER_TYPE where
   kindConstraint = _kindConstraint " output type"
-
-  -- constraintObject TypeDefinition {typeContent = StrictTypeContent {..}, ..} = pure TypeDefinition {typeContent = StrictTypeContent {..}, ..}
-  constraintObject TypeDefinition {typeContent = LazyTypeContent {..}, ..} = pure TypeDefinition {typeContent = LazyTypeContent {..}, ..}
-  constraintObject TypeDefinition {typeName} = throwError (violation "object" typeName)
+  constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
+  constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
+    lookupTypeVariant (Just variantName) variants
+  constraintObject _ TypeDefinition {typeName} = throwError (violation "object" typeName)
 
 violation ::
-  Token ->
+  Text ->
   TypeName ->
   GQLError
 violation kind typeName =

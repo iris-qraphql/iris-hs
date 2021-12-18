@@ -1,6 +1,6 @@
 [
   {
-    "message": "offset=0:\nobject __typename must be a String but got 3235.\n",
+    "message": "offset=0:\nobject \"__typename\" must be a String but got 3235.\n",
     "locations": [{ "line": 1, "column": 1 }]
   }
 ]

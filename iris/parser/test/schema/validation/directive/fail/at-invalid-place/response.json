@@ -16,7 +16,7 @@
     "locations": [{ "line": 17, "column": 14 }]
   },
   {
-    "message": "Directive \"deprecated\" may not to be used on OBJECT",
+    "message": "Directive \"deprecated\" may not to be used on RESOLVER",
     "locations": [{ "line": 21, "column": 12 }]
   },
   {

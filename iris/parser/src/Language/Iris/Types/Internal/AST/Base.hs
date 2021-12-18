@@ -12,9 +12,6 @@ module Language.Iris.Types.Internal.AST.Base
   ( Ref (..),
     Position (..),
     Description,
-    Token,
-    TRUE,
-    FALSE,
   )
 where
 
@@ -32,14 +29,6 @@ import Relude hiding
     intercalate,
   )
 
-type TRUE = 'True
-
-type FALSE = 'False
-
--- Strings
-type Token = Text
-
--- Description
 type Description = Text
 
 data Position = Position

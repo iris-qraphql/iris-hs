@@ -33,12 +33,12 @@ data TypeGuardError
   | Missing
 
 partialImplements :: Field ON_INTERFACE -> TypeGuardError -> GQLError
-partialImplements (Field fieldName argName (TypeEntity (OnTypeGuard guardName memberName) typename)) errorType =
+partialImplements (Field fieldName argName (TypeEntity (OnTypeGuard guardName variantName) typename)) errorType =
   "type guard field " <> maybe "" (const "argument ") argName
     <> renderField (typename <> "." <> guardName) fieldName argName
     <> detailedMessageGen
-      (renderField memberName fieldName argName)
-      (maybe (msg memberName) (const $ renderField memberName fieldName Nothing) argName)
+      (renderField variantName fieldName argName)
+      (maybe (msg variantName) (const $ renderField variantName fieldName Nothing) argName)
       errorType
 
 detailedMessageGen :: GQLError -> GQLError -> TypeGuardError -> GQLError

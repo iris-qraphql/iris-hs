@@ -16,15 +16,15 @@ module Language.Iris.Types.Internal.AST.Name
     FieldName,
     TypeName,
     unitTypeName,
-    unitFieldName,
     isNotSystemTypeName,
-    isNotSystemFieldName,
     intercalate,
     NAME (..),
     FragmentName,
     __typename,
     unpackVariantTypeName,
     packVariantTypeName,
+    isNotSystemName,
+    getVariantName,
   )
 where
 
@@ -76,7 +76,6 @@ newtype Name (t :: NAME) = Name {unpackName :: Text}
       ToJSON
     )
 
-
 instance Msg (Name t) where
   msg name = msg $ "\"" <> unpackName name <> "\""
 
@@ -109,10 +108,6 @@ unitTypeName :: TypeName
 unitTypeName = "Unit"
 {-# INLINE unitTypeName #-}
 
-unitFieldName :: FieldName
-unitFieldName = "_"
-{-# INLINE unitFieldName #-}
-
 isNotSystemName :: Name t -> Bool
 isNotSystemName = not . T.isPrefixOf "__" . unpackName
 
@@ -132,12 +127,11 @@ isNotSystemTypeName name =
 __typename :: FieldName
 __typename = "__typename"
 
-isNotSystemFieldName :: FieldName -> Bool
-isNotSystemFieldName = isNotSystemName
-{-# INLINE isNotSystemFieldName #-}
-
 unpackVariantTypeName :: TypeName -> (TypeName, Maybe TypeName)
 unpackVariantTypeName = bimap packName (fmap packName . T.stripPrefix ".") . T.breakOn "." . unpackName
 
 packVariantTypeName :: TypeName -> TypeName -> TypeName
-packVariantTypeName typename memberName = typename <> "." <> memberName
+packVariantTypeName typename variantName = typename <> "." <> variantName
+
+getVariantName :: TypeName -> Maybe TypeName
+getVariantName = snd . unpackVariantTypeName

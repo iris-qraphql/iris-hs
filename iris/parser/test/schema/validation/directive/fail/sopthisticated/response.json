@@ -41,7 +41,7 @@
     "locations": [{ "line": 12, "column": 14 }]
   },
   {
-    "message": "Directive \"DirectiveC\" may not to be used on OBJECT",
+    "message": "Directive \"DirectiveC\" may not to be used on RESOLVER",
     "locations": [{ "line": 15, "column": 12 }]
   },
   {

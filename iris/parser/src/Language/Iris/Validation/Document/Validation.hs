@@ -24,25 +24,23 @@ import Language.Iris.Schema.Schema
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     CONST,
+    DATA_TYPE,
     DirectiveDefinition (..),
     DirectiveLocation (..),
     FieldContent (..),
     FieldDefinition (..),
     FieldName,
     GQLResult,
-    LAZY,
-    STRICT,
+    RESOLVER_TYPE,
+    Role,
     Schema (..),
-    TRUE,
-    TypeCategory,
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
-    Typed (..),
-    UnionMember (..),
     VALID,
     Value,
-    kindOf,
+    Variant (..),
+    toLocation,
     (<:>),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
@@ -111,7 +109,7 @@ instance TypeCheck Schema where
 
 instance TypeCheck (TypeDefinition cat) where
   typeCheck
-    t@TypeDefinition
+    TypeDefinition
       { typeName,
         typeDescription,
         typeDirectives,
@@ -121,26 +119,22 @@ instance TypeCheck (TypeDefinition cat) where
         TypeDefinition
           typeDescription
           typeName
-          <$> validateDirectives (TYPE_DIRECTIVE $ kindOf t) typeDirectives
+          <$> validateDirectives (toLocation typeContent) typeDirectives
           <*> typeCheck typeContent
 
-instance TypeCheck (TypeContent TRUE cat) where
-  type TypeContext (TypeContent TRUE cat) = TypeEntity ON_TYPE
-  typeCheck LazyTypeContent {lazyObjectFields} =
-    LazyTypeContent <$> traverse typeCheck lazyObjectFields
-  typeCheck StrictTypeContent {strictObjectFields} =
-    StrictTypeContent <$> traverse typeCheck strictObjectFields
+instance TypeCheck (TypeContent cat) where
+  type TypeContext (TypeContent cat) = TypeEntity ON_TYPE
   typeCheck ScalarTypeContent {..} = pure ScalarTypeContent {..}
-  typeCheck StrictUnionContent {strictUnionMembers} =
-    StrictUnionContent <$> traverse typeCheck strictUnionMembers
+  typeCheck DataTypeContent {dataVariants} =
+    DataTypeContent <$> traverse typeCheck dataVariants
   typeCheck
-    LazyUnionContent
-      { unionTypeGuardName,
-        unionMembers
+    ResolverTypeContent
+      { resolverTypeGuard,
+        resolverVariants
       } =
-      LazyUnionContent
-        <$> traverse (validateTypeGuard (toList unionMembers)) unionTypeGuardName
-        <*> traverse typeCheck unionMembers
+      ResolverTypeContent
+        <$> traverse (validateTypeGuard (toList resolverVariants)) resolverTypeGuard
+        <*> traverse typeCheck resolverVariants
 
 instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
   type TypeContext (FieldDefinition cat) = TypeEntity ON_TYPE
@@ -155,17 +149,17 @@ instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
           <*> validateDirectives (directiveLocation (Proxy @cat)) fieldDirectives
       )
     where
-      checkFieldContent :: FieldContent TRUE cat CONST -> SchemaValidator (Field ON_TYPE) (FieldContent TRUE cat VALID)
+      checkFieldContent :: FieldContent cat CONST -> SchemaValidator (Field ON_TYPE) (FieldContent cat VALID)
       checkFieldContent (ResolverFieldContent args) = ResolverFieldContent <$> traverse typeCheck args
       checkFieldContent DataFieldContent = pure DataFieldContent
 
-class FieldDirectiveLocation (cat :: TypeCategory) where
+class FieldDirectiveLocation (cat :: Role) where
   directiveLocation :: Proxy cat -> DirectiveLocation
 
-instance FieldDirectiveLocation LAZY where
+instance FieldDirectiveLocation RESOLVER_TYPE where
   directiveLocation _ = FIELD_DEFINITION
 
-instance FieldDirectiveLocation STRICT where
+instance FieldDirectiveLocation DATA_TYPE where
   directiveLocation _ = DATA_FIELD_DEFINITION
 
 instance TypeCheck DirectiveDefinition where
@@ -196,10 +190,10 @@ validateDefaultValue ::
   SchemaValidator (Field ON_TYPE) (Value VALID)
 validateDefaultValue typeRef argName value = do
   Field fName _ (TypeEntity _ typeName) <- asks (local . localContext)
-  startInput (SourceInputField typeName fName argName) (validateInputByTypeRef (Typed typeRef) value)
+  startInput (SourceInputField typeName fName argName) (validateInputByTypeRef typeRef value)
 
-instance FieldDirectiveLocation cat => TypeCheck (UnionMember cat) where
-  type TypeContext (UnionMember cat) = TypeEntity ON_TYPE
-  typeCheck UnionMember {..} =
-    UnionMember memberDescription memberName
-      <$> traverse (traverse typeCheck) memberFields
+instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
+  type TypeContext (Variant cat) = TypeEntity ON_TYPE
+  typeCheck Variant {..} =
+    Variant variantDescription variantName membership
+      <$> traverse typeCheck memberFields

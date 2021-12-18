@@ -146,6 +146,10 @@ on tuples. For output tuples we will use GraphqL spread to determine which field
 
 TODO: Tuples: `(A,B)`
 
+### No Explicit Schema Definition
+
+in graphql you can define schema, with custom types as query. However in iris for simplicity only Types with coresponding names : `Query`, `Mutation`, `Subscription` will be selected as coresponding operations.
+
 ## Introspection
 
 ### Schema
@@ -176,10 +180,10 @@ resolver __Type
         name: String
         description: String?
       }
-    | Collection {
+    | Series {
         name: String
         description: String?
-        parameter: __TypeRef
+        parameters: [__TypeRef]
       }
     | ADT {
         role: __Role?
@@ -200,7 +204,7 @@ resolver __Variant {
 data __TypeRef {
   name: String
   required: Boolean
-  parameter: __TypeRef?
+  parameters: [__TypeRef]
 }
 
 resolver __Field {
@@ -277,8 +281,8 @@ fragment ADT on __Type.ADT {
   }
 }
 
-fragment List on __Type.Collection {
-  parameter
+fragment List on __Type.Series {
+  parameters
 }
 
 fragment Argument on __Argument {

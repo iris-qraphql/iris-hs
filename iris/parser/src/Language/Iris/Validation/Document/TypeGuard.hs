@@ -11,17 +11,16 @@ module Language.Iris.Validation.Document.TypeGuard
 where
 
 import Control.Monad.Except (throwError)
-import Language.Iris.Error.Resolver
-  ( TypeGuardError (..),
-    partialImplements,
-  )
 import Data.Mergeable.Utils
   ( KeyOf (..),
     empty,
     selectOr,
   )
-import qualified  Language.Iris.Types.Internal.AST as T
-
+import Language.Iris.Error.Resolver
+  ( TypeGuardError (..),
+    partialImplements,
+  )
+import qualified Language.Iris.Types.Internal.AST as T
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
@@ -29,22 +28,18 @@ import Language.Iris.Types.Internal.AST
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    LAZY,
+    RESOLVER_TYPE,
     Subtyping (..),
-    TRUE,
-    IS_OBJECT,
-    TypeContent (..),
-    TypeDefinition (..),
     TypeName,
     TypeRef (..),
-    UnionMember (..), 
+    Variant (..),
   )
 import Language.Iris.Types.Internal.Validation
   ( ValidatorContext (localContext),
-    askTypeMember, 
   )
 import Language.Iris.Types.Internal.Validation.Internal
-  ( askObjectType
+  ( askObjectType,
+    resolveTypeMember,
   )
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
@@ -53,7 +48,7 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
     PLACE,
     SchemaValidator,
     TypeEntity (..),
-    TypeSystemContext(..) ,
+    TypeSystemContext (..),
     inArgument,
     inField,
     inTypeGuard,
@@ -61,19 +56,22 @@ import Language.Iris.Types.Internal.Validation.SchemaValidator
 import Relude hiding (empty, local)
 
 validateTypeGuard ::
-  [UnionMember LAZY CONST] -> TypeName -> 
+  [Variant RESOLVER_TYPE CONST] ->
+  TypeName ->
   SchemaValidator (TypeEntity ON_TYPE) TypeName
-validateTypeGuard  unionTypeNames  typeGuardName = do
+validateTypeGuard unionTypeNames typeGuardName = do
   guardType <- askObjectType typeGuardName
-  traverse (askTypeMember >=> hasCompatibleFields guardType) unionTypeNames
+  traverse (resolveTypeMember >=> hasCompatibleFields guardType) unionTypeNames
     $> typeGuardName
   where
-    hasCompatibleFields :: TypeDefinition (IS_OBJECT LAZY) CONST -> TypeDefinition (IS_OBJECT LAZY) CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
-    hasCompatibleFields guardType memberType = inTypeGuard 
-      (T.typeName guardType) (T.typeName memberType)  $ 
-      isCompatibleTo 
-        (lazyObjectFields $ typeContent memberType)
-        (lazyObjectFields $ typeContent guardType) 
+    hasCompatibleFields :: Variant RESOLVER_TYPE CONST -> Variant RESOLVER_TYPE CONST -> SchemaValidator (TypeEntity ON_TYPE) ()
+    hasCompatibleFields guardType memberType =
+      inTypeGuard
+        (T.variantName guardType)
+        (T.variantName memberType)
+        $ isCompatibleTo
+          (memberFields memberType)
+          (memberFields guardType)
 
 class StructuralCompatibility a where
   type Context a :: PLACE -> Type
@@ -85,8 +83,8 @@ class StructuralCompatibility a where
   isCompatibleBy :: (t -> a) -> t -> t -> SchemaValidator ((Context a) ON_INTERFACE) ()
   isCompatibleBy f a b = f a `isCompatibleTo` f b
 
-instance StructuralCompatibility (FieldsDefinition LAZY s) where
-  type Context (FieldsDefinition LAZY s) = TypeEntity
+instance StructuralCompatibility (FieldsDefinition RESOLVER_TYPE s) where
+  type Context (FieldsDefinition RESOLVER_TYPE s) = TypeEntity
   isCompatibleTo objFields = traverse_ checkInterfaceField
     where
       checkInterfaceField interfaceField@FieldDefinition {fieldName} =
@@ -94,12 +92,12 @@ instance StructuralCompatibility (FieldsDefinition LAZY s) where
         where
           err = failImplements Missing
 
-instance StructuralCompatibility (FieldDefinition LAZY s) where
+instance StructuralCompatibility (FieldDefinition RESOLVER_TYPE s) where
   f1 `isCompatibleTo` f2 =
     isCompatibleBy fieldType f1 f2
       *> isCompatibleBy (fieldArgs . fieldContent) f1 f2
 
-fieldArgs :: Maybe (FieldContent TRUE LAZY s) -> ArgumentsDefinition s
+fieldArgs :: Maybe (FieldContent  RESOLVER_TYPE s) -> ArgumentsDefinition s
 fieldArgs (Just (ResolverFieldContent args)) = args
 fieldArgs _ = empty
 

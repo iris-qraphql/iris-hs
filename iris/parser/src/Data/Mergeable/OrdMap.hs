@@ -68,6 +68,7 @@ instance (Eq k, Hashable k) => IsMap k (OrdMap k) where
       withKey idx = (indexedKey idx, idx)
   singleton k x = OrdMap $ HM.singleton k (Indexed 0 k x)
   lookup key OrdMap {mapEntries} = indexedValue <$> lookup key mapEntries
+  delete key OrdMap {mapEntries} = OrdMap $ delete key mapEntries
 
 instance (NameCollision e a, Eq k, Hashable k, Monad m, MonadError e m) => Merge m (OrdMap k a) where
   merge (OrdMap x) (OrdMap y) = OrdMap <$> merge x (fmap (shiftIndexes (HM.size x)) y)

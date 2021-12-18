@@ -1,7 +1,8 @@
 {
   "data": {
     "deity": {
-      "name": "Morpheus"
+      "name": "Morpheus",
+      "__typename":"Deity"
     }
   }
 }

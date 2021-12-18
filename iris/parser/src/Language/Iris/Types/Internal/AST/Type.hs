@@ -2,22 +2,21 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Language.Iris.Types.Internal.AST.Type
   ( TypeRef (..),
     TypeWrapper (..),
     Nullable (..),
-    Strictness (..),
-    TypeKind (..),
     Subtyping (..),
-    mkTypeRef,
     mkBaseType,
     mkMaybeType,
   )
 where
 
+import qualified Data.Text.Lazy as LT
+import Data.Text.Lazy.Encoding (decodeUtf8)
+import Language.Haskell.TH.Syntax (Lift (..))
 import Language.Iris.Rendering.RenderGQL
   ( RenderGQL (..),
     Rendering,
@@ -31,51 +30,12 @@ import Language.Iris.Types.Internal.AST.Name
   ( TypeName,
     packName,
   )
-import Language.Iris.Types.Internal.AST.OperationType
-  ( OperationType (..),
-  )
-import qualified Data.Text.Lazy as LT
-import Data.Text.Lazy.Encoding (decodeUtf8)
-import Language.Haskell.TH.Syntax (Lift (..))
 import Relude hiding
   ( ByteString,
     decodeUtf8,
     intercalate,
   )
 
--- Kind
------------------------------------------------------------------------------------
-data TypeKind
-  = SCALAR
-  | OBJECT (Maybe OperationType)
-  | UNION
-  | DATA
-  | LIST
-  deriving (Eq, Show, Lift)
-
-instance RenderGQL TypeKind where
-  renderGQL SCALAR = "SCALAR"
-  renderGQL OBJECT {} = "OBJECT"
-  renderGQL UNION = "UNION"
-  renderGQL DATA = "DATA"
-  renderGQL LIST = "LIST"
-
---  Definitions:
---     Strictness:
---        Strict: Value (Strict) Types.
---             members: {scalar, data}
---        Lazy: Resolver (lazy) Types
---             members: resolver 
-class Strictness t where
-  isResolverType :: t -> Bool
-
-instance Strictness TypeKind where
-  isResolverType (OBJECT _) = True
-  isResolverType UNION = True
-  isResolverType _ = False
-
--- TypeWrappers
------------------------------------------------------------------------------------
 data TypeWrapper
   = TypeList !TypeWrapper !Bool
   | BaseType !Bool
@@ -126,9 +86,6 @@ data TypeRef = TypeRef
   }
   deriving (Show, Eq, Lift)
 
-mkTypeRef :: TypeName -> TypeRef
-mkTypeRef typeConName = TypeRef {typeConName, typeWrappers = mkBaseType}
-
 instance Subtyping TypeRef where
   isSubtype t1 t2 =
     typeConName t1 == typeConName t2
@@ -149,14 +106,10 @@ instance Msg TypeRef where
 
 class Nullable a where
   isNullable :: a -> Bool
-  toNullable :: a -> a
 
 instance Nullable TypeWrapper where
   isNullable (TypeList _ nonNull) = not nonNull
   isNullable (BaseType nonNull) = not nonNull
-  toNullable (TypeList t _) = TypeList t False
-  toNullable BaseType {} = BaseType False
 
 instance Nullable TypeRef where
   isNullable = isNullable . typeWrappers
-  toNullable TypeRef {..} = TypeRef {typeWrappers = toNullable typeWrappers, ..}

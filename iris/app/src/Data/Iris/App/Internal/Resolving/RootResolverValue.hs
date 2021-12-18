@@ -89,7 +89,7 @@ runRootDataResolver
   selection =
     do
       root <- runResolverStateT (toResolverStateT res) ctx
-      runResolver channels (resolveObject mempty root selection) ctx
+      runResolver channels (resolveObject Nothing mempty root selection) ctx
 
 runRootResolverValue :: Monad m => RootResolverValue e m -> ResolverContext -> ResponseStream e m (Value VALID)
 runRootResolverValue
@@ -136,7 +136,7 @@ withIntrospection f ctx@ResolverContext {operation} = case splitSystemSelection 
     mergeRoot y x
 
 introspection :: Monad m => SelectionSet VALID -> ResolverContext -> ResponseStream event m ValidValue
-introspection selection ctx@ResolverContext {schema} = runResolver Nothing (resolveObject mempty (schemaAPI schema) selection) ctx
+introspection selection ctx@ResolverContext {schema} = runResolver Nothing (resolveObject Nothing mempty (schemaAPI schema) selection) ctx
 
 mergeRoot :: MonadError GQLError m => ValidValue -> ValidValue -> m ValidValue
 mergeRoot (Object tName x) (Object _ y) = Object tName <$> merge x y

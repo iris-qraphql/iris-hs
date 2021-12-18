@@ -4,7 +4,7 @@ directive @DirectiveB(arg: Int?) on DATA_FIELD_DEFINITION | DATA
 
 directive @DirectiveC(
   arg: MyInput = {}
-) on FIELD_DEFINITION | OBJECT | ARGUMENT_DEFINITION
+) on FIELD_DEFINITION | RESOLVER | ARGUMENT_DEFINITION
 
 scalar MyScalar @DirectiveA
 

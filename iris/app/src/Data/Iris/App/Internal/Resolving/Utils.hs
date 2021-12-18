@@ -27,9 +27,11 @@ import Data.Iris.App.Internal.Resolving.Types
     ObjectTypeResolver (..),
     ResolverValue (..),
     mkList,
-    mkNull, mkObject,
+    mkNull,
+    mkObject,
   )
 import Data.Mergeable.Utils (selectOr)
+import qualified Data.Vector as V
 import Language.Iris.Types.Internal.AST
   ( GQLError,
     ScalarValue (..),
@@ -37,8 +39,8 @@ import Language.Iris.Types.Internal.AST
     decodeScientific,
     internal,
     packName,
+    __typename, Name (unpackName),
   )
-import qualified Data.Vector as V
 import Relude
 
 lookupResJSON :: (MonadError GQLError f, Monad m) => Text -> A.Value -> f (ObjectTypeResolver m)
@@ -59,7 +61,7 @@ mkValue ::
   ResolverValue m
 mkValue (A.Object v) =
   mkObject
-    (HM.lookup "__typename" v >>= unpackJSONName)
+    (HM.lookup (unpackName __typename) v >>= unpackJSONName)
     $ fmap
       (bimap packName (pure . mkValue))
       (HM.toList v)

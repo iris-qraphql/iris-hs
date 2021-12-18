@@ -6,7 +6,6 @@ module Language.Iris.Rendering.RenderGQL
   ( RenderGQL (..),
     render,
     renderObject,
-    renderMembers,
     newline,
     renderArguments,
     renderEntry,
@@ -107,9 +106,6 @@ renderAtNewLine elems = indentNewline $ intercalate newline (fmap renderGQL elem
 
 renderObject :: (RenderGQL a) => [a] -> Rendering
 renderObject fields = space <> "{" <> renderAtNewLine fields <> newline <> "}"
-
-renderMembers :: (RenderGQL a, Foldable t) => t a -> Rendering
-renderMembers members = intercalate (space <> "|" <> space) (fmap renderGQL (toList members))
 
 renderArguments :: (RenderGQL a) => [a] -> Rendering
 renderArguments arguments
