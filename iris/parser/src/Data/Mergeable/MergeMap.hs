@@ -67,6 +67,8 @@ instance
   singleton k x = MergeMap ((k, x) :| [])
   lookup key (MergeMap (x :| xs)) = L.lookup key (x : xs)
 
+
+
 instance
   ( Monad m,
     Eq a,

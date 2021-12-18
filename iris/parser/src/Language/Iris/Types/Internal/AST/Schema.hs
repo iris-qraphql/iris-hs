@@ -27,9 +27,8 @@ import Data.Mergeable.SafeHashMap
   ( toHashMap,
   )
 import Data.Mergeable.Utils
-  ( Empty (..),
-    IsMap (..),
-    insert,
+  ( IsMap (..),
+    fromElems,
     lookup,
     toPair,
   )
@@ -124,14 +123,27 @@ isType name x
   | otherwise = Nothing
 
 mkSchema :: MonadError GQLError m => [TypeDefinition RESOLVER_TYPE s] -> DirectivesDefinition s -> m (Schema s)
-mkSchema types directiveDefinitions = do
-  query <- lookupOperationType "Query" types >>= maybe (throwError "Query root type must be provided.") pure
-  mutation <- lookupOperationType "Mutation" types
-  subscription <- lookupOperationType "Subscription" types
-  foldlM defineType (Schema { types = empty,..}) types
+mkSchema ts directiveDefinitions = do
+  typeMap <- fromElems ts
+  query <- lookupOperationType "Query" typeMap >>= maybe (throwError "Query root type must be provided.") pure
+  mutation <- lookupOperationType "Mutation" typeMap
+  subscription <- lookupOperationType "Subscription" typeMap
+  pure $ Schema {types = foldr delete typeMap ["Query", "Mutation", "Subscription"], ..}
 
-defineType :: MonadError GQLError m => Schema s -> TypeDefinition RESOLVER_TYPE s -> m (Schema s)
-defineType lib datatype = (\t -> lib {types = t}) <$> insert datatype (types lib)
+lookupOperationType ::
+  (MonadError GQLError m) =>
+  TypeName ->
+  TypeDefinitions s ->
+  m (Maybe (TypeDefinition RESOLVER_TYPE s))
+lookupOperationType name types = case lookup name types of
+  Just dt@TypeDefinition {typeContent = ResolverTypeContent _ (_ :| [])} ->
+    pure (fromAny dt)
+  Just {} ->
+    throwError $
+      msg name
+        <> " root type must be Object type if provided, it cannot be "
+        <> msg name
+  _ -> pure Nothing
 
 mergeOptional ::
   (Monad m, MonadError GQLError m) =>
@@ -153,19 +165,3 @@ mergeOperation
     fields <- merge (memberFields v1) (memberFields v2)
     pure $ TypeDefinition {typeContent = ResolverTypeContent Nothing ((v1 {memberFields = fields}) :| []), ..}
 mergeOperation TypeDefinition {} TypeDefinition {} = throwError "can't merge non object types"
-
-lookupOperationType ::
-  (MonadError GQLError m) =>
-  TypeName ->
-  [TypeDefinition RESOLVER_TYPE s] ->
-  m (Maybe (TypeDefinition RESOLVER_TYPE s))
-lookupOperationType name types = case find ((== name) . typeName) types of
-  Just dt@TypeDefinition {typeContent = ResolverTypeContent _ (_ :| [])} ->
-    pure (fromAny dt)
-  Just {} ->
-    throwError $
-      msg name
-        <> " root type must be Object type if provided, it cannot be "
-        <> msg name
-  _ -> pure Nothing
-

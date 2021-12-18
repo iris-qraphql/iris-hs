@@ -25,6 +25,8 @@ class IsMap k m | m -> k where
 
   lookup :: k -> m a -> Maybe a
 
+  delete :: k -> m a -> m a
+
   member :: k -> m a -> Bool
   member = selectOr False (const True)
 
@@ -33,6 +35,7 @@ instance (Eq k, Hashable k) => IsMap k (HashMap k) where
   singleton = HM.singleton
   lookup = HM.lookup
   member = HM.member
+  delete = HM.delete
 
 selectBy :: (MonadError e m, IsMap k c, Monad m) => e -> k -> c a -> m a
 selectBy err = selectOr (throwError err) pure
