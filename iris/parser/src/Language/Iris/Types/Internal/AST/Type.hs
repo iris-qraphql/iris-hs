@@ -8,7 +8,6 @@ module Language.Iris.Types.Internal.AST.Type
   ( TypeRef (..),
     TypeWrapper (..),
     Nullable (..),
-    TypeKind (..),
     Subtyping (..),
     mkBaseType,
     mkMaybeType,
@@ -36,16 +35,6 @@ import Relude hiding
     decodeUtf8,
     intercalate,
   )
-
-data TypeKind
-  = SCALAR
-  | RESOLVER
-  | DATA
-  | LIST
-  deriving (Eq, Show, Lift)
-
-instance RenderGQL TypeKind where
-  renderGQL = show
 
 data TypeWrapper
   = TypeList !TypeWrapper !Bool

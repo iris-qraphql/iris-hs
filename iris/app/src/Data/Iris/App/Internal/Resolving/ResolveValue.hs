@@ -32,9 +32,7 @@ import Data.Mergeable.Utils
   )
 import Language.Iris.Error (subfieldsNotSelected)
 import Language.Iris.Types.Internal.AST
-  ( (<:>),
-    FieldName,
-    GQLError,
+  ( FieldName,
     GQLError,
     Msg (msg),
     ObjectEntry (ObjectEntry),
@@ -46,12 +44,12 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     UnionTag (unionTagSelection),
     VALID,
-    VALID,
-    ValidValue,
     ValidValue,
     Value (..),
     internal,
     unpackName,
+    (<:>),
+    __typename,
   )
 import Relude
 
@@ -135,9 +133,10 @@ resolveObject rmap drv =
   where
     resolver currentSelection = do
       t <- askFieldTypeName (selectionName currentSelection)
-      updateCurrentType t $ local (\ctx -> ctx {currentSelection}) $
-        ObjectEntry (keyOf currentSelection)
-          <$> runFieldResolver rmap currentSelection drv
+      updateCurrentType t $
+        local (\ctx -> ctx {currentSelection}) $
+          ObjectEntry (keyOf currentSelection)
+            <$> runFieldResolver rmap currentSelection drv
 
 resolveData :: (MonadReader ResolverContext m, MonadError GQLError m) => ResolverMap m -> (Maybe TypeName, ObjectTypeResolver m) -> m ValidValue
 resolveData rmap (typeName, drv) = Object typeName <$> (traverse (resolverDataField rmap) (HM.toList $ objectFields drv) >>= fromElems)
@@ -158,7 +157,7 @@ runFieldResolver ::
   ObjectTypeResolver m ->
   m ValidValue
 runFieldResolver rmap Selection {selectionName, selectionContent}
-  | selectionName == "__typename" =
+  | selectionName == __typename =
     const (Scalar . String . unpackName <$> asks (typeName . currentType))
   | otherwise =
     maybe (pure Null) (>>= \x -> resolveSelection rmap x selectionContent)

@@ -35,9 +35,8 @@ import Language.Iris.Types.Internal.AST
     GQLResult,
     Name (unpackName),
     TypeName,
-    mkBaseType,
+    mkBaseType, DirectiveLocation (RESOLVER),
   )
-import Language.Iris.Types.Internal.AST.Type (TypeKind (..))
 import Language.Iris.Types.Internal.AST.Schema (Schema)
 import Language.Iris.Types.Internal.Config (Config)
 import Language.Iris.Types.Internal.Validation

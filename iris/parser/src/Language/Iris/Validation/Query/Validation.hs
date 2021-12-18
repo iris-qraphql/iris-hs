@@ -16,9 +16,8 @@ import Language.Iris.Types.Internal.AST
     GQLResult,
     Operation (..),
     Schema (..),
-    TypeKind (..),
     VALID,
-    mkBaseType,
+    mkBaseType, DirectiveLocation (RESOLVER),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation

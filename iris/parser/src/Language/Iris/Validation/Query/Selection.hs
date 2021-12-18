@@ -214,11 +214,11 @@ selectSelectionField ::
   Variant RESOLVER_TYPE s ->
   FragmentValidator s' (FieldDefinition RESOLVER_TYPE s)
 selectSelectionField ref Variant {memberFields}
-  | refName ref == "__typename" =
+  | refName ref == __typename =
     pure
       FieldDefinition
         { fieldDescription = Nothing,
-          fieldName = "__typename",
+          fieldName = __typename,
           fieldType = TypeRef {typeConName = "String", typeWrappers = mkBaseType},
           fieldContent = Nothing,
           fieldDirectives = empty

@@ -40,7 +40,7 @@ import Language.Iris.Types.Internal.AST
     VALID,
     Value,
     Variant (..),
-    kindOf,
+    toLocation,
     (<:>),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
@@ -119,7 +119,7 @@ instance TypeCheck (TypeDefinition cat) where
         TypeDefinition
           typeDescription
           typeName
-          <$> validateDirectives (TYPE_DIRECTIVE $ kindOf typeContent) typeDirectives
+          <$> validateDirectives (toLocation typeContent) typeDirectives
           <*> typeCheck typeContent
 
 instance TypeCheck (TypeContent cat) where

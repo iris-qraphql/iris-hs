@@ -57,7 +57,6 @@ import Language.Iris.Types.Internal.AST
     FieldsDefinition,
     OperationType (..),
     RESOLVER_TYPE,
-    TypeKind (..),
     TypeName,
     Value,
     Variant (..),
@@ -199,18 +198,14 @@ parseDirectiveLocation =
               INLINE_FRAGMENT,
               ARGUMENT_DEFINITION,
               DATA_FIELD_DEFINITION,
-              SCHEMA,
               QUERY,
               MUTATION,
               SUBSCRIPTION,
-              FIELD
+              FIELD,
+              DATA,
+              SCALAR,
+              RESOLVER
             ]
-            <> map
-              (fmap TYPE_DIRECTIVE . toKeyword)
-              [ DATA,
-                SCALAR,
-                RESOLVER
-              ]
         )
     )
     <* ignoredTokens

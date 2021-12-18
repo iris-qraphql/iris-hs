@@ -25,10 +25,10 @@ module Language.Iris.Types.Internal.AST.TypeSystem
     TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
-    kindOf,
     RawTypeDefinition (..),
     HistoryT,
     startHistory,
+    toLocation,
     (<:>),
     mergeNonEmpty,
   )
@@ -56,6 +56,9 @@ import Language.Iris.Types.Internal.AST.Base
   ( Description,
     Ref,
   )
+import Language.Iris.Types.Internal.AST.Directive
+  ( DirectiveLocation (..),
+  )
 import Language.Iris.Types.Internal.AST.Error
   ( GQLError,
     msg,
@@ -81,9 +84,6 @@ import Language.Iris.Types.Internal.AST.Stage
   ( CONST,
     Stage,
     VALID,
-  )
-import Language.Iris.Types.Internal.AST.Type
-  ( TypeKind (..),
   )
 import Language.Iris.Types.Internal.AST.Value
   ( Value (..),
@@ -203,10 +203,10 @@ instance FromAny TypeContent RESOLVER_TYPE where
   fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
 
-kindOf :: TypeContent a s -> TypeKind
-kindOf ScalarTypeContent {} = SCALAR
-kindOf DataTypeContent {} = DATA
-kindOf ResolverTypeContent {} = RESOLVER
+toLocation :: TypeContent a s -> DirectiveLocation
+toLocation ScalarTypeContent {} = SCALAR
+toLocation DataTypeContent {} = DATA
+toLocation ResolverTypeContent {} = RESOLVER
 
 instance RenderGQL (TypeDefinition a s) where
   renderGQL TypeDefinition {typeName, typeContent} = __render typeContent <> newline

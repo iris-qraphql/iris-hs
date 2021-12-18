@@ -34,7 +34,6 @@ module Language.Iris.Types.Internal.AST.Value
   )
 where
 
-
 import Control.Monad.Except
 import qualified Data.Aeson as A
   ( FromJSON (..),
@@ -55,6 +54,14 @@ import Data.Mergeable
 import Data.Mergeable.Utils
   ( KeyOf (..),
   )
+import Data.Scientific
+  ( Scientific,
+    floatingOrInteger,
+  )
+import qualified Data.Text as T
+import qualified Data.Vector as V
+import Instances.TH.Lift ()
+import Language.Haskell.TH.Syntax (Lift (..))
 import Language.Iris.Rendering.RenderGQL
   ( RenderGQL (..),
     fromText,
@@ -86,14 +93,6 @@ import Language.Iris.Types.Internal.AST.Stage
     VALID,
   )
 import Language.Iris.Types.Internal.AST.Type (TypeRef (..))
-import Data.Scientific
-  ( Scientific,
-    floatingOrInteger,
-  )
-import qualified Data.Text as T
-import qualified Data.Vector as V
-import Instances.TH.Lift ()
-import Language.Haskell.TH.Syntax (Lift (..))
 import Relude hiding (fromList)
 
 -- | Primitive Values for GQLScalar: 'Int', 'Float', 'String', 'Boolean'.
@@ -296,4 +295,4 @@ mkObject hm = Object <$> defaultValue <*> fields
 
 unpackTypeName :: MonadFail m => A.Value -> m TypeName
 unpackTypeName (A.String name) = pure (packName name)
-unpackTypeName v = fail $ "object __typename must be a String but got " <> LB.unpack (render v) <> "."
+unpackTypeName v = fail $ "object " <> show __typename <> " must be a String but got " <> LB.unpack (render v) <> "."

@@ -41,7 +41,6 @@ import Language.Iris.Types.Internal.AST
     RESOLVER_TYPE,
     TypeContent (..),
     TypeDefinition (..),
-    TypeKind (..),
     TypeName,
     TypeRef (..),
     TypeWrapper (BaseType, TypeList),
@@ -74,8 +73,6 @@ instance RenderIntrospection a => RenderIntrospection (Maybe a) where
 instance RenderIntrospection Bool where
   render = pure . mkBoolean
 
-instance RenderIntrospection TypeKind where
-  render = pure . mkString . fromLBS . GQL.render
 
 instance RenderIntrospection (DirectiveDefinition VALID) where
   render DirectiveDefinition {..} =

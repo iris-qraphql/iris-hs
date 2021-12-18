@@ -7,9 +7,8 @@ module Language.Iris.Types.Internal.AST.Directive
 where
 
 import Language.Haskell.TH.Syntax (Lift)
-import Language.Iris.Rendering.RenderGQL (render)
+import Language.Iris.Rendering.RenderGQL
 import Language.Iris.Types.Internal.AST.Error (Msg (..))
-import Language.Iris.Types.Internal.AST.Type (TypeKind)
 import Relude hiding (Show, show)
 import Prelude (Show (..))
 
@@ -21,14 +20,17 @@ data DirectiveLocation
   | FRAGMENT_DEFINITION
   | FRAGMENT_SPREAD
   | INLINE_FRAGMENT
-  | SCHEMA
   | FIELD_DEFINITION
   | ARGUMENT_DEFINITION
   | DATA_FIELD_DEFINITION
-  | TYPE_DIRECTIVE TypeKind
+  | SCALAR
+  | RESOLVER
+  | DATA
+  | LIST
   deriving (Show, Eq, Lift)
 
 instance Msg DirectiveLocation where
-  msg (TYPE_DIRECTIVE x) = msg (render x)
-  msg x = msg (show x)
+  msg = msg . show
 
+instance RenderGQL DirectiveLocation where
+  renderGQL = fromString . show

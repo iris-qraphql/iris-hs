@@ -21,7 +21,7 @@ import Data.Mergeable.Utils
   )
 import Language.Iris.Types.Internal.AST (Variant (..), mergeNonEmpty, startHistory)
 import Language.Iris.Types.Internal.AST.Base (Position (..))
-import Language.Iris.Types.Internal.AST.Name (TypeName)
+import Language.Iris.Types.Internal.AST.Name (TypeName, __typename)
 import Language.Iris.Types.Internal.AST.Role
   ( RESOLVER_TYPE,
   )
@@ -81,7 +81,7 @@ exploreFragments validateFragment types selectionSet = do
   (tags,)
     <$> fromElems
       ( ( Selection
-            { selectionName = "__typename",
+            { selectionName = __typename,
               selectionAlias = Nothing,
               selectionPosition,
               selectionArguments = empty,
