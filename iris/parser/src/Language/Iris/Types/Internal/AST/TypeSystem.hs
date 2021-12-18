@@ -68,9 +68,6 @@ import Language.Iris.Types.Internal.AST.Name
   ( FieldName,
     TypeName,
   )
-import Language.Iris.Types.Internal.AST.OperationType
-  ( toOperationType,
-  )
 import Language.Iris.Types.Internal.AST.Role
   ( DATA_TYPE,
     FromAny (..),
@@ -206,12 +203,10 @@ instance FromAny TypeContent RESOLVER_TYPE where
   fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
   fromAny DataTypeContent {..} = Just DataTypeContent {..}
 
-kindOf :: TypeDefinition a s -> TypeKind
-kindOf TypeDefinition {typeName, typeContent} = __kind typeContent
-  where
-    __kind ScalarTypeContent {} = SCALAR
-    __kind DataTypeContent {} = DATA
-    __kind ResolverTypeContent {} = RESOLVER (toOperationType typeName)
+kindOf :: TypeContent a s -> TypeKind
+kindOf ScalarTypeContent {} = SCALAR
+kindOf DataTypeContent {} = DATA
+kindOf ResolverTypeContent {} = RESOLVER
 
 instance RenderGQL (TypeDefinition a s) where
   renderGQL TypeDefinition {typeName, typeContent} = __render typeContent <> newline

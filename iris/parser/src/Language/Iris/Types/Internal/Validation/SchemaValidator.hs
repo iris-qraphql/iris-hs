@@ -106,7 +106,7 @@ initialScope =
   Scope
     { position = Nothing,
       currentTypeName = "Root",
-      currentTypeKind = RESOLVER Nothing,
+      currentTypeKind = RESOLVER,
       currentTypeWrappers = mkBaseType,
       kind = TYPE,
       fieldName = "Root",

@@ -15,6 +15,9 @@ module Language.Iris.Types.Internal.AST.Type
   )
 where
 
+import qualified Data.Text.Lazy as LT
+import Data.Text.Lazy.Encoding (decodeUtf8)
+import Language.Haskell.TH.Syntax (Lift (..))
 import Language.Iris.Rendering.RenderGQL
   ( RenderGQL (..),
     Rendering,
@@ -28,32 +31,21 @@ import Language.Iris.Types.Internal.AST.Name
   ( TypeName,
     packName,
   )
-import Language.Iris.Types.Internal.AST.OperationType
-  ( OperationType (..),
-  )
-import qualified Data.Text.Lazy as LT
-import Data.Text.Lazy.Encoding (decodeUtf8)
-import Language.Haskell.TH.Syntax (Lift (..))
 import Relude hiding
   ( ByteString,
     decodeUtf8,
     intercalate,
   )
 
--- Kind
------------------------------------------------------------------------------------
 data TypeKind
   = SCALAR
-  | RESOLVER (Maybe OperationType)
+  | RESOLVER
   | DATA
   | LIST
   deriving (Eq, Show, Lift)
 
 instance RenderGQL TypeKind where
-  renderGQL SCALAR = "SCALAR"
-  renderGQL DATA = "DATA"
-  renderGQL RESOLVER {} = "RESOLVER"
-  renderGQL LIST = "LIST"
+  renderGQL = show
 
 data TypeWrapper
   = TypeList !TypeWrapper !Bool

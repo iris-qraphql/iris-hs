@@ -48,20 +48,20 @@ import Language.Iris.Parsing.Internal.Value
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
+    DATA_TYPE,
     Directive (..),
     DirectiveLocation (..),
     Directives,
     FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
-    RESOLVER_TYPE,
     OperationType (..),
-    DATA_TYPE,
+    RESOLVER_TYPE,
     TypeKind (..),
     TypeName,
+    Value,
     Variant (..),
     Variants,
-    Value,
   )
 import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
@@ -70,7 +70,6 @@ import Text.Megaparsec
     many,
   )
 import Text.Megaparsec.Byte (string)
-
 
 unionMembersDefinition ::
   (Parse (Value s), Parse (FieldContent cat s)) =>
@@ -92,6 +91,7 @@ parseMember typeName = do
         membership = fmap (const typeName) fields,
         ..
       }
+
 {-# INLINEABLE unionMembersDefinition #-}
 
 argumentsDefinition ::
@@ -208,11 +208,9 @@ parseDirectiveLocation =
             <> map
               (fmap TYPE_DIRECTIVE . toKeyword)
               [ DATA,
-                SCALAR
+                SCALAR,
+                RESOLVER
               ]
-            <> [ string "RESOLVER"
-                   $> TYPE_DIRECTIVE (RESOLVER Nothing)
-               ]
         )
     )
     <* ignoredTokens

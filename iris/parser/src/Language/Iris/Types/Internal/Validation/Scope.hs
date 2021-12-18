@@ -73,10 +73,10 @@ setDirective Directive {..} Scope {..} =
     }
 
 setType :: TypeDefinition c s -> TypeWrapper -> Scope -> Scope
-setType t wrappers Scope {..} =
+setType TypeDefinition {typeName, typeContent} wrappers Scope {..} =
   Scope
-    { currentTypeName = typeName t,
-      currentTypeKind = kindOf t,
+    { currentTypeName = typeName,
+      currentTypeKind = kindOf typeContent,
       currentTypeWrappers = wrappers,
       ..
     }

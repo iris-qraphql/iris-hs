@@ -109,7 +109,7 @@ instance TypeCheck Schema where
 
 instance TypeCheck (TypeDefinition cat) where
   typeCheck
-    t@TypeDefinition
+    TypeDefinition
       { typeName,
         typeDescription,
         typeDirectives,
@@ -119,7 +119,7 @@ instance TypeCheck (TypeDefinition cat) where
         TypeDefinition
           typeDescription
           typeName
-          <$> validateDirectives (TYPE_DIRECTIVE $ kindOf t) typeDirectives
+          <$> validateDirectives (TYPE_DIRECTIVE $ kindOf typeContent) typeDirectives
           <*> typeCheck typeContent
 
 instance TypeCheck (TypeContent cat) where

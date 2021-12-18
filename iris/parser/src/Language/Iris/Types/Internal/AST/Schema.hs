@@ -125,10 +125,12 @@ isType name x
 mkSchema :: MonadError GQLError m => [TypeDefinition RESOLVER_TYPE s] -> DirectivesDefinition s -> m (Schema s)
 mkSchema ts directiveDefinitions = do
   typeMap <- fromElems ts
-  query <- lookupOperationType "Query" typeMap >>= maybe (throwError "Query root type must be provided.") pure
-  mutation <- lookupOperationType "Mutation" typeMap
-  subscription <- lookupOperationType "Subscription" typeMap
-  pure $ Schema {types = foldr delete typeMap ["Query", "Mutation", "Subscription"], ..}
+  Schema
+    (foldr delete typeMap ["Query", "Mutation", "Subscription"])
+    <$> (lookupOperationType "Query" typeMap >>= maybe (throwError "Query root type must be provided.") pure)
+    <*> lookupOperationType "Mutation" typeMap
+    <*> lookupOperationType "Subscription" typeMap
+    <*> pure directiveDefinitions
 
 lookupOperationType ::
   (MonadError GQLError m) =>
@@ -138,11 +140,7 @@ lookupOperationType ::
 lookupOperationType name types = case lookup name types of
   Just dt@TypeDefinition {typeContent = ResolverTypeContent _ (_ :| [])} ->
     pure (fromAny dt)
-  Just {} ->
-    throwError $
-      msg name
-        <> " root type must be Object type if provided, it cannot be "
-        <> msg name
+  Just {} -> throwError $ msg name <> " type must be an object if provided!"
   _ -> pure Nothing
 
 mergeOptional ::

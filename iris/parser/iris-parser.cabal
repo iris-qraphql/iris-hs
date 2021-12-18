@@ -75,14 +75,6 @@ data-files:
     test/schema/parsing/descriptions/ok/schema.gql
     test/schema/parsing/directive/ok/simple/schema.gql
     test/schema/parsing/directive/ok/sophisticated/schema.gql
-    test/schema/parsing/schema-definition/fail/dupplicate-field/query-mutation-subscription/schema.gql
-    test/schema/parsing/schema-definition/fail/dupplicate-field/query/schema.gql
-    test/schema/parsing/schema-definition/fail/dupplicate-schema-definition/schema.gql
-    test/schema/parsing/schema-definition/fail/unknown-fields/bla/schema.gql
-    test/schema/parsing/schema-definition/fail/unknown-fields/uppercase/schema.gql
-    test/schema/parsing/schema-definition/ok/query-mutation-subscription/schema.gql
-    test/schema/parsing/schema-definition/ok/query-mutation/schema.gql
-    test/schema/parsing/schema-definition/ok/query/schema.gql
     test/schema/validation/data-types/simple/schema.gql
     test/schema/validation/default-value/compound-ok/schema.gql
     test/schema/validation/default-value/missing-field/schema.gql
@@ -95,14 +87,9 @@ data-files:
     test/schema/validation/directive/fail/unknown-directive/schema.gql
     test/schema/validation/directive/ok/deprecated/custom-directive/schema.gql
     test/schema/validation/directive/ok/deprecated/schema.gql
-    test/schema/validation/schema-definition/fail/non-object-kind/from-schema/schema.gql
-    test/schema/validation/schema-definition/fail/non-object-kind/without-schema/schema.gql
-    "test/schema/validation/schema-definition/fail/required query/empty/schema.gql"
-    "test/schema/validation/schema-definition/fail/required query/no-query/schema.gql"
-    "test/schema/validation/schema-definition/fail/required query/no-schema-no-query/schema.gql"
-    "test/schema/validation/schema-definition/fail/required query/schema-with-query/schema.gql"
-    test/schema/validation/schema-definition/fail/unknown-type/unknown/schema.gql
-    test/schema/validation/schema-definition/ok/full/schema.gql
+    test/schema/validation/schema-definition/non-object-kind/schema.gql
+    test/schema/validation/schema-definition/ok/schema.gql
+    test/schema/validation/schema-definition/required-query/schema.gql
     test/schema/validation/type-guard/field-args/fail/schema.gql
     test/schema/validation/type-guard/field-args/ok/schema.gql
     test/schema/validation/type-guard/field-type/fail/schema.gql
@@ -137,14 +124,6 @@ data-files:
     test/schema/parsing/descriptions/ok/response.json
     test/schema/parsing/directive/ok/simple/response.json
     test/schema/parsing/directive/ok/sophisticated/response.json
-    test/schema/parsing/schema-definition/fail/dupplicate-field/query-mutation-subscription/response.json
-    test/schema/parsing/schema-definition/fail/dupplicate-field/query/response.json
-    test/schema/parsing/schema-definition/fail/dupplicate-schema-definition/response.json
-    test/schema/parsing/schema-definition/fail/unknown-fields/bla/response.json
-    test/schema/parsing/schema-definition/fail/unknown-fields/uppercase/response.json
-    test/schema/parsing/schema-definition/ok/query-mutation-subscription/response.json
-    test/schema/parsing/schema-definition/ok/query-mutation/response.json
-    test/schema/parsing/schema-definition/ok/query/response.json
     test/schema/validation/data-types/simple/response.json
     test/schema/validation/default-value/compound-ok/response.json
     test/schema/validation/default-value/missing-field/response.json
@@ -157,14 +136,9 @@ data-files:
     test/schema/validation/directive/fail/unknown-directive/response.json
     test/schema/validation/directive/ok/deprecated/custom-directive/response.json
     test/schema/validation/directive/ok/deprecated/response.json
-    test/schema/validation/schema-definition/fail/non-object-kind/from-schema/response.json
-    test/schema/validation/schema-definition/fail/non-object-kind/without-schema/response.json
-    "test/schema/validation/schema-definition/fail/required query/empty/response.json"
-    "test/schema/validation/schema-definition/fail/required query/no-query/response.json"
-    "test/schema/validation/schema-definition/fail/required query/no-schema-no-query/response.json"
-    "test/schema/validation/schema-definition/fail/required query/schema-with-query/response.json"
-    test/schema/validation/schema-definition/fail/unknown-type/unknown/response.json
-    test/schema/validation/schema-definition/ok/full/response.json
+    test/schema/validation/schema-definition/non-object-kind/response.json
+    test/schema/validation/schema-definition/ok/response.json
+    test/schema/validation/schema-definition/required-query/response.json
     test/schema/validation/type-guard/field-args/fail/response.json
     test/schema/validation/type-guard/field-args/ok/response.json
     test/schema/validation/type-guard/field-type/fail/response.json

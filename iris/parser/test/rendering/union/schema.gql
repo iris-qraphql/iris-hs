@@ -34,8 +34,6 @@ resolver Query = {
   mortal: Mortal
 }
 
-schema {
-  query: Query
-  mutation: Query
-  subscription: Query
-}
+resolver Mutation = Query
+
+resolver Subscription = Query

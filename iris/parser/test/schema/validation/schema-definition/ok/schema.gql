@@ -9,9 +9,3 @@ resolver Mutation = {
 resolver Subscription = {
   name: String
 }
-
-schema {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
-}
