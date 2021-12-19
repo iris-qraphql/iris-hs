@@ -65,7 +65,7 @@ resolveSelection rmap (ResList xs) selection =
   List <$> traverse (flip (resolveSelection rmap) selection) xs
 -- Object -----------------
 resolveSelection rmap (ResObject name fields) SelectionField = resolveData rmap (name, fields)
-resolveSelection rmap (ResObject tyName obj) sel = setCurrentType tyName $ resolveResolver (\t s -> resolveObject tyName rmap obj s) sel
+resolveSelection rmap (ResObject tyName obj) sel = setCurrentType tyName $ resolveResolver (\_ s -> resolveObject tyName rmap obj s) sel
 -- SCALARS
 resolveSelection _ ResNull _ = pure Null
 resolveSelection _ (ResScalar x) SelectionField = pure $ Scalar x

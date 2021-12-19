@@ -141,6 +141,10 @@ data ListDefinition = ListDefinition
 
 type ListDefinitions = SafeHashMap TypeName ListDefinition
 
+instance NameCollision GQLError ListDefinition where
+  nameCollision x = "There can Be only One ListDefinition Named " <> msg (listName x) <> "."
+
+
 type TypeDefinitions s = SafeHashMap TypeName (TypeDefinition RESOLVER_TYPE s)
 
 data TypeDefinition (a :: Role) (s :: Stage) = TypeDefinition

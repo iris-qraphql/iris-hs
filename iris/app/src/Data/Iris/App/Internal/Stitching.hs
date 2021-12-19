@@ -29,9 +29,7 @@ import Data.Mergeable.Utils
     unsafeFromList,
   )
 import Language.Iris.Types.Internal.AST
-  ( Directives,
-    DirectivesDefinition,
-    FieldDefinition,
+  ( FieldDefinition,
     FieldsDefinition,
     GQLError,
     Schema (..),
@@ -66,16 +64,11 @@ instance Stitching (Schema s) where
       <*> prop stitchOperation query s1 s2
       <*> prop (optional stitchOperation) mutation s1 s2
       <*> prop (optional stitchOperation) subscription s1 s2
-      <*> prop stitch directiveDefinitions s1 s2
+      <*> prop merge lists s1 s2
+      <*> prop merge directiveDefinitions s1 s2
 
 instance Stitching (TypeDefinitions s) where
   stitch x y = runResolutionT (mergeT x y) unsafeFromList (resolveWith stitch)
-
-instance Stitching (DirectivesDefinition s) where
-  stitch = merge
-
-instance Stitching (Directives s) where
-  stitch = merge
 
 optional :: Applicative f => (t -> t -> f t) -> Maybe t -> Maybe t -> f (Maybe t)
 optional _ Nothing y = pure y
@@ -91,7 +84,7 @@ stitchOperation x y =
   TypeDefinition
     <$> prop concatM typeDescription x y
     <*> prop fstM typeName x y
-    <*> prop stitch typeDirectives x y
+    <*> prop merge typeDirectives x y
     <*> prop stitch typeContent x y
 
 instance Stitching (TypeDefinition cat s) where
@@ -99,7 +92,7 @@ instance Stitching (TypeDefinition cat s) where
     TypeDefinition
       <$> prop concatM typeDescription x y
       <*> prop (equal $ nameCollision y) typeName x y
-      <*> prop stitch typeDirectives x y
+      <*> prop merge typeDirectives x y
       <*> prop stitch typeContent x y
 
 instance Stitching (TypeContent cat s) where

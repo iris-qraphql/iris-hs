@@ -130,7 +130,9 @@ for example:
 
 like GraphQL list.
 
-exception is named custom listings
+#### Named Lists
+
+named lists are list with specific behavior
 
 ```gql
 list Set

@@ -73,7 +73,6 @@ instance RenderIntrospection a => RenderIntrospection (Maybe a) where
 instance RenderIntrospection Bool where
   render = pure . mkBoolean
 
-
 instance RenderIntrospection (DirectiveDefinition VALID) where
   render DirectiveDefinition {..} =
     pure $
@@ -98,9 +97,9 @@ instance RenderIntrospection (TypeDefinition cat VALID) where
       where
         renderContent ScalarTypeContent {} = mkType "__Type.Scalar" typeName typeDescription []
         renderContent (DataTypeContent variants) =
-          mkUnionType "__Type.ADT" "DATA" typeName typeDescription Nothing variants
+          mkVariants "__Type.ADT" "DATA" typeName typeDescription Nothing variants
         renderContent (ResolverTypeContent typeGuard variants) =
-          mkUnionType "__Type.ADT" "RESOLVER" typeName typeDescription typeGuard variants
+          mkVariants "__Type.ADT" "RESOLVER" typeName typeDescription typeGuard variants
 
 instance RenderIntrospection (FieldContent a VALID) where
   render (ResolverFieldContent args) = render args
@@ -122,6 +121,16 @@ instance RenderIntrospection (FieldDefinition a VALID) where
           renderDeprecated fieldDirectives
         ]
 
+instance RenderIntrospection (Variant a VALID) where
+  render Variant {variantName, membership, memberFields} =
+    pure $
+      mkObject
+        (Just "__Variant")
+        [ renderName variantName,
+          ("namespace", render membership),
+          ("fields", render $ filter fieldVisibility $ toList memberFields)
+        ]
+
 instance RenderIntrospection (ArgumentDefinition VALID) where
   render ArgumentDefinition {argument = FieldDefinition {..}} =
     pure $
@@ -140,8 +149,8 @@ instance RenderIntrospection TypeRef where
   render TypeRef {typeConName, typeWrappers} = pure $ renderWrapper typeWrappers
     where
       renderWrapper :: (Monad m) => TypeWrapper -> ResolverValue m
-      renderWrapper (TypeList nextWrapper isNonNull) =
-        __TypeRef "List" isNonNull (Just $ renderWrapper nextWrapper)
+      renderWrapper (TypeList name nextWrapper isNonNull) =
+        __TypeRef name isNonNull (Just $ renderWrapper nextWrapper)
       renderWrapper (BaseType isNonNull) =
         __TypeRef typeConName isNonNull Nothing
 
@@ -182,51 +191,6 @@ mkType __type name desc etc =
         <> etc
     )
 
-mkFieldsType ::
-  (RenderIntrospection (FieldDefinition t VALID), Monad m) =>
-  TypeName ->
-  TypeName ->
-  TypeName ->
-  Maybe Description ->
-  FieldsDefinition t VALID ->
-  ResolverValue m
-mkFieldsType kind role name desc fields =
-  mkVariants
-    kind
-    role
-    name
-    desc
-    Nothing
-    [ ( Nothing,
-        name,
-        Just $
-          render $
-            filter fieldVisibility $
-              toList fields
-      )
-    ]
-
-mkUnionType ::
-  (Monad m) =>
-  TypeName ->
-  TypeName ->
-  TypeName ->
-  Maybe Description ->
-  Maybe TypeName ->
-  Variants t VALID ->
-  ResolverValue m
-mkUnionType kind role name desc typeGuard variants =
-  mkVariants
-    kind
-    role
-    name
-    desc
-    typeGuard
-    ( map
-        (\x -> (if null (memberFields x) then Just name else Nothing, variantName x, Nothing))
-        (toList variants)
-    )
-
 mkVariants ::
   (Monad m) =>
   TypeName ->
@@ -234,7 +198,7 @@ mkVariants ::
   TypeName ->
   Maybe Description ->
   Maybe TypeName ->
-  [(Maybe TypeName, TypeName, Maybe (m (ResolverValue m)))] ->
+  Variants t VALID ->
   ResolverValue m
 mkVariants
   __type
@@ -248,18 +212,9 @@ mkVariants
       name
       desc
       [ ("role", render role),
-        ("variants", pure $ mkList $ map renderVariant variants),
+        ("variants", render $ toList variants),
         ("guard", render typeGuard)
       ]
-
-renderVariant :: Monad m => (Maybe TypeName, TypeName, Maybe (m (ResolverValue m))) -> ResolverValue m
-renderVariant (namespace, variantName, fields) =
-  mkObject
-    (Just "__Variant")
-    [ renderName variantName,
-      ("namespace", render namespace),
-      ("fields", fromMaybe (pure mkNull) fields)
-    ]
 
 mkObjectType ::
   Monad m =>
@@ -267,7 +222,21 @@ mkObjectType ::
   Maybe Description ->
   FieldsDefinition RESOLVER_TYPE VALID ->
   ResolverValue m
-mkObjectType = mkFieldsType "__Type.ADT" "RESOLVER"
+mkObjectType name desc fields =
+  mkVariants
+    "__Type.ADT"
+    "RESOLVER"
+    name
+    desc
+    Nothing
+    ( Variant
+        { variantName = name,
+          memberFields = fields,
+          membership = Nothing,
+          variantDescription = Nothing
+        }
+        :| []
+    )
 
 renderName ::
   ( RenderIntrospection name,

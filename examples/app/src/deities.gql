@@ -1,3 +1,4 @@
+list Set
 
 data Lifespan 
   = Immortal {} 
@@ -9,7 +10,7 @@ data Power
 
 resolver God = {
   name: String
-  power: [Power]
+  power: Set<Power>
   lifespan: Lifespan
 }
 

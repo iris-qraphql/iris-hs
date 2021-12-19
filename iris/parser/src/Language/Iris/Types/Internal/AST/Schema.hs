@@ -25,8 +25,7 @@ import Data.Mergeable
   ( Merge (..),
   )
 import Data.Mergeable.SafeHashMap
-  ( SafeHashMap,
-    toHashMap,
+  ( toHashMap,
   )
 import Data.Mergeable.Utils
   ( IsMap (..),

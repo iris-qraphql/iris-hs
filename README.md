@@ -11,8 +11,10 @@ language is in experimental phase, so any feedback or proposal is welcome!
 ### Schema
 
 ```gql
-data Lifespan
-  = Immortal {}
+list Set
+
+data Lifespan 
+  = Immortal {} 
   | Limited { max: Int? }
 
 data Power
@@ -21,7 +23,7 @@ data Power
 
 resolver God = {
   name: String
-  power: [Power]
+  power: Set<Power>
   lifespan: Lifespan
 }
 

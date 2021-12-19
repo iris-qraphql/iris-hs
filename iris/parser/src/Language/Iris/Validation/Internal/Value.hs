@@ -138,7 +138,8 @@ validateWrapped wrappers _ Null
   | isNullable wrappers = pure Null
   | otherwise = violation Nothing Null
 -- Validate LIST
-validateWrapped (TypeList wrappers _) tyCont (List list) =
+validateWrapped (TypeList name wrappers _) tyCont (List list) =
+  -- TODO: pick list validator
   List <$> traverse (validateInputByType wrappers tyCont) list
 {-- 2. VALIDATE TYPES, all wrappers are already Processed --}
 validateWrapped BaseType {} TypeDefinition {typeContent} entryValue =
