@@ -29,6 +29,7 @@ import Data.Mergeable.SafeHashMap
   )
 import Data.Mergeable.Utils
   ( IsMap (..),
+    empty,
     fromElems,
     lookup,
     toPair,
@@ -62,6 +63,7 @@ import Language.Iris.Types.Internal.AST.Stage
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
   ( (<:>),
+    ListDefinitions,
     TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
@@ -80,6 +82,7 @@ data Schema (s :: Stage) = Schema
     query :: TypeDefinition RESOLVER_TYPE s,
     mutation :: Maybe (TypeDefinition RESOLVER_TYPE s),
     subscription :: Maybe (TypeDefinition RESOLVER_TYPE s),
+    lists :: ListDefinitions,
     directiveDefinitions :: DirectivesDefinition s
   }
   deriving (Show, Lift)
@@ -91,6 +94,7 @@ instance (MonadError GQLError m) => Merge m (Schema s) where
       <*> mergeOperation (query s1) (query s2)
       <*> mergeOptional (mutation s1) (mutation s2)
       <*> mergeOptional (subscription s1) (subscription s2)
+      <*> merge (lists s1) (lists s2)
       <*> directiveDefinitions s1 <:> directiveDefinitions s2
 
 instance RenderGQL (Schema s) where
@@ -134,6 +138,7 @@ mkSchema ts directiveDefinitions = do
     <$> (lookupOperationType "Query" typeMap >>= maybe (throwError "Query root type must be provided.") pure)
     <*> lookupOperationType "Mutation" typeMap
     <*> lookupOperationType "Subscription" typeMap
+    <*> pure empty -- LISTS
     <*> pure directiveDefinitions
 
 lookupOperationType ::

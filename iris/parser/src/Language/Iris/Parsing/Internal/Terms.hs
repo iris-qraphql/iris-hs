@@ -1,7 +1,9 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 
 module Language.Iris.Parsing.Internal.Terms
   ( name,
@@ -64,7 +66,8 @@ import Language.Iris.Types.Internal.AST
 import Language.Iris.Types.Internal.AST.Name (Name)
 import Relude hiding (ByteString, empty, many)
 import Text.Megaparsec
-  ( between,
+  ( (<?>),
+    between,
     label,
     sepBy,
     sepBy1,
@@ -72,7 +75,6 @@ import Text.Megaparsec
     takeWhile1P,
     takeWhileP,
     try,
-    (<?>),
   )
 import Text.Megaparsec.Byte
   ( char,
@@ -85,6 +87,10 @@ import Text.Megaparsec.Byte
 #define AT 64
 -- '='
 #define EQUAL 61
+-- <
+#define LESS_THEN 60
+-- >
+#define GREATER_THEN 62
 -- '|'
 #define PIPE 124
 -- '$'
@@ -148,6 +154,10 @@ braces = between (symbol 123) (symbol 125)
 brackets :: Parser a -> Parser a
 brackets = between (symbol 91) (symbol 93)
 {-# INLINE brackets #-}
+
+-- parameters: <name>
+parametrized :: Parser a -> Parser a
+parametrized = between (symbol LESS_THEN) (symbol GREATER_THEN)
 
 -- 2.1.9 Names
 -- https://spec.graphql.org/draft/#Name
@@ -272,14 +282,22 @@ parseAlias = try (optional alias) <|> pure Nothing
 parseType :: Parser TypeRef
 parseType = uncurry TypeRef <$> (unwrapped <|> wrapped)
   where
+    parseT = unwrapped <|> wrapped
     unwrapped :: Parser (TypeName, TypeWrapper)
-    unwrapped = (,) <$> parseTypeName <*> (BaseType <$> parseRequired)
+    unwrapped = do
+      n <- parseTypeName
+      parametrizedType n <|> fmap (n,) (BaseType <$> parseRequired)
     {-# INLINE unwrapped #-}
+    parametrizedType n = do
+      (parName, wrappers) <- parametrized parseT
+      req <- parseRequired
+      pure (parName, TypeList n wrappers req)
+    {-# INLINE parametrizedType #-}
     ----------------------------------------------
     wrapped :: Parser (TypeName, TypeWrapper)
     wrapped = do
-      (typename, wrapper) <- brackets (unwrapped <|> wrapped)
+      (typename, wrapper) <- brackets parseT
       isRequired <- parseRequired
-      pure (typename, TypeList wrapper isRequired)
+      pure (typename, TypeList "List" wrapper isRequired)
     {-# INLINE wrapped #-}
 {-# INLINE parseType #-}

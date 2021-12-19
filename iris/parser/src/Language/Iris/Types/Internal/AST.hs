@@ -111,6 +111,7 @@ module Language.Iris.Types.Internal.AST
     lookupTypeVariant,
     getVariantName,
     variantTypeName,
+    ListDefinition (..),
   )
 where
 

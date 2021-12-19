@@ -44,6 +44,7 @@ import Language.Iris.Types.Internal.AST
     Description,
     DirectiveDefinition (..),
     GQLResult,
+    ListDefinition (..),
     RESOLVER_TYPE,
     RawTypeDefinition (..),
     ScalarDefinition (..),
@@ -61,7 +62,6 @@ import Text.Megaparsec
     manyTill,
   )
 
--- Scalars : https://graphql.github.io/graphql-spec/June2018/#sec-Scalars
 scalarTypeDefinition ::
   Parse (Value s) =>
   Maybe Description ->
@@ -73,6 +73,12 @@ scalarTypeDefinition description =
       <*> optionalDirectives
       <*> pure (ScalarTypeContent (ScalarDefinition pure))
 {-# INLINEABLE scalarTypeDefinition #-}
+
+listTypeDefinition :: Maybe Description -> Parser ListDefinition
+listTypeDefinition description =
+  label "ListTypeDefinition" $
+    ListDefinition description <$> typeDeclaration "list"
+{-# INLINEABLE listTypeDefinition #-}
 
 resolverTypeDefinition ::
   Parse (Value s) =>
@@ -116,14 +122,6 @@ dataTypeDefinition description =
     typeVariant name = DataTypeContent . (:| []) . Variant Nothing name Nothing
 {-# INLINEABLE dataTypeDefinition #-}
 
--- 3.13 DirectiveDefinition
---
---  DirectiveDefinition:
---     Description[opt] directive @ Name ArgumentsDefinition[opt] repeatable[opt] on DirectiveLocations
---
---  DirectiveLocations:
---    DirectiveLocations | DirectiveLocation
---    |[opt] DirectiveLocation
 parseDirectiveDefinition ::
   Parse (Value s) =>
   Maybe Description ->
@@ -151,6 +149,7 @@ parseTypeSystemUnit =
               <|> resolverTypeDefinition description
           )
       <|> (RawDirectiveDefinition <$> parseDirectiveDefinition description)
+      <|> (RawListDefinition <$> listTypeDefinition description)
 {-# INLINEABLE parseTypeSystemUnit #-}
 
 parseRawTypeDefinitions :: Parser [RawTypeDefinition]

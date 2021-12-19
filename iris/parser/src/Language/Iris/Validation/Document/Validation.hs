@@ -98,6 +98,7 @@ instance TypeCheck Schema where
         query,
         mutation,
         subscription,
+        lists,
         directiveDefinitions
       } =
       Schema
@@ -105,6 +106,7 @@ instance TypeCheck Schema where
         <*> typeCheck query
         <*> traverse typeCheck mutation
         <*> traverse typeCheck subscription
+        <*> pure lists
         <*> traverse typeCheck directiveDefinitions
 
 instance TypeCheck (TypeDefinition cat) where

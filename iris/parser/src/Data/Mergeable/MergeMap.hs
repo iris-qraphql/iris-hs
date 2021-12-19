@@ -33,6 +33,7 @@ import Data.Mergeable.IsMap (FromList (..), IsMap (..))
 import Language.Haskell.TH.Syntax (Lift (..))
 import Relude hiding (fromList)
 
+
 partition :: (a -> Bool) -> MergeMap dups k a -> (Maybe (MergeMap dups k a), Maybe (MergeMap dups k a))
 partition f (MergeMap xs) =
   case NE.partition (f . snd) xs of
@@ -66,8 +67,10 @@ instance
   unsafeFromList [] = error "empty selection sets are not supported."
   singleton k x = MergeMap ((k, x) :| [])
   lookup key (MergeMap (x :| xs)) = L.lookup key (x : xs)
-
-
+  delete key (MergeMap (x :| xs)) =
+    case filter ((key ==) . fst) (x : xs) of
+      [] -> error "empty selection sets are not supported."
+      (e : es) -> MergeMap (e :| es)
 
 instance
   ( Monad m,

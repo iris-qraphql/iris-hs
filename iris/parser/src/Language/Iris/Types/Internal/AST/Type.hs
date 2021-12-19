@@ -37,7 +37,11 @@ import Relude hiding
   )
 
 data TypeWrapper
-  = TypeList !TypeWrapper !Bool
+  = TypeList
+      { wrapperName :: TypeName,
+        wrapperParameter :: !TypeWrapper,
+        listIsRequired :: !Bool
+      }
   | BaseType !Bool
   deriving (Show, Eq, Lift)
 
@@ -73,8 +77,8 @@ class Subtyping t where
   isSubtype :: t -> t -> Bool
 
 instance Subtyping TypeWrapper where
-  isSubtype (TypeList b nonNull1) (TypeList a nonNull2) =
-    nonNull1 >= nonNull2 && isSubtype b a
+  isSubtype (TypeList name a nonNull1) (TypeList name' a' nonNull2) =
+    name == name' && nonNull1 >= nonNull2 && isSubtype a' a
   isSubtype (BaseType b) (BaseType a) = b >= a
   isSubtype b a = b == a
 
@@ -94,8 +98,11 @@ instance Subtyping TypeRef where
 instance RenderGQL TypeRef where
   renderGQL TypeRef {typeConName, typeWrappers} = renderWrapper typeWrappers
     where
-      renderWrapper (TypeList xs isNonNull) = "[" <> renderWrapper xs <> "]" <> renderNonNull isNonNull
+      renderWrapper (TypeList name xs isNonNull) = renderContent name xs <> renderNonNull isNonNull
       renderWrapper (BaseType isNonNull) = renderGQL typeConName <> renderNonNull isNonNull
+      --
+      renderContent "List" xs = "[" <> renderWrapper xs <> "]"
+      renderContent name xs = renderGQL name <> "<" <> renderWrapper xs <> ">"
 
 renderNonNull :: Bool -> Rendering
 renderNonNull True = ""
@@ -108,7 +115,7 @@ class Nullable a where
   isNullable :: a -> Bool
 
 instance Nullable TypeWrapper where
-  isNullable (TypeList _ nonNull) = not nonNull
+  isNullable TypeList {listIsRequired} = not listIsRequired
   isNullable (BaseType nonNull) = not nonNull
 
 instance Nullable TypeRef where
