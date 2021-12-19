@@ -15,7 +15,6 @@ module Data.Iris.App.Internal.Resolving.Utils
     NamedResolverRef (..),
     ObjectTypeResolver,
     lookupResJSON,
-    mkValue,
   )
 where
 

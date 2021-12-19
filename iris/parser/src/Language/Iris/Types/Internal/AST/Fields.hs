@@ -72,8 +72,8 @@ import Language.Iris.Types.Internal.AST.Role
   ( DATA_TYPE,
     RESOLVER_TYPE,
     Role,
-    ToAny (..),
-    toAny,
+    ToRESOLVER (..),
+    toRESOLVER,
   )
 import Language.Iris.Types.Internal.AST.Stage
   ( Stage,
@@ -167,12 +167,12 @@ type DirectivesDefinition s = OrdMap FieldName (DirectiveDefinition s)
 instance KeyOf FieldName (DirectiveDefinition s) where
   keyOf = directiveDefinitionName
 
-instance ToAny FieldDefinition where
-  toAny FieldDefinition {fieldContent, ..} = FieldDefinition {fieldContent = toAny <$> fieldContent, ..}
+instance ToRESOLVER FieldDefinition where
+  toRESOLVER FieldDefinition {fieldContent, ..} = FieldDefinition {fieldContent = toRESOLVER <$> fieldContent, ..}
 
-instance ToAny FieldContent where
-  toAny (ResolverFieldContent x) = ResolverFieldContent x
-  toAny DataFieldContent = DataFieldContent
+instance ToRESOLVER FieldContent where
+  toRESOLVER (ResolverFieldContent x) = ResolverFieldContent x
+  toRESOLVER DataFieldContent = DataFieldContent
 
 type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
 

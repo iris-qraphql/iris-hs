@@ -9,11 +9,13 @@ module Language.Iris.Types.Internal.AST.Role
   ( Role (..),
     RESOLVER_TYPE,
     DATA_TYPE,
-    ToAny (..),
-    FromAny (..),
+    ToRESOLVER (..),
+    ToDATA (..),
   )
 where
 
+import Control.Monad.Except (MonadError)
+import Language.Iris.Types.Internal.AST.Error (GQLError)
 import Language.Iris.Types.Internal.AST.Stage (Stage)
 import Relude
 
@@ -23,8 +25,8 @@ type DATA_TYPE = 'DATA_TYPE
 
 type RESOLVER_TYPE = 'RESOLVER_TYPE
 
-class ToAny a where
-  toAny :: a k (s :: Stage) -> a RESOLVER_TYPE s
+class ToRESOLVER a where
+  toRESOLVER :: a k (s :: Stage) -> a RESOLVER_TYPE s
 
-class FromAny a (k :: Role) where
-  fromAny :: a RESOLVER_TYPE (s :: Stage) -> Maybe (a k s)
+class ToDATA a where
+  toDATA :: MonadError GQLError m => a RESOLVER_TYPE (s :: Stage) -> m (a DATA_TYPE s)

@@ -26,7 +26,6 @@ module Data.Iris.App.Internal.Resolving
     mkList,
     mkNull,
     mkString,
-    mkValue,
     mkObject,
     SubscriptionField (..),
     getArguments,

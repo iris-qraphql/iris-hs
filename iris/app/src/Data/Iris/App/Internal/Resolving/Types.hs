@@ -81,7 +81,6 @@ data ResolverValue (m :: Type -> Type)
   | ResList [ResolverValue m]
   | ResObject (Maybe TypeName) (ObjectTypeResolver m)
   | ResRef (m NamedResolverRef)
-  | ResLazy (m (ResolverValue m))
 
 instance
   ( Monad m,

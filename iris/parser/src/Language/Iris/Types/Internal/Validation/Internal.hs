@@ -23,7 +23,7 @@ where
 import Control.Monad.Except (MonadError (throwError))
 import Language.Iris.Types.Internal.AST
   ( DATA_TYPE,
-    FromAny,
+    ToDATA,
     GQLError,
     Operation (..),
     RESOLVER_TYPE,
@@ -33,12 +33,12 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     TypeRef,
     VALID,
-    fromAny,
+    toDATA,
     getOperationDataType,
     internal,
     lookupDataType,
     msg,
-    typeConName,
+    typeConName, ToRESOLVER (toRESOLVER),
   )
 import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
 import Language.Iris.Types.Internal.AST.Variant
@@ -63,7 +63,7 @@ resolveTypeMember ::
   Constraints m c cat s ctx =>
   Variant cat s ->
   m (Variant cat s)
-resolveTypeMember Variant {variantName, membership = Just name, memberFields, ..} = do
+resolveTypeMember Variant {variantName, membership = Just name, memberFields, ..} =
   pure
     Variant
       { variantName = packVariantTypeName name variantName,
@@ -77,47 +77,27 @@ type Constraints m c (cat :: Role) s ctx =
     Monad m,
     MonadReader (ValidatorContext s ctx) m,
     KindErrors cat,
-    FromAny TypeContent cat
+    ToDATA TypeContent
   )
 
 getOperationType :: Operation a -> SelectionValidator (Variant RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
 
-type KindConstraint f c =
-  ( MonadError GQLError f,
-    FromAny TypeDefinition c
-  )
-
-_kindConstraint ::
-  KindConstraint f k =>
-  Text ->
-  TypeDefinition RESOLVER_TYPE s ->
-  f (TypeDefinition k s)
-_kindConstraint err anyType =
-  maybe
-    (throwError $ violation err (typeName anyType))
-    pure
-    (fromAny anyType)
+type KindConstraint f  = (MonadError GQLError f, ToDATA TypeDefinition)
 
 class KindErrors c where
-  kindConstraint :: KindConstraint f c => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
+  kindConstraint :: KindConstraint f => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
   constraintObject :: MonadError GQLError m => Maybe TypeName -> TypeDefinition c s -> m (Variant c s)
 
 instance KindErrors DATA_TYPE where
-  kindConstraint = _kindConstraint " data type"
+  kindConstraint = toDATA
   constraintObject
     _
-    TypeDefinition
-      { typeName,
-        typeContent = DataTypeContent typeFields
-      } =
-      case toList typeFields of
-        [Variant {..}] -> pure (Variant {..})
-        _ -> throwError (violation "data object" typeName)
+    TypeDefinition { typeContent = DataTypeContent (Variant {..}:|[])} = pure (Variant {..})
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
 instance KindErrors RESOLVER_TYPE where
-  kindConstraint = _kindConstraint " output type"
+  kindConstraint = pure . toRESOLVER 
   constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
   constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
     lookupTypeVariant (Just variantName) variants

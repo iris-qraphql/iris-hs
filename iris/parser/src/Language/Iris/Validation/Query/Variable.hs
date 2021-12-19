@@ -17,6 +17,7 @@ import Data.Mergeable.Utils
 import Language.Iris.Error.Variable (uninitializedVariable)
 import Language.Iris.Types.Internal.AST
   ( Argument (..),
+    DATA_TYPE,
     DefaultValue,
     Directive (..),
     FieldName,
@@ -28,7 +29,6 @@ import Language.Iris.Types.Internal.AST
     RawValue,
     Ref (..),
     ResolvedValue,
-    DATA_TYPE,
     Selection (..),
     SelectionContent (..),
     SelectionSet,
@@ -41,7 +41,7 @@ import Language.Iris.Types.Internal.AST
     VariableContent (..),
     VariableDefinitions,
     Variables,
-    isNullable,
+    isNullable, toDATA,
   )
 import Language.Iris.Types.Internal.Config
   ( Config (..),
@@ -49,11 +49,9 @@ import Language.Iris.Types.Internal.Config
   )
 import Language.Iris.Types.Internal.Validation
   ( BaseValidator,
-    Constraint (..),
     InputSource (..),
     askFragments,
     checkUnused,
-    constraint,
     selectKnown,
     selectType,
     setPosition,
@@ -145,7 +143,7 @@ lookupAndValidateValueOnBody
     withScope (setPosition variablePosition) $
       toVariable
         <$> ( selectType typeConName
-                >>= constraint ONLY_DATA var
+                >>= toDATA
                 >>= checkType getVariable defaultValue
             )
     where

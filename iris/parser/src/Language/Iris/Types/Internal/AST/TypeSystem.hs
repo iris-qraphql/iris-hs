@@ -34,7 +34,7 @@ module Language.Iris.Types.Internal.AST.TypeSystem
   )
 where
 
-import Control.Monad.Except (MonadError)
+import Control.Monad.Except (MonadError (..))
 import Data.Mergeable
   ( Merge (..),
     NameCollision (..),
@@ -73,12 +73,12 @@ import Language.Iris.Types.Internal.AST.Name
   )
 import Language.Iris.Types.Internal.AST.Role
   ( DATA_TYPE,
-    FromAny (..),
     RESOLVER_TYPE,
     Role,
-    ToAny (..),
-    fromAny,
-    toAny,
+    ToDATA (..),
+    ToRESOLVER (..),
+    toDATA,
+    toRESOLVER,
   )
 import Language.Iris.Types.Internal.AST.Stage
   ( CONST,
@@ -153,16 +153,15 @@ instance NameCollision GQLError (TypeDefinition cat s) where
   nameCollision x =
     "There can Be only One TypeDefinition Named " <> msg (typeName x) <> "."
 
-instance ToAny TypeDefinition where
-  toAny TypeDefinition {typeContent, ..} = TypeDefinition {typeContent = toAny typeContent, ..}
+instance ToRESOLVER TypeDefinition where
+  toRESOLVER TypeDefinition {typeContent, ..} = TypeDefinition {typeContent = toRESOLVER typeContent, ..}
 
-instance
-  (FromAny TypeContent cat) =>
-  FromAny TypeDefinition cat
-  where
-  fromAny TypeDefinition {typeContent, ..} = bla <$> fromAny typeContent
+instance ToDATA TypeDefinition where
+  toDATA TypeDefinition {typeContent, ..} =
+    catchError (to <$> toDATA typeContent) addTypeName
     where
-      bla x = TypeDefinition {typeContent = x, ..}
+      addTypeName e = throwError (e <> "Type " <> msg typeName <> " ")
+      to c = TypeDefinition {typeContent = c, ..}
 
 data
   TypeContent
@@ -188,20 +187,15 @@ indexOf ScalarTypeContent {} = 0
 indexOf DataTypeContent {} = 1
 indexOf ResolverTypeContent {} = 3
 
-instance ToAny TypeContent where
-  toAny ScalarTypeContent {..} = ScalarTypeContent {..}
-  toAny DataTypeContent {..} = DataTypeContent {..}
-  toAny ResolverTypeContent {..} = ResolverTypeContent {..}
+instance ToRESOLVER TypeContent where
+  toRESOLVER ScalarTypeContent {..} = ScalarTypeContent {..}
+  toRESOLVER DataTypeContent {..} = DataTypeContent {..}
+  toRESOLVER ResolverTypeContent {..} = ResolverTypeContent {..}
 
-instance FromAny TypeContent DATA_TYPE where
-  fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny DataTypeContent {..} = Just DataTypeContent {..}
-  fromAny _ = Nothing
-
-instance FromAny TypeContent RESOLVER_TYPE where
-  fromAny ScalarTypeContent {..} = Just ScalarTypeContent {..}
-  fromAny ResolverTypeContent {..} = Just ResolverTypeContent {..}
-  fromAny DataTypeContent {..} = Just DataTypeContent {..}
+instance ToDATA TypeContent where
+  toDATA ScalarTypeContent {..} = pure ScalarTypeContent {..}
+  toDATA DataTypeContent {..} = pure DataTypeContent {..}
+  toDATA _ = throwError "must be an DATA."
 
 toLocation :: TypeContent a s -> DirectiveLocation
 toLocation ScalarTypeContent {} = SCALAR

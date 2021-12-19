@@ -9,7 +9,6 @@
 
 module Language.Iris.Error.Class
   ( MissingRequired (..),
-    KindViolation (..),
     Unknown (..),
     Unused (..),
   )
@@ -23,14 +22,10 @@ import Language.Iris.Types.Internal.AST
     Fragment (..),
     FragmentName,
     GQLError,
-    RESOLVER_TYPE,
     Object,
     ObjectEntry (..),
     Ref (..),
-    DATA_TYPE,
-    Role,
     TypeName,
-    TypeRef (..),
     Variable (..),
     VariableDefinitions,
     at,
@@ -183,32 +178,3 @@ instance Unknown (ObjectEntry valueS) (InputContext ctx) where
 instance Unknown (Directive s') ctx where
   unknown Scope {path} _ Directive {directiveName, directivePosition} =
     (("Unknown Directive " <> msg directiveName <> ".") `at` directivePosition) `withPath` path
-
-class KindViolation (t :: Role) ctx where
-  kindViolation :: c t -> ctx -> GQLError
-
-instance KindViolation RESOLVER_TYPE (Fragment s) where
-  kindViolation _ Fragment {fragmentName, fragmentType, fragmentPosition} =
-    ( "Fragment "
-        <> msg fragmentName
-        <> " cannot condition on non composite type "
-        <> msg fragmentType
-        <> "."
-    )
-      `at` fragmentPosition
-
-instance KindViolation DATA_TYPE (Variable s) where
-  kindViolation
-    _
-    Variable
-      { variableName,
-        variablePosition,
-        variableType = TypeRef {typeConName}
-      } =
-      ( "Variable "
-          <> msg ("$" <> variableName)
-          <> " cannot be non-data type "
-          <> msg typeConName
-          <> "."
-      )
-        `at` variablePosition

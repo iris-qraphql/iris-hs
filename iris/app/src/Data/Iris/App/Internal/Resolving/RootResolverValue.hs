@@ -119,11 +119,6 @@ runRootResolverValue
     selectByOperation operationType
     where
       selectByOperation Query = withIntrospection (runResolverMap Nothing "Query" queryResolverMap) ctx
-      -- TODO: support mutation and subscription
-      -- selectByOperation Mutation =
-      --   runResolverMap typeResolverChannels "Mutation" ctx mutationResolverMap
-      -- selectByOperation Subscription =
-      --   runResolverMap typeResolverChannels "Subscription" ctx subscriptionResolverMap
       selectByOperation _ = throwError "mutation and subscription is not yet supported"
 
 withIntrospection :: Monad m => (ResolverContext -> SelectionSet VALID -> ResponseStream event m ValidValue) -> ResolverContext -> ResponseStream event m ValidValue
