@@ -31,6 +31,8 @@ module Language.Iris.Types.Internal.AST.TypeSystem
     toLocation,
     (<:>),
     mergeNonEmpty,
+    ListDefinition (..),
+    ListDefinitions
   )
 where
 
@@ -129,7 +131,15 @@ instance Lift ScalarDefinition where
 data RawTypeDefinition
   = RawTypeDefinition (TypeDefinition RESOLVER_TYPE CONST)
   | RawDirectiveDefinition (DirectiveDefinition CONST)
+  | RawListDefinition ListDefinition
   deriving (Show)
+
+data ListDefinition = ListDefinition
+  { listDescription :: Maybe Description,
+    listName :: TypeName
+  } deriving (Show, Lift)
+
+type ListDefinitions = SafeHashMap TypeName ListDefinition
 
 type TypeDefinitions s = SafeHashMap TypeName (TypeDefinition RESOLVER_TYPE s)
 
