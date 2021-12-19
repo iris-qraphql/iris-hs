@@ -23,6 +23,7 @@ import Data.Iris.App.NamedResolvers
     queryResolvers,
     ref,
     refs,
+    variant,
   )
 import Language.Iris
   ( parseSchema,
@@ -32,8 +33,8 @@ import Language.Iris.Types.Internal.AST
     Schema,
     VALID,
   )
-import Web.Scotty ( body, post, raw, scotty )
 import Relude hiding (ByteString)
+import Web.Scotty (body, post, raw, scotty)
 
 resolverDeities :: Monad m => RootResolverValue e m
 resolverDeities =
@@ -42,29 +43,53 @@ resolverDeities =
         const $
           object
             [ ("deity", ref "Deity" <$> getArgument "id"),
-              ("deities", pure $ refs "Deity" ["zeus", "morpheus"])
+              ( "deities",
+                pure $
+                  refs
+                    "Deity"
+                    [ "zeus",
+                      "cronos",
+                      "morpheus",
+                      "kraken"
+                    ]
+              )
             ]
       ),
-      ("Deity", deityResolver)
+      ("Deity", deityResolver),
+      ("God", godResolver),
+      ("Deity.Titan", titanResolver),
+      ("Deity.Unknown", const $ object [])
     ]
 
 deityResolver :: Monad m => NamedResolverFunction QUERY e m
-deityResolver "zeus" =
+deityResolver name
+  | name `elem` ["zeus", "morpheus"] = variant "God" name
+  | name `elem` ["cronos", "gaea"] = variant "Deity.Titan" name
+  | otherwise = variant "Deity.Unknown" ""
+
+godResolver :: Monad m => NamedResolverFunction QUERY e m
+godResolver "zeus" =
   object
     [ ("name", pure "Zeus"),
-      ("power", pure $ list [])
+      ("power", pure $ list []),
+      ("lifespan", pure $ enum "Immortal")
     ]
-deityResolver _ =
+godResolver _ =
   object
     [ ("name", pure "Morpheus"),
-      ("power", pure $ list [enum "Shapeshifting"])
+      ("power", pure $ list [enum "Shapeshifting"]),
+      ("lifespan", pure $ enum "Immortal")
     ]
 
+titanResolver :: Monad m => NamedResolverFunction QUERY e m
+titanResolver "cronos" = object [("name", pure "Cronos")]
+titanResolver _ = object [("name", pure "Gaea")]
+
 getSchema :: IO (Schema VALID)
-getSchema = LBS.readFile "examples/app/src/deities.gql"  >>= resultOr (fail . show) pure . parseSchema
+getSchema = LBS.readFile "examples/app/src/deities.gql" >>= resultOr (fail . show) pure . parseSchema
 
 irisApp :: IO (App e IO)
-irisApp  = (`mkApp` resolverDeities) <$> getSchema 
+irisApp = (`mkApp` resolverDeities) <$> getSchema
 
 api :: LBS.ByteString -> IO LBS.ByteString
 api req = irisApp >>= (`runApp` req)

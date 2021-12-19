@@ -20,7 +20,7 @@ module Language.Iris.Types.Internal.Validation
     selectRequired,
     selectKnown,
     Constraint (..),
-    constraint,
+
     asksScope,
     selectWithDefaultValue,
     startInput,
@@ -59,8 +59,7 @@ import Data.Mergeable.Utils
     throwErrors,
   )
 import Language.Iris.Error.Class
-  ( KindViolation (..),
-    MissingRequired (..),
+  ( MissingRequired (..),
     Unknown (..),
     Unused (..),
   )
@@ -71,11 +70,9 @@ import Language.Iris.Types.Internal.AST
     Position (..),
     RESOLVER_TYPE,
     Ref (..),
-    Role,
     TypeDefinition (..),
     TypeName,
     Value (..),
-    fromAny,
     isNullable,
     lookupDataType,
     withPath,
@@ -106,14 +103,6 @@ checkUnused ::
   t b ->
   Validator s (OperationContext s1 s2) ()
 checkUnused uses = failOnUnused . getUnused uses
-
-constraint ::
-  KindViolation k inp =>
-  Constraint (k :: Role) ->
-  inp ->
-  TypeDefinition RESOLVER_TYPE s ->
-  Validator s ctx (TypeDefinition k s)
-constraint ONLY_DATA ctx x = maybe (throwError (kindViolation ONLY_DATA ctx)) pure (fromAny x)
 
 selectRequired ::
   ( IsMap FieldName c,

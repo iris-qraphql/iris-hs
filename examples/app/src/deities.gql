@@ -10,12 +10,13 @@ data Power
 resolver God = {
   name: String
   power: [Power]
+  lifespan: Lifespan
 }
 
 resolver Deity
   = God
   | Titan { name: String } # exists only inside Deity
-  | Monsters {} # exists only inside of Deity`
+  | Unknown {} # exists only inside of Deity`
 
 resolver Query = {
   deities(lifespan: Lifespan?): [Deity]

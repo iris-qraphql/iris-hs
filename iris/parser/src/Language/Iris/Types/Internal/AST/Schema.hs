@@ -15,6 +15,7 @@ module Language.Iris.Types.Internal.AST.Schema
     typeDefinitions,
     lookupDataType,
     Schema (..),
+    constraintResolverVariant,
   )
 where
 
@@ -52,20 +53,18 @@ import Language.Iris.Types.Internal.AST.Name
     unpackVariantTypeName,
   )
 import Language.Iris.Types.Internal.AST.Role
-  ( FromAny (..),
-    RESOLVER_TYPE,
-    ToAny (..),
-    fromAny,
-    toAny,
+  ( RESOLVER_TYPE,
+    ToRESOLVER (..),
+    toRESOLVER,
   )
 import Language.Iris.Types.Internal.AST.Stage
   ( Stage,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
-  ( TypeContent (..),
+  ( (<:>),
+    TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
-    (<:>),
   )
 import Language.Iris.Types.Internal.AST.Variant
   ( Variant (..),
@@ -78,9 +77,9 @@ import Relude hiding
 
 data Schema (s :: Stage) = Schema
   { types :: TypeDefinitions s,
-    query :: TypeDefinition RESOLVER_TYPE s, 
-    mutation :: Maybe (TypeDefinition RESOLVER_TYPE s), 
-    subscription :: Maybe (TypeDefinition RESOLVER_TYPE s), 
+    query :: TypeDefinition RESOLVER_TYPE s,
+    mutation :: Maybe (TypeDefinition RESOLVER_TYPE s),
+    subscription :: Maybe (TypeDefinition RESOLVER_TYPE s),
     directiveDefinitions :: DirectivesDefinition s
   }
   deriving (Show, Lift)
@@ -108,7 +107,7 @@ typeDefinitions :: Schema s -> HashMap TypeName (TypeDefinition RESOLVER_TYPE s)
 typeDefinitions schema@Schema {..} = toHashMap types <> HM.fromList (map toPair $ rootTypeDefinitions schema)
 
 rootTypeDefinitions :: Schema s -> [TypeDefinition RESOLVER_TYPE s]
-rootTypeDefinitions Schema {..} = map toAny $ catMaybes [Just query, mutation, subscription]
+rootTypeDefinitions Schema {..} = map toRESOLVER $ catMaybes [Just query, mutation, subscription]
 
 lookupDataType :: MonadError GQLError m => TypeName -> Schema s -> m (TypeDefinition RESOLVER_TYPE s)
 lookupDataType name Schema {types, query, mutation, subscription} =
@@ -124,7 +123,7 @@ lookupDataType name Schema {types, query, mutation, subscription} =
 
 isType :: TypeName -> TypeDefinition RESOLVER_TYPE s -> Maybe (TypeDefinition RESOLVER_TYPE s)
 isType name x
-  | name == typeName x = pure (toAny x)
+  | name == typeName x = pure (toRESOLVER x)
   | otherwise = Nothing
 
 mkSchema :: MonadError GQLError m => [TypeDefinition RESOLVER_TYPE s] -> DirectivesDefinition s -> m (Schema s)
@@ -143,10 +142,12 @@ lookupOperationType ::
   TypeDefinitions s ->
   m (Maybe (TypeDefinition RESOLVER_TYPE s))
 lookupOperationType name types = case lookup name types of
-  Just dt@TypeDefinition {typeContent = ResolverTypeContent _ (_ :| [])} ->
-    pure (fromAny dt)
-  Just {} -> throwError $ msg name <> " type must be an object if provided!"
+  Just t -> constraintResolverVariant t $> Just t
   _ -> pure Nothing
+
+constraintResolverVariant :: MonadError GQLError m => TypeDefinition a s -> m (Variant RESOLVER_TYPE s)
+constraintResolverVariant TypeDefinition {typeContent = ResolverTypeContent _ (v :| [])} = pure v
+constraintResolverVariant TypeDefinition {typeName} = throwError $ msg typeName <> " type must be an object if provided!"
 
 mergeOptional ::
   (Monad m, MonadError GQLError m) =>

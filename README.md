@@ -11,9 +11,6 @@ language is in experimental phase, so any feedback or proposal is welcome!
 ### Schema
 
 ```gql
-# lists with specific properties
-list Set
-
 data Lifespan 
   = Immortal {} 
   | Limited { max: Int? }
@@ -24,13 +21,14 @@ data Power
 
 resolver God = {
   name: String
-  power: Set<Power>
+  power: [Power]
+  lifespan: Lifespan
 }
 
 resolver Deity
   = God
-  | Titan { name: String } # exists only inside `Deity`
-  | Monsters {} # exists only inside `Deity`
+  | Titan { name: String } # exists only inside Deity
+  | Unknown {} # exists only inside of Deity`
 
 resolver Query = {
   deities(lifespan: Lifespan?): [Deity]
@@ -41,14 +39,13 @@ resolver Query = {
 
 ```gql
 {
-  deities(lifespan: Immortal )
-  {
-    ...on God {
+  deities (lifespan: Immortal ) {
+    ... on God {
       name
       power
+      lifespan
     }
-    # accessing fields of scoped type variants
-    ...on Deity.Titan {
+    ... on Deity.Titan {
       name
     }
   }
@@ -63,16 +60,30 @@ resolver Query = {
     "deities": [
       {
         "__typename": "God",
-        "name": "Zeus",
-        "power": [
-          {
-            "__typename": "Thunderbolt"
-          }
-        ]
+        "lifespan": {
+          "__typename": "Immortal"
+        },
+        "power": [],
+        "name": "Zeus"
       },
       {
         "__typename": "Deity.Titan",
         "name": "Cronos"
+      },
+      {
+        "__typename": "God",
+        "lifespan": {
+          "__typename": "Immortal"
+        },
+        "power": [
+          {
+            "__typename": "Shapeshifting"
+          }
+        ],
+        "name": "Morpheus"
+      },
+      {
+        "__typename": "Deity.Unknown"
       }
     ]
   }
