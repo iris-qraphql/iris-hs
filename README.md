@@ -11,8 +11,8 @@ language is in experimental phase, so any feedback or proposal is welcome!
 ### Schema
 
 ```gql
-data Lifespan 
-  = Immortal {} 
+data Lifespan
+  = Immortal {}
   | Limited { max: Int? }
 
 data Power
@@ -89,3 +89,23 @@ resolver Query = {
   }
 }
 ```
+
+## About
+
+### The name
+
+> _Iris was the Greek goddess – or, better yet, personification – of the rainbow, and a messenger for the gods._
+>
+> _[Greek Mythology](https://www.greekmythology.com/Other_Gods/Iris/iris.html)_
+
+### Team
+
+Iris is written and maintained by [_nalchevanidze_](https://github.com/nalchevanidze)
+
+## Roadmap
+
+- support lists extensions in Haskell
+- finish spec
+- implement js parser
+- implement js client
+- implement js Playground
