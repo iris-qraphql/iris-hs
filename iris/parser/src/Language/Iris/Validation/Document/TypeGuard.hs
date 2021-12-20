@@ -70,8 +70,8 @@ validateTypeGuard unionTypeNames typeGuardName = do
         (T.variantName guardType)
         (T.variantName memberType)
         $ isCompatibleTo
-          (memberFields memberType)
-          (memberFields guardType)
+          (variantFields memberType)
+          (variantFields guardType)
 
 class StructuralCompatibility a where
   type Context a :: PLACE -> Type

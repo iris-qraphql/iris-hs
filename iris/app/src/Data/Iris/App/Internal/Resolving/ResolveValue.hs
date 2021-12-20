@@ -32,8 +32,7 @@ import Data.Mergeable.Utils
   )
 import Language.Iris.Error (subfieldsNotSelected)
 import Language.Iris.Types.Internal.AST
-  ( (<:>),
-    FieldName,
+  ( FieldName,
     GQLError,
     Msg (msg),
     ObjectEntry (ObjectEntry),
@@ -46,15 +45,15 @@ import Language.Iris.Types.Internal.AST
     VALID,
     ValidValue,
     Value (..),
-    __typename,
     internal,
     unpackName,
+    (<:>),
+    __typename,
   )
 import Relude
 
 resolveSelection ::
-  ( Monad m,
-    MonadReader ResolverContext m,
+  ( MonadReader ResolverContext m,
     MonadError GQLError m
   ) =>
   ResolverMap m ->
@@ -69,8 +68,8 @@ resolveSelection rmap (ResObject tyName obj) sel = setCurrentType tyName $ resol
 -- SCALARS
 resolveSelection _ ResNull _ = pure Null
 resolveSelection _ (ResScalar x) SelectionField = pure $ Scalar x
-resolveSelection _ ResScalar {} _ =
-  throwError (internal "scalar Resolver should only receive SelectionField")
+resolveSelection _ (ResScalar x) _ =
+  throwError $ internal $ "scalar Resolver should only receive SelectionField ." <> msg (show x :: Text) <> "."
 resolveSelection rmap (ResRef ref) sel = ref >>= flip (resolveRef rmap) sel
 
 resolveResolver ::
@@ -127,18 +126,18 @@ resolveObject typeName rmap drv =
     . fmap (Object typeName)
     . fromElems
     <=< traverse resolver
-    . excludeTypeName
-    . toList
+      . excludeTypeName
+      . toList
   where
     excludeTypeName
       | isJust typeName = filter ((__typename /=) . selectionName)
       | otherwise = id
     resolver currentSelection = do
       t <- askFieldTypeName (selectionName currentSelection)
-      setCurrentType t
-        $ local (\ctx -> ctx {currentSelection})
-        $ ObjectEntry (keyOf currentSelection)
-          <$> runFieldResolver rmap currentSelection drv
+      setCurrentType t $
+        local (\ctx -> ctx {currentSelection}) $
+          ObjectEntry (keyOf currentSelection)
+            <$> runFieldResolver rmap currentSelection drv
 
 resolveData :: (MonadReader ResolverContext m, MonadError GQLError m) => ResolverMap m -> (Maybe TypeName, ObjectTypeResolver m) -> m ValidValue
 resolveData rmap (typeName, drv) = Object typeName <$> (traverse (resolverDataField rmap) (HM.toList $ objectFields drv) >>= fromElems)

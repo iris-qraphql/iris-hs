@@ -63,7 +63,7 @@ resolveTypeMember ::
   Constraints m c cat s ctx =>
   Variant cat s ->
   m (Variant cat s)
-resolveTypeMember Variant {variantName, membership = Just name, memberFields, ..} =
+resolveTypeMember Variant {variantName, membership = Just name, variantFields, ..} =
   pure
     Variant
       { variantName = packVariantTypeName name variantName,

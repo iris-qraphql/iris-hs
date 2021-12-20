@@ -99,7 +99,7 @@ askFieldTypeName fieldName = do
     _ -> pure Nothing
   where
     fieldTypeName :: Variant RESOLVER_TYPE VALID -> Maybe TypeName
-    fieldTypeName = selectOr Nothing (Just . typeConName . fieldType) fieldName . memberFields
+    fieldTypeName = selectOr Nothing (Just . typeConName . fieldType) fieldName . variantFields
 
 type ResolverState = ResolverStateT () Identity
 

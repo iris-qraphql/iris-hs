@@ -198,4 +198,4 @@ instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
   type TypeContext (Variant cat) = TypeEntity ON_TYPE
   typeCheck Variant {..} =
     Variant variantDescription variantName membership
-      <$> traverse typeCheck memberFields
+      <$> traverse typeCheck variantFields

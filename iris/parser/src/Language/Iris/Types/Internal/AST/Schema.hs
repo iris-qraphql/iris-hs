@@ -171,6 +171,6 @@ mergeOperation ::
 mergeOperation
   TypeDefinition {typeContent = ResolverTypeContent Nothing (v1 :| [])}
   TypeDefinition {typeContent = ResolverTypeContent Nothing (v2 :| []), ..} = do
-    fields <- merge (memberFields v1) (memberFields v2)
-    pure $ TypeDefinition {typeContent = ResolverTypeContent Nothing ((v1 {memberFields = fields}) :| []), ..}
+    fields <- merge (variantFields v1) (variantFields v2)
+    pure $ TypeDefinition {typeContent = ResolverTypeContent Nothing ((v1 {variantFields = fields}) :| []), ..}
 mergeOperation TypeDefinition {} TypeDefinition {} = throwError "can't merge non object types"
