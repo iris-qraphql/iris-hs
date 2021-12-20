@@ -213,7 +213,7 @@ selectSelectionField ::
   Ref FieldName ->
   Variant RESOLVER_TYPE s ->
   FragmentValidator s' (FieldDefinition RESOLVER_TYPE s)
-selectSelectionField ref Variant {memberFields}
+selectSelectionField ref Variant {variantFields}
   | refName ref == __typename =
     pure
       FieldDefinition
@@ -223,7 +223,7 @@ selectSelectionField ref Variant {memberFields}
           fieldContent = Nothing,
           fieldDirectives = empty
         }
-  | otherwise = selectKnown ref memberFields
+  | otherwise = selectKnown ref variantFields
 
 validateSelectionContent ::
   ValidateFragmentSelection s =>

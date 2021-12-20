@@ -154,8 +154,8 @@ validateUnwrapped ::
   InputValidator schemaS ctx ValidValue
 validateUnwrapped (DataTypeContent variants) (Object conName fields) =
   case toList variants of
-    [Variant {memberFields}] ->
-      Object conName <$> validateInputObject memberFields fields
+    [Variant {variantFields}] ->
+      Object conName <$> validateInputObject variantFields fields
     _ -> validateStrictUnionType variants (Object conName fields)
 validateUnwrapped (DataTypeContent tags) value =
   validateStrictUnionType tags value
@@ -250,7 +250,7 @@ validateStrictUnionType inputUnion (Object (Just conName) rawFields) =
   case lookupTypeVariant (Just conName) inputUnion of
     Left _ -> violation (Just $ msg conName <> " is not possible union type") (Object (Just conName) rawFields)
     Right memberTypeRef -> do
-      fields <- memberFields <$> resolveTypeMember memberTypeRef
+      fields <- variantFields <$> resolveTypeMember memberTypeRef
       Object (Just conName) <$> validateInputObject fields rawFields
 validateStrictUnionType _ (Object Nothing fields)
   | member __typename fields =

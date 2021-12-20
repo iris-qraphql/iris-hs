@@ -64,7 +64,7 @@ resolver __Type
         name: String
         description: String?
       } 
-    | Series {
+    | List {
         name: String
         description: String?
         parameters: [__TypeRef] 
@@ -81,8 +81,8 @@ data __Role = DATA {} | RESOLVER {}
 
 resolver __Variant = {
   name: String
-  namespace: String?
-  fields(includeDeprecated: Boolean = false): [__Field]?
+  description: String?
+  fields(includeDeprecated: Boolean = false): [__Field]
 }
 
 data __TypeRef = {

@@ -60,7 +60,7 @@ lookupTypeVariant Nothing (x :| []) = pure x
 lookupTypeVariant Nothing _ = throwError "type should have only one variant"
 
 renderVariants :: TypeName -> NonEmpty (Variant cat s) -> Rendering
-renderVariants typeName (Variant {memberFields, variantName} :| []) | typeName == variantName = " =" <> renderGQL memberFields
+renderVariants typeName (Variant {variantFields, variantName} :| []) | typeName == variantName = " =" <> renderGQL variantFields
 renderVariants _ variants =
   " = "
     <> intercalate
@@ -71,7 +71,7 @@ data Variant (r :: Role) (stage :: Stage) = Variant
   { variantDescription :: Maybe Description,
     variantName :: TypeName,
     membership :: Maybe TypeName,
-    memberFields :: FieldsDefinition r stage
+    variantFields :: FieldsDefinition r stage
   }
   deriving (Show, Lift, Eq)
 
@@ -81,8 +81,8 @@ instance NameCollision GQLError (Variant c s) where
       <> msg variantName
 
 instance RenderGQL (Variant cat s) where
-  renderGQL Variant {variantName, memberFields} =
-    renderGQL variantName <> renderGQL memberFields
+  renderGQL Variant {variantName, variantFields} =
+    renderGQL variantName <> renderGQL variantFields
 
 instance Msg (Variant cat s) where
   msg = msg . variantName

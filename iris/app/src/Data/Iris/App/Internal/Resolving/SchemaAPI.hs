@@ -18,21 +18,17 @@ import Data.Iris.App.Internal.Resolving.Types
     mkObject,
   )
 import Data.Iris.App.RenderIntrospection
-  ( mkObjectType,
-    render,
+  ( render,
   )
 import Data.Mergeable.Utils
-  ( empty,
-    selectOr,
+  ( selectOr,
   )
 import Language.Iris.Types.Internal.AST
   ( Argument (..),
     FieldName,
-    RESOLVER_TYPE,
     QUERY,
     ScalarValue (..),
     Schema (..),
-    TypeDefinition (..),
     TypeName,
     VALID,
     Value (..),
@@ -45,12 +41,6 @@ import qualified Relude as HM
 resolveTypes :: Monad m => Schema VALID -> m (ResolverValue m)
 resolveTypes schema = mkList <$> traverse render (toList $ typeDefinitions schema)
 
-renderOperation ::
-  Monad m =>
-  Maybe (TypeDefinition RESOLVER_TYPE VALID) ->
-  m (ResolverValue m)
-renderOperation (Just TypeDefinition {typeName}) = pure $ mkObjectType typeName Nothing empty
-renderOperation Nothing = pure mkNull
 
 findType ::
   Monad m =>
@@ -65,9 +55,9 @@ schemaResolver schema@Schema {query, mutation, subscription, directiveDefinition
     mkObject
       (Just "__Schema")
       [ ("types", resolveTypes schema),
-        ("queryType", renderOperation (Just query)),
-        ("mutationType", renderOperation mutation),
-        ("subscriptionType", renderOperation subscription),
+        ("queryType", render  query),
+        ("mutationType", render mutation),
+        ("subscriptionType", render subscription),
         ("directives", render $ toList directiveDefinitions)
       ]
 

@@ -134,7 +134,7 @@ mkUnionRootType = do
       { variantDescription = Nothing,
         variantName,
         membership = Nothing,
-        memberFields = empty
+        variantFields = empty
       }
 
 validateUnionSelection ::

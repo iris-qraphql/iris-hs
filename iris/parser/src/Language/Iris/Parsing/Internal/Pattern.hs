@@ -86,7 +86,7 @@ parseMember typeName = do
   fields <- optional fieldsDefinition
   pure
     Variant
-      { memberFields = fromMaybe empty fields,
+      { variantFields = fromMaybe empty fields,
         membership = fmap (const typeName) fields,
         ..
       }

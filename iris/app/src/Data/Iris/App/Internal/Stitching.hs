@@ -97,8 +97,8 @@ instance Stitching (TypeDefinition cat s) where
 
 instance Stitching (TypeContent cat s) where
   stitch (ResolverTypeContent Nothing (v1 :| [])) (ResolverTypeContent Nothing (v2 :| [])) = do
-    fields <- stitch (memberFields v1) (memberFields v2)
-    pure $ ResolverTypeContent Nothing ((v1 {memberFields = fields}) :| [])
+    fields <- stitch (variantFields v1) (variantFields v2)
+    pure $ ResolverTypeContent Nothing ((v1 {variantFields = fields}) :| [])
   stitch x y
     | x == y = pure y
     | otherwise = throwError ("Schema Stitching works only for objects" :: GQLError)
