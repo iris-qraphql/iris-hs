@@ -22,7 +22,8 @@ import Language.Iris.Schema.Schema
   ( internalSchema,
   )
 import Language.Iris.Types.Internal.AST
-  ( ArgumentDefinition (..),
+  ( (<:>),
+    ArgumentDefinition (..),
     CONST,
     DATA_TYPE,
     DirectiveDefinition (..),
@@ -41,7 +42,6 @@ import Language.Iris.Types.Internal.AST
     Value,
     Variant (..),
     toLocation,
-    (<:>),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation
@@ -166,11 +166,11 @@ instance FieldDirectiveLocation DATA_TYPE where
 
 instance TypeCheck DirectiveDefinition where
   typeCheck DirectiveDefinition {directiveDefinitionArgs = arguments, ..} =
-    inType "Directive" $
-      inField directiveDefinitionName $
-        do
-          directiveDefinitionArgs <- traverse typeCheck arguments
-          pure DirectiveDefinition {..}
+    inType "Directive"
+      $ inField directiveDefinitionName
+      $ do
+        directiveDefinitionArgs <- traverse typeCheck arguments
+        pure DirectiveDefinition {..}
 
 instance TypeCheck ArgumentDefinition where
   type TypeContext ArgumentDefinition = Field ON_TYPE
@@ -180,10 +180,13 @@ instance TypeCheck ArgumentDefinition where
               fieldDescription
               fieldName
               Nothing
-              fieldType
-              <$> validateDirectives ARGUMENT_DEFINITION fieldDirectives
+              <$> validateFieldType fieldType
+              <*> validateDirectives ARGUMENT_DEFINITION fieldDirectives
           )
         <*> traverse (validateDefaultValue fieldType (Just fieldName)) defaultValue
+
+validateFieldType :: Monad m => TypeRef -> m TypeRef
+validateFieldType = pure --TODO: validate field types
 
 validateDefaultValue ::
   TypeRef ->

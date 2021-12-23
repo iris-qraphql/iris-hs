@@ -17,28 +17,33 @@ module Language.Iris.Types.Internal.Validation.Internal
     resolveTypeMember,
     getOperationType,
     askObjectType,
+    askListType,
   )
 where
 
 import Control.Monad.Except (MonadError (throwError))
+import Data.Mergeable.IsMap (selectBy)
 import Language.Iris.Types.Internal.AST
   ( DATA_TYPE,
-    ToDATA,
     GQLError,
+    ListDefinition (ListDefinition),
     Operation (..),
     RESOLVER_TYPE,
     Role,
+    ToDATA,
+    ToRESOLVER (toRESOLVER),
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
     TypeRef,
     VALID,
-    toDATA,
     getOperationDataType,
     internal,
+    lists,
     lookupDataType,
     msg,
-    typeConName, ToRESOLVER (toRESOLVER),
+    toDATA,
+    typeConName,
   )
 import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
 import Language.Iris.Types.Internal.AST.Variant
@@ -47,6 +52,17 @@ import Language.Iris.Types.Internal.Validation.Validator
     ValidatorContext (schema),
   )
 import Relude hiding (empty)
+
+askListType ::
+  ( MonadReader (ValidatorContext s ctx) m,
+    MonadError GQLError m
+  ) =>
+  TypeName ->
+  m ListDefinition
+askListType "List" = pure $ ListDefinition Nothing "List"
+askListType name =
+  asks (lists . schema)
+    >>= selectBy ("Unknown list " <> msg name <> ".") name
 
 askType :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
 askType = __askType . typeConName
@@ -83,7 +99,7 @@ type Constraints m c (cat :: Role) s ctx =
 getOperationType :: Operation a -> SelectionValidator (Variant RESOLVER_TYPE VALID)
 getOperationType operation = asks schema >>= getOperationDataType operation
 
-type KindConstraint f  = (MonadError GQLError f, ToDATA TypeDefinition)
+type KindConstraint f = (MonadError GQLError f, ToDATA TypeDefinition)
 
 class KindErrors c where
   kindConstraint :: KindConstraint f => TypeDefinition RESOLVER_TYPE s -> f (TypeDefinition c s)
@@ -93,11 +109,11 @@ instance KindErrors DATA_TYPE where
   kindConstraint = toDATA
   constraintObject
     _
-    TypeDefinition { typeContent = DataTypeContent (Variant {..}:|[])} = pure (Variant {..})
+    TypeDefinition {typeContent = DataTypeContent (Variant {..} :| [])} = pure (Variant {..})
   constraintObject _ TypeDefinition {typeName} = throwError (violation "data object" typeName)
 
 instance KindErrors RESOLVER_TYPE where
-  kindConstraint = pure . toRESOLVER 
+  kindConstraint = pure . toRESOLVER
   constraintObject Nothing TypeDefinition {typeContent = ResolverTypeContent _ (member :| [])} = pure member
   constraintObject (Just variantName) TypeDefinition {typeContent = ResolverTypeContent _ variants} =
     lookupTypeVariant (Just variantName) variants
