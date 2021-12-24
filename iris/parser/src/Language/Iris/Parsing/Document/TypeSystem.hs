@@ -9,10 +9,7 @@ module Language.Iris.Parsing.Document.TypeSystem
 where
 
 import Data.ByteString.Lazy (ByteString)
-import Data.Mergeable.Utils
-  ( empty,
-    fromElems,
-  )
+import Data.Mergeable.Utils (empty)
 import Language.Iris.Parsing.Internal.Internal
   ( Parser,
     processParser,
@@ -159,7 +156,4 @@ parseRawTypeDefinitions =
       *> manyTill parseTypeSystemUnit eof
 
 parseSchema :: ByteString -> GQLResult (Schema CONST)
-parseSchema src = do
-  defs <- processParser parseRawTypeDefinitions src
-  dirs <- fromElems [dir | RawDirectiveDefinition dir <- defs]
-  mkSchema [t | RawTypeDefinition t <- defs] dirs
+parseSchema = processParser parseRawTypeDefinitions >=> mkSchema

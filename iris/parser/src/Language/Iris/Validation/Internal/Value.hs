@@ -54,7 +54,7 @@ import Language.Iris.Types.Internal.Validation
     selectKnown,
     selectWithDefaultValue,
   )
-import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember)
+import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember, askListType)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -97,7 +97,7 @@ validateInputByTypeRef ::
 validateInputByTypeRef
   ref
   value = do
-    inputTypeDef <- askType ref
+    inputTypeDef <- askType (typeConName ref)
     validateInputByType
       (typeWrappers ref)
       inputTypeDef
@@ -138,8 +138,9 @@ validateWrapped wrappers _ Null
   | isNullable wrappers = pure Null
   | otherwise = violation Nothing Null
 -- Validate LIST
-validateWrapped (TypeList name wrappers _) tyCont (List list) =
-  -- TODO: pick list validator
+validateWrapped (TypeList name wrappers _) tyCont (List list) = do
+  _listDef <- askListType name 
+  -- TODO: consider tuples validator
   List <$> traverse (validateInputByType wrappers tyCont) list
 {-- 2. VALIDATE TYPES, all wrappers are already Processed --}
 validateWrapped BaseType {} TypeDefinition {typeContent} entryValue =

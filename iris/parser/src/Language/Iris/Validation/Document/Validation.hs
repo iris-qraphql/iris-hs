@@ -22,7 +22,8 @@ import Language.Iris.Schema.Schema
   ( internalSchema,
   )
 import Language.Iris.Types.Internal.AST
-  ( ArgumentDefinition (..),
+  ( (<:>),
+    ArgumentDefinition (..),
     CONST,
     DATA_TYPE,
     DirectiveDefinition (..),
@@ -37,11 +38,11 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
+    TypeWrapper (..),
     VALID,
     Value,
     Variant (..),
     toLocation,
-    (<:>),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation
@@ -49,6 +50,7 @@ import Language.Iris.Types.Internal.Validation
     ValidatorContext (localContext),
     startInput,
   )
+import Language.Iris.Types.Internal.Validation.Internal (Constraints, KindErrors, askListType, askType)
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
     ON_TYPE,
@@ -82,10 +84,6 @@ instance ValidateSchema CONST where
 instance ValidateSchema VALID where
   validateSchema _ _ = pure
 
------ TypeCheck -------------------------------
----
----
----
 class TypeCheck a where
   type TypeContext a :: Type
   type TypeContext a = ()
@@ -138,16 +136,16 @@ instance TypeCheck (TypeContent cat) where
         <$> traverse (validateTypeGuard (toList resolverVariants)) resolverTypeGuard
         <*> traverse typeCheck resolverVariants
 
-instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
+instance (FieldDirectiveLocation cat, KindErrors cat) => TypeCheck (FieldDefinition cat) where
   type TypeContext (FieldDefinition cat) = TypeEntity ON_TYPE
-  typeCheck FieldDefinition {..} =
+  typeCheck f@FieldDefinition {..} =
     inField
       fieldName
       ( FieldDefinition
           fieldDescription
           fieldName
           <$> traverse checkFieldContent fieldContent
-          <*> pure fieldType -- TODO: check if type exists
+          <*> validateFieldType f
           <*> validateDirectives (directiveLocation (Proxy @cat)) fieldDirectives
       )
     where
@@ -166,24 +164,40 @@ instance FieldDirectiveLocation DATA_TYPE where
 
 instance TypeCheck DirectiveDefinition where
   typeCheck DirectiveDefinition {directiveDefinitionArgs = arguments, ..} =
-    inType "Directive" $
-      inField directiveDefinitionName $
-        do
-          directiveDefinitionArgs <- traverse typeCheck arguments
-          pure DirectiveDefinition {..}
+    inType "Directive"
+      $ inField directiveDefinitionName
+      $ do
+        directiveDefinitionArgs <- traverse typeCheck arguments
+        pure DirectiveDefinition {..}
 
 instance TypeCheck ArgumentDefinition where
   type TypeContext ArgumentDefinition = Field ON_TYPE
-  typeCheck (ArgumentDefinition FieldDefinition {..} defaultValue) =
+  typeCheck (ArgumentDefinition f@FieldDefinition {..} defaultValue) =
     ArgumentDefinition
       <$> ( FieldDefinition
               fieldDescription
               fieldName
               Nothing
-              fieldType
-              <$> validateDirectives ARGUMENT_DEFINITION fieldDirectives
+              <$> validateFieldType f
+              <*> validateDirectives ARGUMENT_DEFINITION fieldDirectives
           )
         <*> traverse (validateDefaultValue fieldType (Just fieldName)) defaultValue
+
+validateFieldType ::
+  forall m c cat s ctx.
+  Constraints m c cat s ctx =>
+  FieldDefinition cat s ->
+  m TypeRef
+validateFieldType FieldDefinition {fieldType = TypeRef {typeConName, typeWrappers}} = do
+  (_ :: TypeDefinition cat s) <- askType typeConName
+  _ <- validateWrapper typeWrappers
+  pure TypeRef {..}
+  where
+    validateWrapper :: TypeWrapper -> m TypeWrapper
+    validateWrapper BaseType {..} = pure BaseType {..}
+    validateWrapper TypeList {..} = do
+      _ <- askListType wrapperName
+      pure TypeList {..}
 
 validateDefaultValue ::
   TypeRef ->
@@ -194,7 +208,7 @@ validateDefaultValue typeRef argName value = do
   Field fName _ (TypeEntity _ typeName) <- asks (local . localContext)
   startInput (SourceInputField typeName fName argName) (validateInputByTypeRef typeRef value)
 
-instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
+instance (KindErrors cat, FieldDirectiveLocation cat) => TypeCheck (Variant cat) where
   type TypeContext (Variant cat) = TypeEntity ON_TYPE
   typeCheck Variant {..} =
     Variant variantDescription variantName membership

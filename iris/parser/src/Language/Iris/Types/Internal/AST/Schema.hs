@@ -59,11 +59,13 @@ import Language.Iris.Types.Internal.AST.Role
     toRESOLVER,
   )
 import Language.Iris.Types.Internal.AST.Stage
-  ( Stage,
+  ( CONST,
+    Stage,
   )
 import Language.Iris.Types.Internal.AST.TypeSystem
   ( (<:>),
     ListDefinitions,
+    RawTypeDefinition (..),
     TypeContent (..),
     TypeDefinition (..),
     TypeDefinitions,
@@ -130,16 +132,16 @@ isType name x
   | name == typeName x = pure (toRESOLVER x)
   | otherwise = Nothing
 
-mkSchema :: MonadError GQLError m => [TypeDefinition RESOLVER_TYPE s] -> DirectivesDefinition s -> m (Schema s)
-mkSchema ts directiveDefinitions = do
-  typeMap <- fromElems ts
+mkSchema :: MonadError GQLError m => [RawTypeDefinition] -> m (Schema CONST)
+mkSchema defs = do
+  typeMap <- fromElems [t | RawTypeDefinition t <- defs]
   Schema
     (foldr delete typeMap ["Query", "Mutation", "Subscription"])
     <$> (lookupOperationType "Query" typeMap >>= maybe (throwError "Query root type must be provided.") pure)
     <*> lookupOperationType "Mutation" typeMap
     <*> lookupOperationType "Subscription" typeMap
-    <*> pure empty -- LISTS
-    <*> pure directiveDefinitions
+    <*> fromElems [t | RawListDefinition t <- defs] 
+    <*> fromElems [dir | RawDirectiveDefinition dir <- defs]
 
 lookupOperationType ::
   (MonadError GQLError m) =>

@@ -42,7 +42,7 @@ data TypeWrapper
         wrapperParameter :: !TypeWrapper,
         listIsRequired :: !Bool
       }
-  | BaseType !Bool
+  | BaseType {isBaseTypeRequired :: !Bool}
   deriving (Show, Eq, Lift)
 
 mkBaseType :: TypeWrapper
