@@ -141,6 +141,9 @@ data ListDefinition = ListDefinition
 
 type ListDefinitions = SafeHashMap TypeName ListDefinition
 
+instance KeyOf TypeName ListDefinition where
+  keyOf = listName
+
 instance NameCollision GQLError ListDefinition where
   nameCollision x = "There can Be only One ListDefinition Named " <> msg (listName x) <> "."
 
