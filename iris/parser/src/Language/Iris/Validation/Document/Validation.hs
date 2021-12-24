@@ -50,7 +50,7 @@ import Language.Iris.Types.Internal.Validation
     ValidatorContext (localContext),
     startInput,
   )
-import Language.Iris.Types.Internal.Validation.Internal (Constraints, askType, askListType)
+import Language.Iris.Types.Internal.Validation.Internal (Constraints, KindErrors, askListType, askType)
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
     ON_TYPE,
@@ -136,16 +136,16 @@ instance TypeCheck (TypeContent cat) where
         <$> traverse (validateTypeGuard (toList resolverVariants)) resolverTypeGuard
         <*> traverse typeCheck resolverVariants
 
-instance FieldDirectiveLocation cat => TypeCheck (FieldDefinition cat) where
+instance (FieldDirectiveLocation cat, KindErrors cat) => TypeCheck (FieldDefinition cat) where
   type TypeContext (FieldDefinition cat) = TypeEntity ON_TYPE
-  typeCheck FieldDefinition {..} =
+  typeCheck f@FieldDefinition {..} =
     inField
       fieldName
       ( FieldDefinition
           fieldDescription
           fieldName
           <$> traverse checkFieldContent fieldContent
-          <*> pure fieldType -- TODO: check if type exists
+          <*> validateFieldType f
           <*> validateDirectives (directiveLocation (Proxy @cat)) fieldDirectives
       )
     where
@@ -208,7 +208,7 @@ validateDefaultValue typeRef argName value = do
   Field fName _ (TypeEntity _ typeName) <- asks (local . localContext)
   startInput (SourceInputField typeName fName argName) (validateInputByTypeRef typeRef value)
 
-instance FieldDirectiveLocation cat => TypeCheck (Variant cat) where
+instance (KindErrors cat, FieldDirectiveLocation cat) => TypeCheck (Variant cat) where
   type TypeContext (Variant cat) = TypeEntity ON_TYPE
   typeCheck Variant {..} =
     Variant variantDescription variantName membership

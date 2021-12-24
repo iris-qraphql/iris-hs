@@ -19,6 +19,7 @@ module Language.Iris.Types.Internal.Validation.Internal
     askObjectType,
     askListType,
     Constraints,
+    KindErrors,
   )
 where
 
