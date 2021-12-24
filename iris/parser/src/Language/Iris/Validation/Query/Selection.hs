@@ -234,7 +234,7 @@ validateSelectionContent ::
   FragmentValidator s (Arguments VALID, SelectionContent VALID)
 validateSelectionContent typeDef ref selectionArguments content = do
   fieldDef <- selectSelectionField ref typeDef
-  fieldTypeDef <- askType (fieldType fieldDef)
+  fieldTypeDef <- askType (typeConName (fieldType fieldDef))
   validArgs <- validateFieldArguments fieldDef selectionArguments
   validContent <- validateContent fieldTypeDef content
   pure (validArgs, validContent)

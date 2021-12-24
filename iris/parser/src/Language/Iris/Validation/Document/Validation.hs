@@ -38,6 +38,7 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
+    TypeWrapper (..),
     VALID,
     Value,
     Variant (..),
@@ -49,6 +50,7 @@ import Language.Iris.Types.Internal.Validation
     ValidatorContext (localContext),
     startInput,
   )
+import Language.Iris.Types.Internal.Validation.Internal (Constraints, askType, askListType)
 import Language.Iris.Types.Internal.Validation.SchemaValidator
   ( Field (..),
     ON_TYPE,
@@ -82,10 +84,6 @@ instance ValidateSchema CONST where
 instance ValidateSchema VALID where
   validateSchema _ _ = pure
 
------ TypeCheck -------------------------------
----
----
----
 class TypeCheck a where
   type TypeContext a :: Type
   type TypeContext a = ()
@@ -174,19 +172,32 @@ instance TypeCheck DirectiveDefinition where
 
 instance TypeCheck ArgumentDefinition where
   type TypeContext ArgumentDefinition = Field ON_TYPE
-  typeCheck (ArgumentDefinition FieldDefinition {..} defaultValue) =
+  typeCheck (ArgumentDefinition f@FieldDefinition {..} defaultValue) =
     ArgumentDefinition
       <$> ( FieldDefinition
               fieldDescription
               fieldName
               Nothing
-              <$> validateFieldType fieldType
+              <$> validateFieldType f
               <*> validateDirectives ARGUMENT_DEFINITION fieldDirectives
           )
         <*> traverse (validateDefaultValue fieldType (Just fieldName)) defaultValue
 
-validateFieldType :: Monad m => TypeRef -> m TypeRef
-validateFieldType = pure --TODO: validate field types
+validateFieldType ::
+  forall m c cat s ctx.
+  Constraints m c cat s ctx =>
+  FieldDefinition cat s ->
+  m TypeRef
+validateFieldType FieldDefinition {fieldType = TypeRef {typeConName, typeWrappers}} = do
+  (_ :: TypeDefinition cat s) <- askType typeConName
+  _ <- validateWrapper typeWrappers
+  pure TypeRef {..}
+  where
+    validateWrapper :: TypeWrapper -> m TypeWrapper
+    validateWrapper BaseType {..} = pure BaseType {..}
+    validateWrapper TypeList {..} = do
+      _ <- askListType wrapperName
+      pure TypeList {..}
 
 validateDefaultValue ::
   TypeRef ->

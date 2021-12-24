@@ -18,6 +18,7 @@ module Language.Iris.Types.Internal.Validation.Internal
     getOperationType,
     askObjectType,
     askListType,
+    Constraints,
   )
 where
 
@@ -35,7 +36,6 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
-    TypeRef,
     VALID,
     getOperationDataType,
     internal,
@@ -43,7 +43,6 @@ import Language.Iris.Types.Internal.AST
     lookupDataType,
     msg,
     toDATA,
-    typeConName,
   )
 import Language.Iris.Types.Internal.AST.Name (packVariantTypeName, unpackVariantTypeName)
 import Language.Iris.Types.Internal.AST.Variant
@@ -64,16 +63,12 @@ askListType name =
   asks (lists . schema)
     >>= selectBy ("Unknown list " <> msg name <> ".") name
 
-askType :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
-askType = __askType . typeConName
-
-__askType ::
-  Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
-__askType name = asks schema >>= lookupDataType name >>= kindConstraint
+askType :: Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
+askType name = asks schema >>= lookupDataType name >>= kindConstraint
 
 askObjectType :: Constraints m c cat s ctx => TypeName -> m (Variant cat s)
 askObjectType name = case unpackVariantTypeName name of
-  (tName, variantName) -> __askType tName >>= constraintObject variantName
+  (tName, variantName) -> askType tName >>= constraintObject variantName
 
 resolveTypeMember ::
   Constraints m c cat s ctx =>
@@ -86,7 +81,7 @@ resolveTypeMember Variant {variantName, membership = Just name, variantFields, .
         membership = Just name,
         ..
       }
-resolveTypeMember Variant {variantName} = __askType variantName >>= constraintObject Nothing
+resolveTypeMember Variant {variantName} = askType variantName >>= constraintObject Nothing
 
 type Constraints m c (cat :: Role) s ctx =
   ( MonadError GQLError m,

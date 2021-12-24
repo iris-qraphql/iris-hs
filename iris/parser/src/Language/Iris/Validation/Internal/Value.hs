@@ -97,7 +97,7 @@ validateInputByTypeRef ::
 validateInputByTypeRef
   ref
   value = do
-    inputTypeDef <- askType ref
+    inputTypeDef <- askType (typeConName ref)
     validateInputByType
       (typeWrappers ref)
       inputTypeDef
