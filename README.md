@@ -2,6 +2,8 @@
 
 a Language influenced by GraphQL and Haskell
 
+Language should provide new interesting features ,however still provide an interface for GraphQL clients.
+
 for documentations see `spec/index.md`
 
 language is in experimental phase, so any feedback or proposal is welcome!

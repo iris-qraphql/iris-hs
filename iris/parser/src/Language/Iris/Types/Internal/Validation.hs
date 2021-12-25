@@ -20,7 +20,6 @@ module Language.Iris.Types.Internal.Validation
     selectRequired,
     selectKnown,
     Constraint (..),
-
     asksScope,
     selectWithDefaultValue,
     startInput,
@@ -72,8 +71,8 @@ import Language.Iris.Types.Internal.AST
     Ref (..),
     TypeDefinition (..),
     TypeName,
+    TypeRef (..),
     Value (..),
-    isNullable,
     lookupDataType,
     withPath,
   )
@@ -134,7 +133,7 @@ selectWithDefaultValue
   f
   validateF
   defaultValue
-  field@FieldDefinition {fieldName}
+  FieldDefinition {fieldName, fieldType}
   values =
     selectOr
       (handleNull defaultValue)
@@ -146,8 +145,8 @@ selectWithDefaultValue
       handleNull :: Maybe (Value s) -> Validator s ctx validValue
       handleNull (Just value) = f value
       handleNull Nothing
-        | isNullable field = f Null
-        | otherwise = failSelection
+        | isRequired fieldType = failSelection
+        | otherwise = f Null
       -----------------
       failSelection = do
         ValidatorContext {scope, localContext} <- Validator ask

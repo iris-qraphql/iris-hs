@@ -14,9 +14,9 @@ module Language.Iris.Rendering.RenderGQL
     fromText,
     intercalate,
     renderInputSeq,
+    renderSeries,
   )
 where
-
 
 import qualified Data.Aeson as A
 import Data.ByteString.Lazy (ByteString)
@@ -107,10 +107,13 @@ renderAtNewLine elems = indentNewline $ intercalate newline (fmap renderGQL elem
 renderObject :: (RenderGQL a) => [a] -> Rendering
 renderObject fields = space <> "{" <> renderAtNewLine fields <> newline <> "}"
 
+renderSeries :: RenderGQL a => [a] -> Rendering
+renderSeries xs = intercalate ", " (renderGQL <$> xs)
+
 renderArguments :: (RenderGQL a) => [a] -> Rendering
 renderArguments arguments
   | null arguments = ""
-  | otherwise = "(" <> intercalate ", " (renderGQL <$> arguments) <> ")"
+  | otherwise = "(" <> renderSeries arguments <> ")"
 
 renderEntry ::
   (RenderGQL name, RenderGQL value) =>

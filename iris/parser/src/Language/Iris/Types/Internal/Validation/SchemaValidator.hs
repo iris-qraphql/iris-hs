@@ -35,7 +35,7 @@ import Language.Iris.Types.Internal.AST
     GQLResult,
     Name (unpackName),
     TypeName,
-    mkBaseType, DirectiveLocation (RESOLVER),
+     DirectiveLocation (RESOLVER), TypeRef (TypeRef),
   )
 import Language.Iris.Types.Internal.AST.Schema (Schema)
 import Language.Iris.Types.Internal.Config (Config)
@@ -106,7 +106,7 @@ initialScope =
     { position = Nothing,
       currentTypeName = "Root",
       currentTypeKind = RESOLVER,
-      currentTypeWrappers = mkBaseType,
+      currentTypeWrappers = TypeRef "Root" [] True,
       kind = TYPE,
       fieldName = "Root",
       path = []

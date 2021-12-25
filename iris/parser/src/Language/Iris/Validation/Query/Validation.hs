@@ -12,12 +12,13 @@ where
 
 import Data.Mergeable.Utils (empty)
 import Language.Iris.Types.Internal.AST
-  ( ExecutableDocument (..),
+  ( DirectiveLocation (RESOLVER),
+    ExecutableDocument (..),
     GQLResult,
     Operation (..),
     Schema (..),
+    TypeRef (..),
     VALID,
-    mkBaseType, DirectiveLocation (RESOLVER),
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation
@@ -104,7 +105,7 @@ validateRequest
           { kind = SELECTION,
             currentTypeName = "Root",
             currentTypeKind = RESOLVER,
-            currentTypeWrappers = mkBaseType,
+            currentTypeWrappers = TypeRef "Root" [] True,
             fieldName = "Root",
             position = Just operationPosition,
             path = []

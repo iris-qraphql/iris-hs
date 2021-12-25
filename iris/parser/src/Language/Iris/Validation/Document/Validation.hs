@@ -38,7 +38,6 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeRef (..),
-    TypeWrapper (..),
     VALID,
     Value,
     Variant (..),
@@ -188,16 +187,16 @@ validateFieldType ::
   Constraints m c cat s ctx =>
   FieldDefinition cat s ->
   m TypeRef
-validateFieldType FieldDefinition {fieldType = TypeRef {typeConName, typeWrappers}} = do
-  (_ :: TypeDefinition cat s) <- askType typeConName
-  _ <- validateWrapper typeWrappers
-  pure TypeRef {..}
+validateFieldType FieldDefinition {fieldType} = validateTypRef fieldType
   where
-    validateWrapper :: TypeWrapper -> m TypeWrapper
-    validateWrapper BaseType {..} = pure BaseType {..}
-    validateWrapper TypeList {..} = do
-      _ <- askListType wrapperName
-      pure TypeList {..}
+    validateTypRef :: TypeRef -> m TypeRef
+    validateTypRef TypeRef {typeRefName, typeParameters = [], ..} = do
+      (_ :: TypeDefinition cat s) <- askType typeRefName
+      pure TypeRef {typeParameters = [], ..}
+    validateTypRef TypeRef {..} =
+      traverse_ validateTypRef typeParameters
+        *> askListType typeRefName
+        $> TypeRef {..}
 
 validateDefaultValue ::
   TypeRef ->

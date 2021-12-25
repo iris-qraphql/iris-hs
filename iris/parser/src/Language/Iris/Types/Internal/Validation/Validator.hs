@@ -52,17 +52,16 @@ where
 import Control.Monad.Except (MonadError (catchError, throwError))
 import Control.Monad.Reader (asks)
 import Language.Iris.Types.Internal.AST
-  ( FieldDefinition (..),
+  ( DATA_TYPE,
+    FieldDefinition (..),
     FieldName,
     Fragments,
     GQLResult,
     RAW,
-    DATA_TYPE,
+    Role,
     Schema,
     Stage,
-    Role,
     TypeName,
-    TypeRef (..),
     VALID,
     Variable (..),
     VariableDefinitions,
@@ -70,6 +69,7 @@ import Language.Iris.Types.Internal.AST
     unpackName,
   )
 import Language.Iris.Types.Internal.AST.Error
+import Language.Iris.Types.Internal.AST.Type
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation.Scope
   ( Scope (..),
@@ -152,18 +152,16 @@ inField :: FieldDefinition DATA_TYPE s -> InputValidator s c a -> InputValidator
 inField
   FieldDefinition
     { fieldName,
-      fieldType = TypeRef {typeConName}
+      fieldType
     } = withContext update
     where
-      update
+      update InputContext {inputPath = old, ..} =
         InputContext
-          { inputPath = old,
+          { inputPath = old <> getPath fieldName fieldType,
             ..
-          } =
-          InputContext
-            { inputPath = old <> [Prop fieldName typeConName],
-              ..
-            }
+          }
+      getPath name TypeRef {typeRefName, typeParameters = []} = [Prop name typeRefName]
+      getPath name TypeRef {typeRefName, typeParameters} = Prop name typeRefName : concatMap (getPath "[0]") typeParameters
 
 inputValueSource :: MonadReader (ValidatorContext s (InputContext c)) m => m InputSource
 inputValueSource = asksLocal inputSource

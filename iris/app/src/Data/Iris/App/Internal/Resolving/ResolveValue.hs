@@ -14,7 +14,7 @@ import Control.Monad.Except (MonadError (throwError))
 import qualified Data.HashMap.Lazy as HM
 import Data.Iris.App.Internal.Resolving.ResolverState
   ( ResolverContext (..),
-    askFieldTypeName,
+    askFieldType,
     setCurrentType,
   )
 import Data.Iris.App.Internal.Resolving.Types
@@ -32,7 +32,8 @@ import Data.Mergeable.Utils
   )
 import Language.Iris.Error (subfieldsNotSelected)
 import Language.Iris.Types.Internal.AST
-  ( FieldName,
+  ( (<:>),
+    FieldName,
     GQLError,
     Msg (msg),
     ObjectEntry (ObjectEntry),
@@ -45,10 +46,9 @@ import Language.Iris.Types.Internal.AST
     VALID,
     ValidValue,
     Value (..),
+    __typename,
     internal,
     unpackName,
-    (<:>),
-    __typename,
   )
 import Relude
 
@@ -82,7 +82,7 @@ resolveResolver ::
   m value
 resolveResolver f (SelectionSet selection) = f Nothing selection
 resolveResolver f (UnionSelection interface unionSel) = do
-  typename <- asks currentTypeName
+  typename <- asks currentType
   selection <- selectOr (pure interface) ((interface <:>) . unionTagSelection) typename unionSel
   f (Just typename) selection
 resolveResolver _ SelectionField = do
@@ -126,25 +126,25 @@ resolveObject typeName rmap drv =
     . fmap (Object typeName)
     . fromElems
     <=< traverse resolver
-      . excludeTypeName
-      . toList
+    . excludeTypeName
+    . toList
   where
     excludeTypeName
       | isJust typeName = filter ((__typename /=) . selectionName)
       | otherwise = id
     resolver currentSelection = do
-      t <- askFieldTypeName (selectionName currentSelection)
-      setCurrentType t $
-        local (\ctx -> ctx {currentSelection}) $
-          ObjectEntry (keyOf currentSelection)
-            <$> runFieldResolver rmap currentSelection drv
+      t <- askFieldType (selectionName currentSelection)
+      setCurrentType t
+        $ local (\ctx -> ctx {currentSelection})
+        $ ObjectEntry (keyOf currentSelection)
+          <$> runFieldResolver rmap currentSelection drv
 
 resolveData :: (MonadReader ResolverContext m, MonadError GQLError m) => ResolverMap m -> (Maybe TypeName, ObjectTypeResolver m) -> m ValidValue
 resolveData rmap (typeName, drv) = Object typeName <$> (traverse (resolverDataField rmap) (HM.toList $ objectFields drv) >>= fromElems)
 
 resolverDataField :: (MonadReader ResolverContext m, MonadError GQLError m) => ResolverMap m -> (FieldName, m (ResolverValue m)) -> m (ObjectEntry VALID)
 resolverDataField rmap (key, value) = do
-  t <- askFieldTypeName key
+  t <- askFieldType key
   res <- value
   setCurrentType t $ ObjectEntry key <$> resolveSelection rmap res SelectionField
 
@@ -159,7 +159,7 @@ runFieldResolver ::
   m ValidValue
 runFieldResolver rmap Selection {selectionName, selectionContent}
   | selectionName == __typename =
-    const (Scalar . String . unpackName <$> asks currentTypeName)
+    const (Scalar . String . unpackName <$> asks currentType)
   | otherwise =
     maybe (pure Null) (>>= \x -> resolveSelection rmap x selectionContent)
       . HM.lookup selectionName

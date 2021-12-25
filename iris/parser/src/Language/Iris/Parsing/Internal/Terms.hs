@@ -1,9 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 
 module Language.Iris.Parsing.Internal.Terms
   ( name,
@@ -60,7 +58,6 @@ import Language.Iris.Types.Internal.AST
     Ref (..),
     TypeName,
     TypeRef (..),
-    TypeWrapper (..),
     packName,
   )
 import Language.Iris.Types.Internal.AST.Name (Name)
@@ -155,9 +152,14 @@ brackets :: Parser a -> Parser a
 brackets = between (symbol 91) (symbol 93)
 {-# INLINE brackets #-}
 
--- parameters: <name>
-parametrized :: Parser a -> Parser a
-parametrized = between (symbol LESS_THEN) (symbol GREATER_THEN)
+-- parameters: <a,b,c> | ""
+parametrized :: Parser a -> Parser [a]
+parametrized x =
+  between
+    (symbol LESS_THEN)
+    (symbol GREATER_THEN)
+    (x `sepBy1` ignoredTokens)
+    <|> pure []
 
 -- 2.1.9 Names
 -- https://spec.graphql.org/draft/#Name
@@ -280,24 +282,9 @@ parseAlias = try (optional alias) <|> pure Nothing
 {-# INLINE parseAlias #-}
 
 parseType :: Parser TypeRef
-parseType = uncurry TypeRef <$> (unwrapped <|> wrapped)
-  where
-    parseT = unwrapped <|> wrapped
-    unwrapped :: Parser (TypeName, TypeWrapper)
-    unwrapped = do
-      n <- parseTypeName
-      parametrizedType n <|> fmap (n,) (BaseType <$> parseRequired)
-    {-# INLINE unwrapped #-}
-    parametrizedType n = do
-      (parName, wrappers) <- parametrized parseT
-      req <- parseRequired
-      pure (parName, TypeList n wrappers req)
-    {-# INLINE parametrizedType #-}
-    ----------------------------------------------
-    wrapped :: Parser (TypeName, TypeWrapper)
-    wrapped = do
-      (typename, wrapper) <- brackets parseT
-      isRequired <- parseRequired
-      pure (typename, TypeList "List" wrapper isRequired)
-    {-# INLINE wrapped #-}
+parseType = do
+  tyRef <-
+    TypeRef <$> parseTypeName <*> parametrized parseType
+      <|> fmap (TypeRef "List" . pure) (brackets parseType)
+  tyRef <$> parseRequired
 {-# INLINE parseType #-}

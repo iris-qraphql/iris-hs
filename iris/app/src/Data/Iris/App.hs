@@ -133,7 +133,7 @@ validateReq inputSchema config request = ResultT $
             { schema,
               config,
               operation,
-              currentTypeName = fromString $ show $ operationType operation,
+              currentType = fromString $ show $ operationType operation,
               currentSelection =
                 Selection
                   { selectionName = "Root",

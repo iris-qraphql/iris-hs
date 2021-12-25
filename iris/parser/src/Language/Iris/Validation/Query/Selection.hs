@@ -30,7 +30,7 @@ import Language.Iris.Error.Selection
   )
 import Language.Iris.Types.Internal.AST
   ( Arguments,
-    DirectiveLocation (FIELD, FRAGMENT_SPREAD, INLINE_FRAGMENT, MUTATION, QUERY, SUBSCRIPTION),
+    DirectiveLocation (..),
     Directives,
     FieldDefinition (..),
     FieldName,
@@ -47,24 +47,25 @@ import Language.Iris.Types.Internal.AST
     SelectionSet,
     TypeContent (..),
     TypeDefinition (..),
-    TypeRef (..),
     UnionTag (..),
     VALID,
     Variant (..),
+    __typename,
     at,
     mergeNonEmpty,
-    mkBaseType,
     msg,
-    __typename,
   )
+import Language.Iris.Types.Internal.AST.Type (TypeRef (..))
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
     SelectionValidator,
-    askType,
     getOperationType,
     selectKnown,
     setSelection,
     withScope,
+  )
+import Language.Iris.Types.Internal.Validation.Internal
+  ( resolveTypeRef,
   )
 import Language.Iris.Validation.Internal.Arguments
   ( validateFieldArguments,
@@ -185,13 +186,13 @@ validateSelection typeDef sel@Selection {..} =
               }
           )
 validateSelection typeDef (Spread dirs ref) =
-  processSelectionDirectives FRAGMENT_SPREAD dirs $
-    const $
-      validateSpreadSelection typeDef ref
+  processSelectionDirectives FRAGMENT_SPREAD dirs
+    $ const
+    $ validateSpreadSelection typeDef ref
 validateSelection typeDef (InlineFragment fragment@Fragment {fragmentDirectives}) =
-  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives $
-    const $
-      validateInlineFragmentSelection typeDef fragment
+  processSelectionDirectives INLINE_FRAGMENT fragmentDirectives
+    $ const
+    $ validateInlineFragmentSelection typeDef fragment
 
 validateSpreadSelection ::
   ValidateFragmentSelection s =>
@@ -219,7 +220,7 @@ selectSelectionField ref Variant {variantFields}
       FieldDefinition
         { fieldDescription = Nothing,
           fieldName = __typename,
-          fieldType = TypeRef {typeConName = "String", typeWrappers = mkBaseType},
+          fieldType = TypeRef "String" [] True,
           fieldContent = Nothing,
           fieldDirectives = empty
         }
@@ -234,13 +235,13 @@ validateSelectionContent ::
   FragmentValidator s (Arguments VALID, SelectionContent VALID)
 validateSelectionContent typeDef ref selectionArguments content = do
   fieldDef <- selectSelectionField ref typeDef
-  fieldTypeDef <- askType (typeConName (fieldType fieldDef))
+  fieldTypeDef <- resolveTypeRef (fieldType fieldDef)
   validArgs <- validateFieldArguments fieldDef selectionArguments
-  validContent <- validateContent fieldTypeDef content
+  validContent <- validateContent content fieldTypeDef
   pure (validArgs, validContent)
   where
-    validateContent fieldTypeDef SelectionField = validateContentLeaf ref fieldTypeDef
-    validateContent fieldTypeDef (SelectionSet rawSelectionSet) = validateByTypeContent fieldTypeDef ref rawSelectionSet
+    validateContent SelectionField fieldTypeDef = validateContentLeaf ref fieldTypeDef
+    validateContent (SelectionSet rawSelectionSet) fieldTypeDef = validateByTypeContent fieldTypeDef ref rawSelectionSet
 
 validateContentLeaf ::
   Ref FieldName ->
@@ -279,8 +280,8 @@ validateByTypeContent
           resolverTypeGuard
           resolverVariants
       __validate _ =
-        const $
-          throwError $
-            hasNoSubfields
-              currentSelectionRef
-              typeName
+        const
+          $ throwError
+          $ hasNoSubfields
+            currentSelectionRef
+            typeName
