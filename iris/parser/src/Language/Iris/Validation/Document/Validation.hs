@@ -28,7 +28,6 @@ import Language.Iris.Types.Internal.AST
     DATA_TYPE,
     DirectiveDefinition (..),
     DirectiveLocation (..),
-    FieldContent (..),
     FieldDefinition (..),
     FieldName,
     GQLResult,
@@ -41,7 +40,7 @@ import Language.Iris.Types.Internal.AST
     VALID,
     Value,
     Variant (..),
-    toLocation,
+    toLocation
   )
 import Language.Iris.Types.Internal.Config (Config (..))
 import Language.Iris.Types.Internal.Validation
@@ -137,20 +136,16 @@ instance TypeCheck (TypeContent cat) where
 
 instance (FieldDirectiveLocation cat, KindErrors cat) => TypeCheck (FieldDefinition cat) where
   type TypeContext (FieldDefinition cat) = TypeEntity ON_TYPE
-  typeCheck f@FieldDefinition {..} =
+  typeCheck FieldDefinition {..} =
     inField
       fieldName
       ( FieldDefinition
           fieldDescription
           fieldName
-          <$> traverse checkFieldContent fieldContent
-          <*> validateFieldType f
+          <$> traverse (traverse typeCheck) fieldArgs
+          <*> validateFieldType (Proxy @cat) fieldType
           <*> validateDirectives (directiveLocation (Proxy @cat)) fieldDirectives
       )
-    where
-      checkFieldContent :: FieldContent cat CONST -> SchemaValidator (Field ON_TYPE) (FieldContent cat VALID)
-      checkFieldContent (ResolverFieldContent args) = ResolverFieldContent <$> traverse typeCheck args
-      checkFieldContent DataFieldContent = pure DataFieldContent
 
 class FieldDirectiveLocation (cat :: Role) where
   directiveLocation :: Proxy cat -> DirectiveLocation
@@ -171,23 +166,21 @@ instance TypeCheck DirectiveDefinition where
 
 instance TypeCheck ArgumentDefinition where
   type TypeContext ArgumentDefinition = Field ON_TYPE
-  typeCheck (ArgumentDefinition f@FieldDefinition {..} defaultValue) =
+  typeCheck ArgumentDefinition {..} =
     ArgumentDefinition
-      <$> ( FieldDefinition
-              fieldDescription
-              fieldName
-              Nothing
-              <$> validateFieldType f
-              <*> validateDirectives ARGUMENT_DEFINITION fieldDirectives
-          )
-        <*> traverse (validateDefaultValue fieldType (Just fieldName)) defaultValue
+      argDescription
+      argName
+      <$> validateFieldType (Proxy @DATA_TYPE) argType
+      <*> traverse (validateDefaultValue argType (Just argName)) argDefaultValue
+      <*> validateDirectives ARGUMENT_DEFINITION argDirectives
 
 validateFieldType ::
   forall m c cat s ctx.
   Constraints m c cat s ctx =>
-  FieldDefinition cat s ->
+  Proxy cat ->
+  TypeRef ->
   m TypeRef
-validateFieldType FieldDefinition {fieldType} = validateTypRef fieldType
+validateFieldType _ = validateTypRef 
   where
     validateTypRef :: TypeRef -> m TypeRef
     validateTypRef TypeRef {typeRefName, typeParameters = [], ..} = do

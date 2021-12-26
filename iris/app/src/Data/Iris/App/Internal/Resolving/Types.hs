@@ -40,7 +40,7 @@ import Language.Iris.Types.Internal.AST
     ScalarValue (..),
     TypeName,
     ValidValue,
-    internal,
+    internal, VALID,
   )
 import Relude hiding (show)
 
@@ -79,6 +79,7 @@ data ResolverValue (m :: Type -> Type)
   = ResNull
   | ResScalar ScalarValue
   | ResList [ResolverValue m]
+  | ResMap (Map (Value VALID) (ResolverValue m))
   | ResObject (Maybe TypeName) (ObjectTypeResolver m)
   | ResRef (m NamedResolverRef)
 

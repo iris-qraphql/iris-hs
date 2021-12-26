@@ -25,7 +25,6 @@ import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
     CONST,
-    FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
     RESOLVER_TYPE,
@@ -95,11 +94,7 @@ instance StructuralCompatibility (FieldsDefinition RESOLVER_TYPE s) where
 instance StructuralCompatibility (FieldDefinition RESOLVER_TYPE s) where
   f1 `isCompatibleTo` f2 =
     isCompatibleBy fieldType f1 f2
-      *> isCompatibleBy (fieldArgs . fieldContent) f1 f2
-
-fieldArgs :: Maybe (FieldContent  RESOLVER_TYPE s) -> ArgumentsDefinition s
-fieldArgs (Just (ResolverFieldContent args)) = args
-fieldArgs _ = empty
+      *> isCompatibleBy (fromMaybe empty . fieldArgs) f1 f2
 
 instance StructuralCompatibility (ArgumentsDefinition s) where
   subArguments `isCompatibleTo` arguments = traverse_ hasCompatibleSubArgument arguments
@@ -109,7 +104,7 @@ instance StructuralCompatibility (ArgumentsDefinition s) where
           selectOr (failImplements Missing) (`isCompatibleTo` argument) (keyOf argument) subArguments
 
 instance StructuralCompatibility (ArgumentDefinition s) where
-  isCompatibleTo = isCompatibleBy (fieldType . argument)
+  isCompatibleTo = isCompatibleBy argType
 
 instance StructuralCompatibility TypeRef where
   t1 `isCompatibleTo` t2

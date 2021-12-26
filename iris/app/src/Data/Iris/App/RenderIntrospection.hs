@@ -40,7 +40,6 @@ import Language.Iris.Types.Internal.AST
     Value (..),
     Variant (..),
     Variants,
-    fieldArguments,
     fieldVisibility,
     lookupDeprecation,
     unpackName,
@@ -94,13 +93,13 @@ instance RenderIntrospection (Value VALID) where
   render x = pure $ mkString $ fromLBS $ GQL.render x
 
 instance RenderIntrospection (FieldDefinition a VALID) where
-  render field@FieldDefinition {..} =
+  render FieldDefinition {..} =
     renderObject
       "__Field"
       fieldName
       fieldDescription
       [ ("type", render fieldType),
-        ("args", render $ toList $ fieldArguments field),
+        ("args", render $ toList <$> fieldArgs),
         ("deprecation", render (lookupDeprecation fieldDirectives))
       ]
 
@@ -113,13 +112,13 @@ instance RenderIntrospection (Variant a VALID) where
       [("fields", render $ filter fieldVisibility $ toList variantFields)]
 
 instance RenderIntrospection (ArgumentDefinition VALID) where
-  render ArgumentDefinition {argument = FieldDefinition {..}, ..} =
+  render ArgumentDefinition {..} =
     renderObject
       "__Argument"
-      fieldName
-      fieldDescription
-      [ ("type", render fieldType),
-        ("defaultValue", render argumentDefaultValue)
+      argName
+      argDescription
+      [ ("type", render argType),
+        ("defaultValue", render argDefaultValue)
       ]
 
 instance RenderIntrospection TypeRef where

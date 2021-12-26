@@ -9,7 +9,6 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -20,7 +19,6 @@ module Language.Iris.Types.Internal.AST.Fields
     ArgumentsDefinition,
     FieldDefinition (..),
     FieldsDefinition,
-    FieldContent (..),
     DirectivesDefinition,
     DirectiveDefinition (..),
     Directives,
@@ -28,7 +26,6 @@ module Language.Iris.Types.Internal.AST.Fields
     fieldVisibility,
     renderArgumentValues,
     renderDirectives,
-    fieldArguments,
     lookupDeprecation,
   )
 where
@@ -39,8 +36,7 @@ import Data.Mergeable
     OrdMap,
   )
 import Data.Mergeable.Utils
-  ( Empty (..),
-    KeyOf (..),
+  ( KeyOf (..),
     selectOr,
   )
 import Instances.TH.Lift ()
@@ -69,9 +65,7 @@ import Language.Iris.Types.Internal.AST.Name
     isNotSystemName,
   )
 import Language.Iris.Types.Internal.AST.Role
-  ( DATA_TYPE,
-    RESOLVER_TYPE,
-    Role,
+  ( Role,
     ToRESOLVER (..),
     toRESOLVER,
   )
@@ -167,39 +161,18 @@ instance KeyOf FieldName (DirectiveDefinition s) where
   keyOf = directiveDefinitionName
 
 instance ToRESOLVER FieldDefinition where
-  toRESOLVER FieldDefinition {fieldContent, ..} = FieldDefinition {fieldContent = toRESOLVER <$> fieldContent, ..}
-
-instance ToRESOLVER FieldContent where
-  toRESOLVER (ResolverFieldContent x) = ResolverFieldContent x
-  toRESOLVER DataFieldContent = DataFieldContent
+  toRESOLVER FieldDefinition {..} = FieldDefinition {..}
 
 type FieldsDefinition cat s = OrdMap FieldName (FieldDefinition cat s)
 
 data FieldDefinition (cat :: Role) (s :: Stage) = FieldDefinition
   { fieldDescription :: Maybe Description,
     fieldName :: FieldName,
-    fieldContent :: Maybe (FieldContent cat s),
+    fieldArgs :: Maybe (ArgumentsDefinition s),
     fieldType :: TypeRef,
     fieldDirectives :: Directives s
   }
   deriving (Show, Lift, Eq)
-
-data FieldContent (cat :: Role) (s :: Stage) where
-  DataFieldContent :: FieldContent cat s
-  ResolverFieldContent ::
-    { fieldArgumentsDefinition :: ArgumentsDefinition s
-    } ->
-    FieldContent RESOLVER_TYPE s
-
-fieldArguments :: FieldDefinition c s -> ArgumentsDefinition s
-fieldArguments FieldDefinition {fieldContent = Just (ResolverFieldContent args)} = args
-fieldArguments _ = empty
-
-deriving instance Eq (FieldContent cat s)
-
-deriving instance Show (FieldContent cat s)
-
-deriving instance Lift (FieldContent cat s)
 
 instance KeyOf FieldName (FieldDefinition cat s) where
   keyOf = fieldName
@@ -209,7 +182,7 @@ instance NameCollision GQLError (FieldDefinition cat s) where
     "There can Be only One field Named " <> msg fieldName
 
 instance RenderGQL (FieldDefinition cat s) where
-  renderGQL FieldDefinition {fieldName, fieldType, fieldContent = Just (ResolverFieldContent args)} =
+  renderGQL FieldDefinition {fieldName, fieldType, fieldArgs = Just args} =
     renderGQL fieldName <> renderGQL args <> ": " <> renderGQL fieldType
   renderGQL FieldDefinition {fieldName, fieldType} =
     renderEntry fieldName fieldType
@@ -226,20 +199,24 @@ instance RenderGQL (ArgumentsDefinition s) where
   renderGQL = renderArguments . toList
 
 instance RenderGQL (ArgumentDefinition s) where
-  renderGQL = renderGQL . argument
+  renderGQL ArgumentDefinition {argName, argType} =
+    renderEntry argName argType
 
 data ArgumentDefinition s = ArgumentDefinition
-  { argument :: FieldDefinition DATA_TYPE s,
-    argumentDefaultValue :: Maybe (Value s)
+  { argDescription :: Maybe Description,
+    argName :: FieldName,
+    argType :: TypeRef,
+    argDefaultValue :: Maybe (Value s),
+    argDirectives :: Directives s
   }
   deriving (Show, Lift, Eq)
 
 instance KeyOf FieldName (ArgumentDefinition s) where
-  keyOf = keyOf . argument
+  keyOf = argName
 
 instance NameCollision GQLError (ArgumentDefinition s) where
-  nameCollision ArgumentDefinition {argument} =
-    "There can Be only One argument Named " <> msg (fieldName argument)
+  nameCollision ArgumentDefinition {argName} =
+    "There can Be only One argument Named " <> msg argName
 
 lookupDeprecation :: Directives s -> Maybe Description
 lookupDeprecation = fmap readReason . lookup "deprecated"

@@ -25,16 +25,14 @@ import Language.Iris.Types.Internal.AST
     ArgumentsDefinition,
     CONST,
     DirectiveDefinition (..),
-    FieldDefinition (..),
-    DATA_TYPE,
-    RESOLVER_TYPE,
+    FieldName,
     ObjectEntry (..),
     Position (..),
     RAW,
+    TypeRef,
     VALID,
     Value (..),
     VariableDefinitions,
-    fieldArguments,
   )
 import Language.Iris.Types.Internal.Validation
   ( FragmentValidator,
@@ -77,46 +75,43 @@ validateArgument ::
   Validator schemaS ctx (Argument VALID)
 validateArgument
   requestArgs
-  ArgumentDefinition {argument,argumentDefaultValue} =
+  ArgumentDefinition {..} =
     selectWithDefaultValue
-      (toArgument argument >=> validateArgumentValue argument)
-      (validateArgumentValue argument)
-      argumentDefaultValue
-      argument
+      (toArgument argName >=> validateArgumentValue argType)
+      (validateArgumentValue argType)
+      argDefaultValue
+      argName
+      argType
       requestArgs
 
-toArgument :: FieldDefinition DATA_TYPE s -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
-toArgument
-  FieldDefinition {fieldName}
-  value = mkArg . fromMaybe (Position 0 0) <$> asksScope position
-    where
-      mkArg pos = Argument pos fieldName value
+toArgument :: FieldName -> Value schemaS -> Validator schemaStage ctx (Argument schemaS)
+toArgument name value = mkArg . fromMaybe (Position 0 0) <$> asksScope position
+  where
+    mkArg pos = Argument pos name value
 
 validateArgumentValue ::
   (ValidateWithDefault ctx schemaS valueS) =>
-  FieldDefinition DATA_TYPE schemaS ->
+  TypeRef ->
   Argument valueS ->
   Validator schemaS ctx (Argument VALID)
 validateArgumentValue
-  field
+  argType
   Argument {argumentValue, ..} =
-    withScope (setPosition argumentPosition) $
-      startInput (SourceArgument argumentName) $
-        Argument
-          argumentPosition
-          argumentName
-          <$> validateInputByTypeRef (fieldType field) argumentValue
+    withScope (setPosition argumentPosition)
+      $ startInput (SourceArgument argumentName)
+      $ Argument
+        argumentPosition
+        argumentName
+        <$> validateInputByTypeRef argType argumentValue
 
 validateFieldArguments ::
-  FieldDefinition RESOLVER_TYPE VALID ->
+  ArgumentsDefinition VALID ->
   Arguments RAW ->
   FragmentValidator s (Arguments VALID)
-validateFieldArguments field =
+validateFieldArguments arguments =
   validateArguments
     (`selectKnown` arguments)
     arguments
-  where
-    arguments = fieldArguments field
 
 validateDirectiveArguments ::
   ArgumentsConstraints ctx schemaStage valueStage =>
