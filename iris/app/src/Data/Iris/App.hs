@@ -64,7 +64,7 @@ import Language.Iris.Types.Internal.AST
     SelectionContent (..),
     VALID,
     Value,
-    (<:>),
+    (<:>), TypeRef (TypeRef),
   )
 import Relude hiding (ByteString, empty)
 
@@ -133,7 +133,7 @@ validateReq inputSchema config request = ResultT $
             { schema,
               config,
               operation,
-              currentType = fromString $ show $ operationType operation,
+              currentType = TypeRef (fromString $ show $ operationType operation) [] True,
               currentSelection =
                 Selection
                   { selectionName = "Root",

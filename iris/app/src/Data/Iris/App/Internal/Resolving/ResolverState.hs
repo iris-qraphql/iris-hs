@@ -15,7 +15,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-
 module Data.Iris.App.Internal.Resolving.ResolverState
   ( ResolverContext (..),
     ResolverStateT (..),
@@ -70,11 +69,12 @@ import Language.Iris.Types.Internal.AST
 import Relude
 
 data ResolverContext = ResolverContext
-  { currentSelection :: Selection VALID,
-    schema :: Schema VALID,
+  { schema :: Schema VALID,
     operation :: Operation VALID,
     config :: Config,
-    currentType :: TypeName
+    -- scope
+    currentType :: TypeRef,
+    currentSelection :: Selection VALID
   }
   deriving (Show)
 
@@ -82,28 +82,27 @@ setCurrentType ::
   ( MonadReader ResolverContext m,
     MonadError GQLError m
   ) =>
-  Maybe TypeName ->
+  Maybe TypeRef ->
   m a ->
   m a
 setCurrentType Nothing = id
-setCurrentType (Just typeRefName) = local (\ctx -> ctx {currentType = typeRefName})
+setCurrentType (Just currentType) = local (\ctx -> ctx {currentType})
 
-askFieldType :: forall m. (MonadReader ResolverContext m, MonadError GQLError m) => FieldName -> m (Maybe TypeName)
+askFieldType :: forall m. (MonadReader ResolverContext m, MonadError GQLError m) => FieldName -> m (Maybe TypeRef)
 askFieldType fieldName = asks currentType >>= resolveTypeRef
   where
-    resolveTypeRef :: TypeName -> m (Maybe TypeName)
-    resolveTypeRef name = do
-      t <- asks schema >>= lookupDataType name
+    resolveTypeRef :: TypeRef -> m (Maybe TypeRef)
+    resolveTypeRef TypeRef {typeRefName} = do
+      t <- asks schema >>= lookupDataType typeRefName
       case t of
         TypeDefinition {typeContent = ResolverTypeContent _ vs} ->
           catchError
-            (fieldTypeName <$> lookupTypeVariant (getVariantName name) vs)
+            (fieldTypeName <$> lookupTypeVariant (getVariantName typeRefName) vs)
             (const $ pure Nothing)
         _ -> pure Nothing
-      where
-        fieldTypeName :: Variant RESOLVER_TYPE VALID -> Maybe TypeName
-        fieldTypeName = fmap typeRefName . selectOr Nothing (Just . fieldType) fieldName . variantFields 
-  
+    fieldTypeName :: Variant RESOLVER_TYPE VALID -> Maybe TypeRef
+    fieldTypeName =  selectOr Nothing (Just . fieldType) fieldName . variantFields
+
 type ResolverState = ResolverStateT () Identity
 
 runResolverStateT :: ResolverStateT e m a -> ResolverContext -> ResultT e m a

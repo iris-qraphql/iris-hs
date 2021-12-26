@@ -151,10 +151,10 @@ instance Unknown (Argument s') ctx where
       scope _ = "Field"
 
 instance Unknown (Ref FieldName) ctx where
-  unknown Scope {currentTypeName, path} _ Ref {refName, refPosition} =
+  unknown Scope {currentType, path} _ Ref {refName, refPosition} =
     ( ( "Cannot query field " <> msg refName
           <> " on type "
-          <> msg currentTypeName
+          <> msg currentType
           <> "."
       )
         `at` refPosition

@@ -104,9 +104,8 @@ initialScope :: Scope
 initialScope =
   Scope
     { position = Nothing,
-      currentTypeName = "Root",
-      currentTypeKind = RESOLVER,
-      currentTypeWrappers = TypeRef "Root" [] True,
+      currentType = TypeRef "Root" [] True,
+      currentLocation = RESOLVER,
       kind = TYPE,
       fieldName = "Root",
       path = []
