@@ -10,6 +10,7 @@ module Data.Iris.App.NamedResolvers
     NamedResolverFunction,
     RootResolverValue,
     ResultBuilder,
+    refMap,
   )
 where
 
@@ -32,6 +33,7 @@ import Language.Iris.Types.Internal.AST
     TypeName,
     ValidValue,
   )
+import Relude hiding (empty, fromList)
 
 -- PUBLIC
 
@@ -47,6 +49,9 @@ ref typeName = ResRef . pure . NamedResolverRef typeName
 
 refs :: Applicative m => TypeName -> [ValidValue] -> ResolverValue m
 refs typeName = mkList . map (ref typeName)
+
+refMap :: Applicative m => TypeName -> [(ValidValue, ValidValue)] -> ResolverValue m
+refMap typeName xs = ResMap $ map (second (ref typeName)) xs
 
 type NamedResolverFunction o e m = ValidValue -> Resolver o e m (ResultBuilder o e m)
 

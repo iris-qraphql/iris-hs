@@ -103,9 +103,8 @@ validateRequest
       scope =
         Scope
           { kind = SELECTION,
-            currentTypeName = "Root",
-            currentTypeKind = RESOLVER,
-            currentTypeWrappers = TypeRef "Root" [] True,
+            currentLocation = RESOLVER,
+            currentType = TypeRef "Root" [] True,
             fieldName = "Root",
             position = Just operationPosition,
             path = []

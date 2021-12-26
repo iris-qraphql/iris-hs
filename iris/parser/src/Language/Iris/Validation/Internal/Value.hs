@@ -63,14 +63,14 @@ violation ::
 violation message value = do
   Scope
     { position,
-      currentTypeWrappers
+      currentType
     } <-
     asksScope id
   prefix <- inputMessagePrefix
   throwError $
     ( prefix
         <> typeViolation
-          currentTypeWrappers
+          currentType
           value
         <> maybe "" (" " <>) message
     )
@@ -177,8 +177,8 @@ validateScalar ::
   Value s ->
   InputValidator schemaS ctx ValidValue
 validateScalar ScalarDefinition {validateValue} value = do
-  typeName <- asksScope currentTypeName
-  scalarValue <- toScalar typeName value
+  typeName <- asksScope currentType
+  scalarValue <- toScalar (typeRefName typeName) value
   case validateValue scalarValue of
     Right _ -> pure scalarValue
     Left "" -> violation Nothing value

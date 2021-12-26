@@ -42,6 +42,7 @@ import Language.Iris.Types.Internal.AST
     SelectionContent (..),
     SelectionSet,
     TypeName,
+    TypeRef (..),
     UnionTag (unionTagSelection),
     VALID,
     ValidValue,
@@ -60,11 +61,16 @@ resolveSelection ::
   ResolverValue m ->
   SelectionContent VALID ->
   m ValidValue
+resolveSelection rmap (ResMap resMap) selection = List <$> traverse resolveTuple resMap
+  where
+    resolveTuple (k, v) = do
+      value <- resolveSelection rmap v selection
+      pure $ List [k, value]
 resolveSelection rmap (ResList xs) selection =
   List <$> traverse (flip (resolveSelection rmap) selection) xs
 -- Object -----------------
 resolveSelection rmap (ResObject name fields) SelectionField = resolveData rmap (name, fields)
-resolveSelection rmap (ResObject tyName obj) sel = setCurrentType tyName $ resolveResolver (\_ s -> resolveObject tyName rmap obj s) sel
+resolveSelection rmap (ResObject tyName obj) sel = setCurrentType (mkRef <$> tyName) $ resolveResolver (\_ s -> resolveObject tyName rmap obj s) sel
 -- SCALARS
 resolveSelection _ ResNull _ = pure Null
 resolveSelection _ (ResScalar x) SelectionField = pure $ Scalar x
@@ -82,7 +88,7 @@ resolveResolver ::
   m value
 resolveResolver f (SelectionSet selection) = f Nothing selection
 resolveResolver f (UnionSelection interface unionSel) = do
-  typename <- asks currentType
+  typename <- asks (typeRefName . currentType)
   selection <- selectOr (pure interface) ((interface <:>) . unionTagSelection) typename unionSel
   f (Just typename) selection
 resolveResolver _ SelectionField = do
@@ -100,7 +106,7 @@ resolveRef ::
 resolveRef rmap ref selection = do
   namedResolver <- getNamedResolverBy ref rmap
   case namedResolver of
-    NamedObjectResolver res -> setCurrentType (Just $ resolverTypeName ref) $ resolveResolver (\t -> resolveObject t rmap res) selection
+    NamedObjectResolver res -> setCurrentType (Just $ mkRef $ resolverTypeName ref) $ resolveResolver (\t -> resolveObject t rmap res) selection
     NamedUnionResolver unionRef -> resolveSelection rmap (ResRef $ pure unionRef) selection
 
 getNamedResolverBy ::
@@ -112,6 +118,9 @@ getNamedResolverBy ref = selectOr cantFoundError ((resolverArgument ref &) . res
   where
     cantFoundError = throwError ("Resolver Type " <> msg (resolverTypeName ref) <> "can't found")
 
+mkRef :: TypeName -> TypeRef
+mkRef x = TypeRef x [] True
+
 resolveObject ::
   ( MonadReader ResolverContext m,
     MonadError GQLError m
@@ -122,7 +131,7 @@ resolveObject ::
   SelectionSet VALID ->
   m ValidValue
 resolveObject typeName rmap drv =
-  setCurrentType typeName
+  setCurrentType (mkRef <$> typeName)
     . fmap (Object typeName)
     . fromElems
     <=< traverse resolver
@@ -159,7 +168,7 @@ runFieldResolver ::
   m ValidValue
 runFieldResolver rmap Selection {selectionName, selectionContent}
   | selectionName == __typename =
-    const (Scalar . String . unpackName <$> asks currentType)
+    const (Scalar . String . unpackName . typeRefName <$> asks currentType)
   | otherwise =
     maybe (pure Null) (>>= \x -> resolveSelection rmap x selectionContent)
       . HM.lookup selectionName

@@ -19,7 +19,7 @@ import Data.Mergeable.Utils
     fromElems,
     selectOr,
   )
-import Language.Iris.Types.Internal.AST (Variant (..), mergeNonEmpty, startHistory)
+import Language.Iris.Types.Internal.AST (Variant (..), mergeNonEmpty, startHistory, typeRefName)
 import Language.Iris.Types.Internal.AST.Base (Position (..))
 import Language.Iris.Types.Internal.AST.Name (TypeName, __typename)
 import Language.Iris.Types.Internal.AST.Role
@@ -128,7 +128,7 @@ joinClusters selSet typedSelections
 
 mkUnionRootType :: FragmentValidator s (Variant RESOLVER_TYPE VALID)
 mkUnionRootType = do
-  variantName <- asksScope currentTypeName
+  variantName <- asksScope (typeRefName . currentType)
   pure
     Variant
       { variantDescription = Nothing,

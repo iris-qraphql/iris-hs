@@ -169,7 +169,7 @@ validateSelectionSet typeDef =
 -- validate single selection: InlineFragments and Spreads will Be resolved and included in SelectionSet
 validateSelection :: ValidateFragmentSelection s => Variant RESOLVER_TYPE VALID -> Selection RAW -> FragmentValidator s (Maybe (SelectionSet VALID))
 validateSelection typeDef sel@Selection {..} =
-  withScope (setSelection (variantName typeDef) selectionRef) $
+  withScope (setSelection (TypeRef (variantName typeDef) [] True) selectionRef) $
     processSelectionDirectives FIELD selectionDirectives validateContent
   where
     selectionRef = Ref selectionName selectionPosition
@@ -266,7 +266,7 @@ validateByTypeContent ::
 validateByTypeContent
   TypeDefinition {typeContent, ..}
   currentSelectionRef =
-    withScope (setSelection typeName currentSelectionRef)
+    withScope (setSelection (TypeRef typeName [] True) currentSelectionRef)
       . __validate typeContent
     where
       __validate ::

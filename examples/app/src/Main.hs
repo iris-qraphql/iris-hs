@@ -22,6 +22,7 @@ import Data.Iris.App.NamedResolvers
     object,
     queryResolvers,
     ref,
+    refMap,
     refs,
     variant,
   )
@@ -45,12 +46,12 @@ resolverDeities =
             [ ("deity", ref "Deity" <$> getArgument "id"),
               ( "deities",
                 pure $
-                  refs
+                  refMap
                     "Deity"
-                    [ "zeus",
-                      "cronos",
-                      "morpheus",
-                      "kraken"
+                    [ ("ze3", "zeus"),
+                      ("cr1", "cronos"),
+                      ("z34", "morpheus"),
+                      ("z42", "kraken")
                     ]
               )
             ]
