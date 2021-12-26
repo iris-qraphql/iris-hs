@@ -221,7 +221,7 @@ selectSelectionField ref Variant {variantFields}
         { fieldDescription = Nothing,
           fieldName = __typename,
           fieldType = TypeRef "String" [] True,
-          fieldContent = Nothing,
+          fieldArgs = Nothing,
           fieldDirectives = empty
         }
   | otherwise = selectKnown ref variantFields
@@ -236,7 +236,10 @@ validateSelectionContent ::
 validateSelectionContent typeDef ref selectionArguments content = do
   fieldDef <- selectSelectionField ref typeDef
   fieldTypeDef <- resolveTypeRef (fieldType fieldDef)
-  validArgs <- validateFieldArguments fieldDef selectionArguments
+  validArgs <-
+    validateFieldArguments
+      (fromMaybe empty $ fieldArgs fieldDef)
+      selectionArguments
   validContent <- validateContent content fieldTypeDef
   pure (validArgs, validContent)
   where

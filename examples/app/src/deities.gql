@@ -20,5 +20,5 @@ resolver Deity
   | Unknown {} # exists only inside of Deity`
 
 resolver Query = {
-  deities(lifespan: Lifespan?): [Deity]
+  deities(lifespan: Lifespan?): Map<String,Deity>
 }

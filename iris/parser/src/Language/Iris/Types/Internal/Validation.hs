@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -63,9 +62,7 @@ import Language.Iris.Error.Class
     Unused (..),
   )
 import Language.Iris.Types.Internal.AST
-  ( DATA_TYPE,
-    FieldDefinition (..),
-    FieldName,
+  ( FieldName,
     Position (..),
     RESOLVER_TYPE,
     Ref (..),
@@ -126,14 +123,16 @@ selectWithDefaultValue ::
   (Value s -> Validator s ctx validValue) ->
   (a -> Validator s ctx validValue) ->
   Maybe (Value s) ->
-  FieldDefinition DATA_TYPE s ->
+  FieldName ->
+  TypeRef ->
   c a ->
   Validator s ctx validValue
 selectWithDefaultValue
   f
   validateF
   defaultValue
-  FieldDefinition {fieldName, fieldType}
+  fieldName 
+  fieldType
   values =
     selectOr
       (handleNull defaultValue)

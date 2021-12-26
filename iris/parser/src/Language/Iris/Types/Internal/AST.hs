@@ -76,8 +76,6 @@ module Language.Iris.Types.Internal.AST
     DirectivesDefinition,
     DirectiveDefinition (..),
     DirectiveLocation (..),
-    FieldContent (..),
-    fieldArguments,
     Variant (..),
     RawTypeDefinition (..),
     UnionSelection,

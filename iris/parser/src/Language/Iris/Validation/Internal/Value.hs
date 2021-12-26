@@ -113,13 +113,11 @@ validateSeries :: ValidateWithDefault ctx s valueS => TypeName -> [TypeRef] -> V
 validateSeries name [t] (List vs) =
   askListType name
     >> List <$> traverse (validateInputByTypeRef t) vs
-validateSeries "Map" [keyType,valueType] (List values) = List <$> traverse validateTuple values
+validateSeries "Map" [keyType, valueType] (List values) = List <$> traverse validateTuple values
   where
-    validateTuple (List [k,v]) =  List <$> traverse (uncurry validateInputByTypeRef) [(keyType,k),(valueType,v)]
+    validateTuple (List [k, v]) = List <$> traverse (uncurry validateInputByTypeRef) [(keyType, k), (valueType, v)]
     validateTuple v = violation Nothing v
 validateSeries _ _ entryValue = violation Nothing entryValue
-
-
 
 validateUnwrapped ::
   ValidateWithDefault ctx schemaS valueS =>
@@ -152,23 +150,25 @@ class ValidateWithDefault c schemaS s where
     Validator schemaS (InputContext c) (ObjectEntry VALID)
 
 instance ValidateWithDefault c VALID s where
-  validateWithDefault object fieldDef@FieldDefinition {fieldName} =
+  validateWithDefault object fieldDef@FieldDefinition {fieldName, fieldType} =
     ObjectEntry fieldName
       <$> selectWithDefaultValue
         pure
         (validateValueByField fieldDef . entryValue)
         Nothing
-        fieldDef
+        fieldName
+        fieldType
         object
 
 instance ValidateWithDefault c CONST s where
-  validateWithDefault object fieldDef@FieldDefinition {fieldName} =
+  validateWithDefault object fieldDef@FieldDefinition {fieldName, fieldType} =
     ObjectEntry fieldName
       <$> selectWithDefaultValue
         (validateValueByField fieldDef)
         (validateValueByField fieldDef . entryValue)
         Nothing
-        fieldDef
+        fieldName
+        fieldType
         object
 
 -- Leaf Validations

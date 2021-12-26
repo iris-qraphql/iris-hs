@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -48,15 +47,12 @@ import Language.Iris.Parsing.Internal.Value
 import Language.Iris.Types.Internal.AST
   ( ArgumentDefinition (..),
     ArgumentsDefinition,
-    DATA_TYPE,
     Directive (..),
     DirectiveLocation (..),
     Directives,
-    FieldContent (..),
     FieldDefinition (..),
     FieldsDefinition,
     OperationType (..),
-    RESOLVER_TYPE,
     TypeName,
     Value,
     Variant (..),
@@ -71,13 +67,13 @@ import Text.Megaparsec
 import Text.Megaparsec.Byte (string)
 
 unionMembersDefinition ::
-  (Parse (Value s), Parse (FieldContent cat s)) =>
+  (Parse (Value s)) =>
   TypeName ->
   Parser (Variants cat s)
 unionMembersDefinition typeName = label "Variant" $ pipe (parseMember typeName)
 
 parseMember ::
-  (Parse (Value s), Parse (FieldContent cat s)) =>
+  Parse (Value s) =>
   TypeName ->
   Parser (Variant cat s)
 parseMember typeName = do
@@ -98,17 +94,14 @@ argumentsDefinition ::
   Parser (ArgumentsDefinition s)
 argumentsDefinition =
   label "ArgumentsDefinition" $
-    uniqTuple $ do
-      fieldDescription <- optDescription
-      fieldName <- parseName
-      fieldType <- colon *> parseType
-      argumentDefaultValue <- optional parseDefaultValue
-      fieldDirectives <- optionalDirectives
-      pure
-        ArgumentDefinition
-          { argument = FieldDefinition {fieldContent = Nothing, ..},
-            argumentDefaultValue
-          }
+    uniqTuple
+      ( ArgumentDefinition
+          <$> optDescription
+          <*> parseName
+          <*> (colon *> parseType)
+          <*> optional parseDefaultValue
+          <*> optionalDirectives
+      )
 {-# INLINEABLE argumentsDefinition #-}
 
 --  FieldsDefinition : https://graphql.github.io/graphql-spec/June2018/#FieldsDefinition
@@ -117,46 +110,25 @@ argumentsDefinition =
 --    { FieldDefinition(list) }
 --
 fieldsDefinition ::
-  (Parse (Value s), Parse (FieldContent cat s)) =>
+  Parse (Value s) =>
   Parser (FieldsDefinition cat s)
 fieldsDefinition = label "FieldsDefinition" $ setOf fieldDefinition
 {-# INLINEABLE fieldsDefinition #-}
 
-fieldDefinition ::
-  (Parse (Value s), Parse (FieldContent cat s)) =>
-  Parser (FieldDefinition cat s)
+fieldDefinition :: Parse (Value s) => Parser (FieldDefinition cat s)
 fieldDefinition =
   label "FieldDefinition" $
     FieldDefinition
       <$> optDescription
       <*> parseName
-      <*> optional parse
+      <*> optional argumentsDefinition
       <*> (colon *> parseType)
       <*> optionalDirectives
 
-instance Parse (Value s) => Parse (FieldContent DATA_TYPE s) where
-  parse = pure DataFieldContent
-
-instance Parse (Value s) => Parse (FieldContent RESOLVER_TYPE s) where
-  parse = ResolverFieldContent <$> argumentsDefinition
-
---  FieldDefinition
---    Description(opt) Name ArgumentsDefinition(opt) : Type Directives(Const)(opt)
-
--- Directives : https://graphql.github.io/graphql-spec/June2018/#sec-Language.Directives
---
--- example: @directive ( arg1: "value" , .... )
---
--- Directives[Const]
--- Directive[Const](list)
---
 optionalDirectives :: Parse (Value s) => Parser (Directives s)
 optionalDirectives = label "Directives" $ many directive >>= lift . fromElems
 {-# INLINEABLE optionalDirectives #-}
 
--- Directive[Const]
---
--- @ Name Arguments[Const](opt)
 directive :: Parse (Value s) => Parser (Directive s)
 directive =
   label "Directive" $
