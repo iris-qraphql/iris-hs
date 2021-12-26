@@ -36,7 +36,6 @@ import Language.Iris.Types.Internal.AST
     TypeDefinition (..),
     TypeName,
     TypeRef (..),
-    TypeWrapper (BaseType, TypeList),
     VALID,
     Value (..),
     Variant (..),
@@ -106,7 +105,7 @@ instance RenderIntrospection (FieldDefinition a VALID) where
       ]
 
 instance RenderIntrospection (Variant a VALID) where
-  render Variant {variantDescription,membership, variantName, variantFields} =
+  render Variant {variantDescription, membership, variantName, variantFields} =
     renderObject
       "__Variant"
       (maybe variantName (<> ("." <> variantName)) membership)
@@ -124,26 +123,14 @@ instance RenderIntrospection (ArgumentDefinition VALID) where
       ]
 
 instance RenderIntrospection TypeRef where
-  render TypeRef {typeConName, typeWrappers} = renderWrapper typeWrappers
-    where
-      renderWrapper :: (Monad m) => TypeWrapper -> m (ResolverValue m)
-      renderWrapper (TypeList name nextWrapper isNonNull) =
-        __TypeRef name isNonNull . Just =<< renderWrapper nextWrapper
-      renderWrapper (BaseType isNonNull) =
-        __TypeRef typeConName isNonNull Nothing
-
-__TypeRef :: Monad m => TypeName -> Bool -> Maybe (ResolverValue m) -> m (ResolverValue m)
-__TypeRef name isRequired value =
-  renderObject
-    "__TypeRef"
-    name
-    Nothing
-    [ ("required", render isRequired),
-      renderParameters value
-    ]
-
-renderParameters :: Monad m => Maybe (ResolverValue m) -> (FieldName, m (ResolverValue m))
-renderParameters value = ("parameters", pure $ mkList (maybeToList value))
+  render (TypeRef name params isRequired) =
+    renderObject
+      "__TypeRef"
+      name
+      Nothing
+      [ ("parameters", render params),
+        ("required", render isRequired)
+      ]
 
 renderObject ::
   (Monad m) =>

@@ -14,6 +14,7 @@
 
 module Language.Iris.Types.Internal.Validation.Internal
   ( askType,
+    resolveTypeRef,
     resolveTypeMember,
     getOperationType,
     askObjectType,
@@ -25,8 +26,11 @@ where
 
 import Control.Monad.Except (MonadError (throwError))
 import Data.Mergeable.IsMap (selectBy)
+import Data.Mergeable.Utils (empty, fromElems)
 import Language.Iris.Types.Internal.AST
   ( DATA_TYPE,
+    FieldDefinition (..),
+    FieldName,
     GQLError,
     ListDefinition (ListDefinition),
     Operation (..),
@@ -37,6 +41,7 @@ import Language.Iris.Types.Internal.AST
     TypeContent (..),
     TypeDefinition (..),
     TypeName,
+    TypeRef (..),
     VALID,
     getOperationDataType,
     internal,
@@ -59,10 +64,17 @@ askListType ::
   ) =>
   TypeName ->
   m ListDefinition
+askListType "Map" = pure $ ListDefinition Nothing "Map"
 askListType "List" = pure $ ListDefinition Nothing "List"
 askListType name =
   asks (lists . schema)
     >>= selectBy ("Unknown list " <> msg name <> ".") name
+
+resolveTypeRef :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat s)
+resolveTypeRef TypeRef {typeRefName, typeParameters = []} = askType typeRefName
+resolveTypeRef TypeRef {typeParameters = [ref]} = resolveTypeRef ref
+resolveTypeRef TypeRef {typeRefName = "Map", typeParameters = [_, valueType]} = resolveTypeRef valueType
+resolveTypeRef TypeRef {} = undefined
 
 askType :: Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
 askType name = asks schema >>= lookupDataType name >>= kindConstraint

@@ -1,0 +1,12 @@
+resolver Dog = {
+  bark: String
+}
+
+resolver Pet 
+  = Dog 
+  | Other {}
+
+resolver Query = {
+  simple: Map<String, [Dog]>
+  nested:  Map<String, Map<Dog, Pet> >
+}

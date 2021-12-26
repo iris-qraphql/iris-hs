@@ -1,0 +1,6 @@
+
+resolver Query = {
+  name: Map<Int,Map<String,Map<String,Int>>>
+}
+
+

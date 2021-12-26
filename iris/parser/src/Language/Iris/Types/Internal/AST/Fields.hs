@@ -79,8 +79,7 @@ import Language.Iris.Types.Internal.AST.Stage
   ( Stage,
   )
 import Language.Iris.Types.Internal.AST.Type
-  ( Nullable (..),
-    TypeRef (..),
+  ( TypeRef (..),
   )
 import Language.Iris.Types.Internal.AST.Value
   ( ScalarValue (..),
@@ -217,9 +216,6 @@ instance RenderGQL (FieldDefinition cat s) where
 
 instance RenderGQL (FieldsDefinition cat s) where
   renderGQL = renderObject . filter fieldVisibility . toList
-
-instance Nullable (FieldDefinition cat s) where
-  isNullable = isNullable . fieldType
 
 fieldVisibility :: FieldDefinition cat s -> Bool
 fieldVisibility = isNotSystemName . fieldName

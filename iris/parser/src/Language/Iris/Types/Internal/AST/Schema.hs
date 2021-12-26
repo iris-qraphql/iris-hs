@@ -29,7 +29,6 @@ import Data.Mergeable.SafeHashMap
   )
 import Data.Mergeable.Utils
   ( IsMap (..),
-    empty,
     fromElems,
     lookup,
     toPair,
@@ -118,7 +117,6 @@ rootTypeDefinitions Schema {..} = map toRESOLVER $ catMaybes [Just query, mutati
 lookupDataType :: MonadError GQLError m => TypeName -> Schema s -> m (TypeDefinition RESOLVER_TYPE s)
 lookupDataType name Schema {types, query, mutation, subscription} =
   maybe
-    -- TODO: use type class unknown
     (throwError $ "Unknown type " <> msg name <> ".")
     pure
     ( isType name query

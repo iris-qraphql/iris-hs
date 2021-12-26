@@ -26,8 +26,7 @@ import Language.Iris.Types.Internal.AST
     Ref (..),
     TypeDefinition (..),
     TypeName,
-    TypeWrapper,
-    toLocation,
+    toLocation, TypeRef,
   )
 import Relude
 
@@ -41,7 +40,7 @@ data Scope = Scope
   { position :: Maybe Position,
     currentTypeName :: TypeName,
     currentTypeKind :: DirectiveLocation,
-    currentTypeWrappers :: TypeWrapper,
+    currentTypeWrappers :: TypeRef,
     fieldName :: FieldName,
     kind :: ScopeKind,
     path :: [Text]
@@ -72,7 +71,7 @@ setDirective Directive {..} Scope {..} =
       ..
     }
 
-setType :: TypeDefinition c s -> TypeWrapper -> Scope -> Scope
+setType :: TypeDefinition c s -> TypeRef -> Scope -> Scope
 setType TypeDefinition {typeName, typeContent} wrappers Scope {..} =
   Scope
     { currentTypeName = typeName,

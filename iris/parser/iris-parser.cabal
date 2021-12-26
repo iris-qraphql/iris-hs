@@ -40,6 +40,11 @@ data-files:
     test/query/validation/data-union/vars-wrong-fields/query.gql
     test/query/validation/data-union/vars-wrong-typename/query.gql
     test/query/validation/data-union/wrong-fields/query.gql
+    test/query/validation/maps/inputs/netsed/query.gql
+    test/query/validation/maps/inputs/schema.gql
+    test/query/validation/maps/inputs/simple/query.gql
+    test/query/validation/maps/selections/schema.gql
+    test/query/validation/maps/selections/simple/query.gql
     test/rendering/simple/directive/query.gql
     test/rendering/simple/directive/rendering.gql
     test/rendering/simple/fragment/query.gql
@@ -75,6 +80,8 @@ data-files:
     test/schema/parsing/descriptions/ok/schema.gql
     test/schema/parsing/directive/ok/simple/schema.gql
     test/schema/parsing/directive/ok/sophisticated/schema.gql
+    test/schema/parsing/maps/nested/schema.gql
+    test/schema/parsing/maps/simple/schema.gql
     test/schema/validation/data-types/simple/schema.gql
     test/schema/validation/default-value/compound-ok/schema.gql
     test/schema/validation/default-value/missing-field/schema.gql
@@ -115,6 +122,9 @@ data-files:
     test/query/validation/data-union/vars-wrong-typename/response.json
     test/query/validation/data-union/vars-wrong-typename/variables.json
     test/query/validation/data-union/wrong-fields/response.json
+    test/query/validation/maps/inputs/netsed/response.json
+    test/query/validation/maps/inputs/simple/response.json
+    test/query/validation/maps/selections/simple/response.json
     test/rendering/variable/enum/variables.json
     test/rendering/variable/include-exclude/variables.json
     test/rendering/variable/input/variables.json
@@ -124,6 +134,8 @@ data-files:
     test/schema/parsing/descriptions/ok/response.json
     test/schema/parsing/directive/ok/simple/response.json
     test/schema/parsing/directive/ok/sophisticated/response.json
+    test/schema/parsing/maps/nested/response.json
+    test/schema/parsing/maps/simple/response.json
     test/schema/validation/data-types/simple/response.json
     test/schema/validation/default-value/compound-ok/response.json
     test/schema/validation/default-value/missing-field/response.json

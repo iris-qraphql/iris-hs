@@ -1,0 +1,9 @@
+query {
+  simple(
+    data: [
+      [3, { id: "235" }]
+      [6, { id: "323", name: "David" }],
+      [7, { id: "336", name: "George" }]
+    ]
+  )
+}

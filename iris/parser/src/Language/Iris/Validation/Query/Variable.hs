@@ -17,7 +17,6 @@ import Data.Mergeable.Utils
 import Language.Iris.Error.Variable (uninitializedVariable)
 import Language.Iris.Types.Internal.AST
   ( Argument (..),
-    DATA_TYPE,
     DefaultValue,
     Directive (..),
     FieldName,
@@ -32,16 +31,14 @@ import Language.Iris.Types.Internal.AST
     Selection (..),
     SelectionContent (..),
     SelectionSet,
-    TypeDefinition,
-    TypeRef (..),
     VALID,
     ValidValue,
     Value (..),
     Variable (..),
     VariableContent (..),
     VariableDefinitions,
-    Variables,
-    isNullable, toDATA,
+    Variables, 
+    TypeRef (..)
   )
 import Language.Iris.Types.Internal.Config
   ( Config (..),
@@ -53,13 +50,12 @@ import Language.Iris.Types.Internal.Validation
     askFragments,
     checkUnused,
     selectKnown,
-    selectType,
     setPosition,
     startInput,
     withScope,
   )
 import Language.Iris.Validation.Internal.Value
-  ( validateInputByType,
+  ( validateInputByTypeRef,
   )
 import Relude
 
@@ -136,16 +132,12 @@ lookupAndValidateValueOnBody
   validationMode
   var@Variable
     { variableName,
-      variableType = variableType@TypeRef {typeWrappers, typeConName},
+      variableType = variableType,
       variablePosition,
       variableValue = DefaultValue defaultValue
     } =
-    withScope (setPosition variablePosition) $
-      toVariable
-        <$> ( selectType typeConName
-                >>= toDATA
-                >>= checkType getVariable defaultValue
-            )
+    withScope (setPosition variablePosition) $ 
+    toVariable <$> checkType getVariable defaultValue
     where
       toVariable x = var {variableValue = ValidVariableValue x}
       getVariable :: Maybe ResolvedValue
@@ -155,27 +147,21 @@ lookupAndValidateValueOnBody
       checkType ::
         Maybe ResolvedValue ->
         DefaultValue ->
-        TypeDefinition DATA_TYPE VALID ->
         BaseValidator ValidValue
-      checkType (Just variable) Nothing varType = validator varType False variable
-      checkType (Just variable) (Just defValue) varType =
-        validator varType True defValue *> validator varType False variable
-      checkType Nothing (Just defValue) varType = validator varType True defValue
-      checkType Nothing Nothing varType
-        | validationMode /= WITHOUT_VARIABLES && not (isNullable variableType) =
+      checkType (Just variable) Nothing = validator False variable
+      checkType (Just variable) (Just defValue) = validator True defValue *> validator False variable
+      checkType Nothing (Just defValue) = validator True defValue
+      checkType Nothing Nothing
+        | validationMode /= WITHOUT_VARIABLES && isRequired variableType =
           throwError $ uninitializedVariable var
         | otherwise =
           returnNull
         where
           returnNull :: BaseValidator ValidValue
-          returnNull = selectOr (pure Null) (validator varType False) variableName bodyVariables
+          returnNull = selectOr (pure Null) (validator False) variableName bodyVariables
       -----------------------------------------------------------------------------------------------
-      validator :: TypeDefinition DATA_TYPE VALID -> Bool -> ResolvedValue -> BaseValidator ValidValue
-      validator varTypeDef isDefaultValue varValue =
+      validator :: Bool -> ResolvedValue -> BaseValidator ValidValue
+      validator isDefaultValue varValue =
         startInput
           (SourceVariable var isDefaultValue)
-          ( validateInputByType
-              typeWrappers
-              varTypeDef
-              varValue
-          )
+          (validateInputByTypeRef variableType varValue)

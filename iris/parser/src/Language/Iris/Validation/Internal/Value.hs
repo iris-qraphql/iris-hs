@@ -9,7 +9,6 @@
 
 module Language.Iris.Validation.Internal.Value
   ( validateInputByTypeRef,
-    validateInputByType,
     ValidateWithDefault,
   )
 where
@@ -34,7 +33,6 @@ import Language.Iris.Types.Internal.AST
     TypeDefinition (..),
     TypeName,
     TypeRef (..),
-    TypeWrapper (..),
     VALID,
     ValidValue,
     Value (..),
@@ -43,7 +41,6 @@ import Language.Iris.Types.Internal.AST
     Variant (..),
     Variants,
     atPositions,
-    isNullable,
     isSubtype,
     lookupTypeVariant,
     msg,
@@ -54,7 +51,7 @@ import Language.Iris.Types.Internal.Validation
     selectKnown,
     selectWithDefaultValue,
   )
-import Language.Iris.Types.Internal.Validation.Internal (resolveTypeMember, askListType)
+import Language.Iris.Types.Internal.Validation.Internal (askListType, resolveTypeMember)
 import Language.Iris.Types.Internal.Validation.Scope (setType)
 import Language.Iris.Types.Internal.Validation.Validator
 import Relude hiding (empty)
@@ -66,7 +63,6 @@ violation ::
 violation message value = do
   Scope
     { position,
-      currentTypeName,
       currentTypeWrappers
     } <-
     asksScope id
@@ -74,7 +70,7 @@ violation message value = do
   throwError $
     ( prefix
         <> typeViolation
-          (TypeRef currentTypeName currentTypeWrappers)
+          currentTypeWrappers
           value
         <> maybe "" (" " <>) message
     )
@@ -89,20 +85,6 @@ checkTypeCompatibility valueType ref var@Variable {variableValue = ValidVariable
   | variableType `isSubtype` valueType = pure value
   | otherwise = throwError $ incompatibleVariableType ref var valueType
 
-validateInputByTypeRef ::
-  ValidateWithDefault c schemaS s =>
-  TypeRef ->
-  Value s ->
-  Validator schemaS (InputContext c) (Value VALID)
-validateInputByTypeRef
-  ref
-  value = do
-    inputTypeDef <- askType (typeConName ref)
-    validateInputByType
-      (typeWrappers ref)
-      inputTypeDef
-      value
-
 validateValueByField ::
   ValidateWithDefault c schemaS s =>
   FieldDefinition DATA_TYPE schemaS ->
@@ -113,40 +95,31 @@ validateValueByField field =
     . validateInputByTypeRef
       (fieldType field)
 
--- Validate data Values
-validateInputByType ::
-  ValidateWithDefault ctx schemaS valueS =>
-  TypeWrapper ->
-  TypeDefinition DATA_TYPE schemaS ->
-  Value valueS ->
-  InputValidator schemaS ctx ValidValue
-validateInputByType tyWrappers typeDef =
-  withScope (setType typeDef tyWrappers) . validateWrapped tyWrappers typeDef
-
 -- VALIDATION
-validateWrapped ::
+validateInputByTypeRef ::
   ValidateWithDefault ctx schemaS valueS =>
-  TypeWrapper ->
-  TypeDefinition DATA_TYPE schemaS ->
+  TypeRef ->
   Value valueS ->
   InputValidator schemaS ctx ValidValue
--- Validate Null. value = null ?
-validateWrapped wrappers _ (ResolvedVariable ref variable) = do
-  typeName <- asksScope currentTypeName
-  checkTypeCompatibility (TypeRef typeName wrappers) ref variable
-validateWrapped wrappers _ Null
-  | isNullable wrappers = pure Null
-  | otherwise = violation Nothing Null
--- Validate LIST
-validateWrapped (TypeList name wrappers _) tyCont (List list) = do
-  _listDef <- askListType name 
-  -- TODO: consider tuples validator
-  List <$> traverse (validateInputByType wrappers tyCont) list
-{-- 2. VALIDATE TYPES, all wrappers are already Processed --}
-validateWrapped BaseType {} TypeDefinition {typeContent} entryValue =
-  validateUnwrapped typeContent entryValue
-{-- 3. THROW ERROR: on invalid values --}
-validateWrapped _ _ entryValue = violation Nothing entryValue
+validateInputByTypeRef t (ResolvedVariable ref variable) = checkTypeCompatibility t ref variable
+validateInputByTypeRef (TypeRef name params isRequired) v
+  | v == Null = if isRequired then violation Nothing Null else pure Null
+  | null params = do
+    typeDef <- askType name
+    withScope (setType typeDef (TypeRef name [] isRequired)) $ validateUnwrapped (typeContent typeDef) v
+  | otherwise = validateSeries name params v
+
+validateSeries :: ValidateWithDefault ctx s valueS => TypeName -> [TypeRef] -> Value valueS -> Validator s (InputContext ctx) (Value VALID)
+validateSeries name [t] (List vs) =
+  askListType name
+    >> List <$> traverse (validateInputByTypeRef t) vs
+validateSeries "Map" [keyType,valueType] (List values) = List <$> traverse validateTuple values
+  where
+    validateTuple (List [k,v]) =  List <$> traverse (uncurry validateInputByTypeRef) [(keyType,k),(valueType,v)]
+    validateTuple v = violation Nothing v
+validateSeries _ _ entryValue = violation Nothing entryValue
+
+
 
 validateUnwrapped ::
   ValidateWithDefault ctx schemaS valueS =>

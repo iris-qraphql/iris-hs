@@ -1,0 +1,9 @@
+data User = {
+  id: String
+  name: String?
+}
+
+resolver Query = {
+  simple ( data: Map< Int, User> ): String
+  nested ( data: Map< Int, Map< String, User>> ): String
+}
