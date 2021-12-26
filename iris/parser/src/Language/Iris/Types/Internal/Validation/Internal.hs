@@ -26,11 +26,8 @@ where
 
 import Control.Monad.Except (MonadError (throwError))
 import Data.Mergeable.IsMap (selectBy)
-import Data.Mergeable.Utils (empty, fromElems)
 import Language.Iris.Types.Internal.AST
   ( DATA_TYPE,
-    FieldDefinition (..),
-    FieldName,
     GQLError,
     ListDefinition (ListDefinition),
     Operation (..),
@@ -74,7 +71,7 @@ resolveTypeRef :: Constraints m c cat s ctx => TypeRef -> m (TypeDefinition cat 
 resolveTypeRef TypeRef {typeRefName, typeParameters = []} = askType typeRefName
 resolveTypeRef TypeRef {typeParameters = [ref]} = resolveTypeRef ref
 resolveTypeRef TypeRef {typeRefName = "Map", typeParameters = [_, valueType]} = resolveTypeRef valueType
-resolveTypeRef TypeRef {} = undefined
+resolveTypeRef t = throwError $ "invalid type "<> msg t <> "."
 
 askType :: Constraints m c cat s ctx => TypeName -> m (TypeDefinition cat s)
 askType name = asks schema >>= lookupDataType name >>= kindConstraint
