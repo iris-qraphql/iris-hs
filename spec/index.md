@@ -4,25 +4,33 @@ Composite language of GraphQl and Haskell
 
 ## Type System
 
-## types vs type variants
+### Types, variants and typeVariants
 
-- Type is standalone type element and containing one or multiple variants.
-- variant can be:
-  - reference of another type with single variant
-  - collection if fields with corresponding tag. this variant will exist inside the type and can't be referenced by another types
+- **Type**: a standalone entity and containing one or multiple variants.
+- **VariantType**: a type with a singe variant
+- **Variant**: a variant can be either a reference of VariantType or collection of fields with corresponding tag. this variant will exist inside the type and can't be referenced by another types
 
-### \_\_typename
+in following schema, variants `God` and `Titan` will exist only inside `Deity` and will get `__typename` as `Deity.God` and `Deity.Titan`
 
-for example type `User` can use type `Address` however, type `Address` can't.
+```gql
+<role> God = { name: String }
+# role: resolver | data
+<role> Deity
+  = God
+  | Titan {
+      name: String
+    }
+```
 
-value `"A"` and `{ type: "A" }` are equals
+#### \_\_typename
 
-- server will always serialize `resolver` types as `{ type: "A" }`.
-- server will always serialize `data` types as `"A"`
+every type (variant) has field \_\_typename.
 
-- on inputs user always should be provide \_\_typename
-- on outputs \_\_typename will be always automatically selected
+value `"A"` and `{ __typename: "A" }` are equals
 
+- server will always serialize `resolver` and `data` types as `{ __typename: "A" }`.
+- in every selection, field `__typename` will be always automatically selected
+- on input unions user must provide `__typename`
 
 ### Data types
 
@@ -33,7 +41,7 @@ properties:
 - represents just JSON values
 - fields field cannot be selected. It means that client will get its value as if it was GraphQL JSON Scalar (but typed).
 
-#### Data as a generalization of enums, scalars and input types
+**data** as a generalization of enums, scalars and input types
 
 ```gql
 # GQL enum with data
@@ -68,53 +76,33 @@ resolver User = {
 }
 ```
 
-### resolver as generalization of types, unions and interfaces
+for example type `User` can use type `Address` however, type `Address` can't.
 
-#### Unions
+#### Type guards
 
-same way as with object we have data and resolver unions.
+since we don't have GraphQL interfaces we provide type guards.
+
+```gql
+data U | GuardType = A | B
+```
+
+**resolver** as generalization of types, unions and interfaces
 
 ```gql
 ## GQL type
 resolver A = { a: Int? }
 
 ## GQL Union
-resolver X 
+resolver X
   | A ## GQL interface
-  = X1 { a: Int } 
+  = X1 { a: Int }
   | X2 { a: Int? , b: Float }
 ```
 
-### closed variants
-
-union variants can be also enclosed inside by the Union Type. for example
-
 ```gql
-resolver Deity
-  = Morpheus {
-    name: String
-    shapes : String
-  }
-  | Iris {
-    name: String
-  }
-```
-
-type `A` and `B` will exist only inside `MyType` and will get `ID` as `Deity.Morpheus` and `Deity.Iris`
-
-```gql
-fragment Morpheus on Deity.Morpheus {
+fragment Morpheus on X.X1 {
   name
-  shapes
 }
-```
-
-### Type guards
-
-since we don't have GraphQL interfaces we provide type guards.
-
-```gql
-data U | GuardType = A | B
 ```
 
 ## Wrappers
@@ -128,11 +116,7 @@ for example:
 - required type: `Type`
 - optional type: `Type?`
 
-### List
-
-like GraphQL list.
-
-#### Named Lists
+### (Named) Lists
 
 named lists are list with specific behavior
 
@@ -159,138 +143,5 @@ for example :
 ```gql
 resolver Type {
   field(max: Int = 10): [String]
-}
-```
-
-## Introspection
-
-### Schema
-
-```gql
-resolver __Schema {
-  types: [__Type]
-  queryType: __Type
-  mutationType: __Type?
-  subscriptionType: __Type?
-  directives: [__Directive]
-}
-
-resolver __TypeGuard {
-  name: String
-  description: String?
-}
-
-resolver __Type
-  | __TypeGuard
-    = List {
-        name: String
-        description: String?
-        parameters: [__TypeRef]
-      }
-    | ADT {
-        role: __Role?
-        name: String
-        description: String?
-        guard: String?
-        variants(includeDeprecated: Boolean = false): [__Variant]
-      }
-
-data __Role = DATA {} | RESOLVER {}
-
-resolver __Variant {
-  name: String
-  namespace: String?
-  fields(includeDeprecated: Boolean = false): [__Field]?
-}
-
-data __TypeRef {
-  name: String
-  required: Boolean
-  parameters: [__TypeRef]
-}
-
-resolver __Field {
-  name: String
-  description: String?
-  type: __TypeRef
-  args: [__Argument]?
-  deprecation: String?
-}
-
-resolver __Argument {
-  name: String
-  description: String?
-  type: __TypeRef
-  defaultValue: String?
-}
-
-resolver __Directive {
-  name: String
-  description: String?
-  locations: [__DirectiveLocation]
-  args: [__Argument]
-}
-
-data __DirectiveLocation
-  = QUERY {}
-  | MUTATION {}
-  | SUBSCRIPTION {}
-  | FIELD {}
-  | FRAGMENT_DEFINITION {}
-  | FRAGMENT_SPREAD {}
-  | INLINE_FRAGMENT {}
-  | SCHEMA {}
-  | SCALAR {}
-  | DATA {}
-  | RESOLVER {}
-  | FIELD_DEFINITION {}
-  | ARGUMENT_DEFINITION {}
-
-resolver Query {
-  __type(name: String): __Type?
-  __schema: __Schema
-}
-```
-
-### Query
-
-```gql
-{ __schema {
-    types {
-      name
-      description
-      ...ADT
-      ...List
-    }
-  }
-}
-
-fragment ADT on __Type.ADT {
-  role
-  guard
-  variants {
-    name
-    namespace
-    fields {
-      name
-      description
-      type
-      args {
-        ...Argument
-      }
-      deprecation
-    }
-  }
-}
-
-fragment List on __Type.Series {
-  parameters
-}
-
-fragment Argument on __Argument {
-  name
-  description
-  type
-  defaultValue
 }
 ```
