@@ -4,42 +4,33 @@ Composite language of GraphQl and Haskell
 
 ## Type System
 
-### Types vs type variants
+### Types, variants and typeVariants
 
-- Type is standalone type element and containing one or multiple variants.
-- variant can be:
-  - reference of another type with single variant
-  - collection if fields with corresponding tag. this variant will exist inside the type and can't be referenced by another types
+- **Type**: a standalone entity and containing one or multiple variants.
+- **VariantType**: a type with a singe variant
+- **Variant**: a variant can be either a reference of VariantType or collection of fields with corresponding tag. this variant will exist inside the type and can't be referenced by another types
 
-#### inline variants
-
-union variants can be also defined inside the type definition. for example
+in following schema, variants `God` and `Titan` will exist only inside `Deity` and will get `__typename` as `Deity.God` and `Deity.Titan`
 
 ```gql
+<role> God = { name: String }
 # role: resolver | data
 <role> Deity
-  = Morpheus {
-    name: String
-    shapes : String
-  }
-  | Iris {
-    name: String
-  }
+  = God
+  | Titan {
+      name: String
+    }
 ```
-
-type `A` and `B` will exist only inside `MyType` and will get `ID` as `Deity.Morpheus` and `Deity.Iris`
 
 #### \_\_typename
 
-for example type `User` can use type `Address` however, type `Address` can't.
+every type (variant) has field \_\_typename.
 
-value `"A"` and `{ type: "A" }` are equals
+value `"A"` and `{ __typename: "A" }` are equals
 
-- server will always serialize `resolver` types as `{ type: "A" }`.
-- server will always serialize `data` types as `"A"`
-
-- on inputs user always should be provide \_\_typename
-- on outputs \_\_typename will be always automatically selected
+- server will always serialize `resolver` and `data` types as `{ __typename: "A" }`.
+- in every selection, field `__typename` will be always automatically selected
+- on input unions user must provide `__typename`
 
 ### Data types
 
@@ -50,7 +41,7 @@ properties:
 - represents just JSON values
 - fields field cannot be selected. It means that client will get its value as if it was GraphQL JSON Scalar (but typed).
 
-__data__ as a generalization of enums, scalars and input types
+**data** as a generalization of enums, scalars and input types
 
 ```gql
 # GQL enum with data
@@ -85,6 +76,8 @@ resolver User = {
 }
 ```
 
+for example type `User` can use type `Address` however, type `Address` can't.
+
 #### Type guards
 
 since we don't have GraphQL interfaces we provide type guards.
@@ -93,28 +86,24 @@ since we don't have GraphQL interfaces we provide type guards.
 data U | GuardType = A | B
 ```
 
-
-__resolver__ as generalization of types, unions and interfaces
+**resolver** as generalization of types, unions and interfaces
 
 ```gql
 ## GQL type
 resolver A = { a: Int? }
 
 ## GQL Union
-resolver X 
+resolver X
   | A ## GQL interface
-  = X1 { a: Int } 
+  = X1 { a: Int }
   | X2 { a: Int? , b: Float }
 ```
 
-
 ```gql
-fragment Morpheus on Deity.Morpheus {
+fragment Morpheus on X.X1 {
   name
-  shapes
 }
 ```
-
 
 ## Wrappers
 
