@@ -104,7 +104,7 @@ resolver Query = {
 enum Unit = { Unit }
 
 """
-@typedef {{ max: string, __typename: "Lifespan_Limited" }} Lifespan_Limited
+@typedef {{ max: number, __typename: "Lifespan_Limited" }} Lifespan_Limited
 @typedef {("Immortal" | Lifespan_Limited) } Lifespan
 """
 scalar Lifespan
