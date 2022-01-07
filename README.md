@@ -1,10 +1,12 @@
 # Iris
 
-a Language influenced by GraphQL and Haskell
+The motivation of Iris is to combine the flexibility of the GraphQL query language with the formalism and strength of the Haskell type system.
 
-Language should provide new interesting features ,however still provide an interface for GraphQL clients.
+the Language attempts to substitute various entities of the GQL language (such as input, scalar, enum, object, enum, interface, and wrapping types) with small but more unified and powerful alternatives (such as `resolver`, `data`, and `wrapping` types).
 
-for documentations see `spec/index.md`
+The types defined by Iris can be converted into the standard GQL language that can be used by GraphQL clients. However, these converted types have additional annotations that provide additional information (like JSDoc) that can be used by code genes to generate suitable types for them.
+
+for documentations see [spec](https://github.com/nalchevanidze/iris/tree/main/spec/index.md)
 
 language is in experimental phase, so any feedback or proposal is welcome!
 
