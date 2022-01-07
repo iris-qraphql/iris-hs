@@ -170,8 +170,8 @@ Iris is written and maintained by [_nalchevanidze_](https://github.com/nalchevan
 
 ## Roadmap
 
-- support lists extensions in Haskell
-- finish spec
+- support GQL spec transformation
 - implement js parser
 - implement js client
 - implement js Playground
+- implement ts code-gen plugin for iris
