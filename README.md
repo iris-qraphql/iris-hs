@@ -4,7 +4,7 @@ The motivation of Iris is to combine the flexibility of the GraphQL query langua
 
 the Language attempts to substitute various entities of the GQL language (such as input, scalar, enum, object, enum, interface, and wrapping types) with small but more unified and powerful alternatives (such as `resolver`, `data`, and `wrapping` types).
 
-The types defined by Iris can be converted into the standard GQL language that can be used by GraphQL clients. However, these converted types have additional annotations that provide additional information (like JSDoc) that can be used by code-gen to generate suitable types for them.
+The types defined by Iris can be converted into the standard GQL language that can be used by GraphQL clients. However, these converted types have additional annotations that provide additional information (like JSDoc, see Exposing Scalar Type Definition) that can be used by code-gen to generate suitable types for them.
 
 for documentations see [spec](https://github.com/nalchevanidze/iris/tree/main/spec/index.md)
 
@@ -91,7 +91,6 @@ The iris app provides GQL introspection that converts the types defined above in
   Nevertheless, the approach also brings its limitations. The GQL language itself cannot guarantee type safety of the scalar input values. Therefore, each input value should be re-declared as a variable and passed as JSON by the host language, which uses generated types to check its validity (see variable `$lifespan` in query).
 
 ```gql
-
 """
 @typedef {{ max: number, __typename: "Lifespan_Limited" }} Lifespan_Limited
 @typedef {("Immortal" | Lifespan_Limited) } Lifespan
@@ -108,32 +107,107 @@ type Deity_Titan {
   name: String!
 }
 
-union Deity
-  = God
-  | Deity_Titan
+union Deity = God | Deity_Titan
 
 type Query {
   deities(lifespan: Lifespan): [Deity!]!
 }
 ```
 
-query
+based on the schema `ApolloCLI` generates corresponding typescript types for the `queries/GetDeities.ts`.
 
-```gql
-query ($lifespan: Lifespan) {
-  deities(lifespan: $lifespan) {
-    ... on God {
-      name
-      lifespan
-    }
-    ... on Deity_Titan {
-      name
+```ts
+// queries/GetDeities.ts
+
+import { gql } from "@apollo/client";
+
+export const GET_DEITIES = gql`
+  query GetDeities($lifespan: Lifespan!) {
+    deities(lifespan: $lifespan) {
+      ... on God {
+        name
+        lifespan
+      }
+      ... on Deity_Titan {
+        name
+      }
     }
   }
+`;
+```
+
+```ts
+// queries/__generated__/GetDeities.ts
+
+import { Lifespan } from "__generated__/globalTypes";
+
+export interface GetDeities_deities_God {
+  __typename: "God";
+  name: string;
+  lifespan: Lifespan;
+}
+
+export interface GetDeities_deities_Deity_Titan {
+  __typename: "Deity_Titan";
+  name: string;
+}
+
+export type GetDeities_deities =
+  | GetDeities_deities_God
+  | GetDeities_deities_Deity_Titan;
+
+export interface GetDeities {
+  deities: GetDeities_deities[];
+}
+
+export interface GetDeitiesVariables {
+  lifespan: Lifespan;
 }
 ```
 
-Another alternative is to use a Json schema. For example, for the introspection of the scalar type "Lifespan" the field "jsonSchema" (see example below) can be provided, which can be used by Code-Gens.
+```ts
+// __generated__/globalTypes.ts
+
+export type Lifespan =
+  | "Immortal"
+  | {
+      __typename: "Lifespan.Limited";
+      max: number | undefined;
+    };
+```
+
+if you use React, you can end with the component:
+
+```tsx
+const Deities = () => {
+  const { loading, error, data } = useQuery(GET_DEITIES, {
+    variables: { lifespan: "Immortal" }, 
+  });
+
+  return (
+    <div>
+      ...
+    </div>
+  );
+}
+```
+
+## Exposing Scalar Type Definition
+
+## using JSDoc in Description
+
+Using GQL scalar descriptions for JSDoc type definitions.
+
+```gql
+"""
+@typedef{("Athens" | "Ithaca")}
+"""
+scalar Place
+```
+
+## using  JSON Schema as Introspection field
+
+For example, for the introspection of the scalar type "Lifespan" the field "jsonSchema" (see example below) can be provided, which can be used by Code-Gens.
 
 ```json
 {
