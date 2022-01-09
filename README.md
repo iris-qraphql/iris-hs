@@ -92,7 +92,8 @@ The iris app provides GQL introspection that converts the types defined above in
 
 ```gql
 """
-@typedef {{ max: number, __typename: "Lifespan_Limited" }} Lifespan_Limited
+period of the life
+@typedef {{ __typename: "Lifespan.Limited", max: ?number }} Lifespan_Limited
 @typedef {("Immortal" | Lifespan_Limited) } Lifespan
 """
 scalar Lifespan
@@ -168,12 +169,12 @@ export interface GetDeitiesVariables {
 ```ts
 // __generated__/globalTypes.ts
 
-export type Lifespan =
-  | "Immortal"
-  | {
-      __typename: "Lifespan.Limited";
-      max: number | undefined;
-    };
+export type Lifespan_Limited = {
+  __typename: "Lifespan.Limited";
+  max: number | undefined;
+};
+
+export type Lifespan = "Immortal" | Lifespan_Limited;
 ```
 
 if you use React, you can end with the component:
@@ -181,15 +182,11 @@ if you use React, you can end with the component:
 ```tsx
 const Deities = () => {
   const { loading, error, data } = useQuery(GET_DEITIES, {
-    variables: { lifespan: "Immortal" }, 
+    variables: { lifespan: "Immortal" },
   });
 
-  return (
-    <div>
-      ...
-    </div>
-  );
-}
+  return <div>...</div>;
+};
 ```
 
 ## Exposing Scalar Type Definition
@@ -200,12 +197,12 @@ Using GQL scalar descriptions for JSDoc type definitions.
 
 ```gql
 """
-@typedef{("Athens" | "Ithaca")}
+@typedef{("Athens" | "Ithaca")} City
 """
-scalar Place
+scalar City
 ```
 
-## using  JSON Schema as Introspection field
+## using JSON Schema as Introspection field
 
 For example, for the introspection of the scalar type "Lifespan" the field "jsonSchema" (see example below) can be provided, which can be used by Code-Gens.
 
