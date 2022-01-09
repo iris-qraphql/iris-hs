@@ -1,37 +1,151 @@
-## Welcome to GitHub Pages
+# Iris specs
 
-You can use the [editor on GitHub](https://github.com/nalchevanidze/iris/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+## Intro
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+The motivation of Iris is to combine the flexibility of the GraphQL query language with the formalism and strength of the Haskell type system.
 
-### Markdown
+the Language attempts to substitute various entities of the GQL language (such as input, scalar, enum, object, enum, interface, and wrapping types) with small but more unified and powerful alternatives (such as `resolver`, `data`, and `wrapping` types).
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+The types defined by Iris can be converted into the standard GQL language that can be used by GraphQL clients. However, these converted types have additional annotations that provide additional information (like JSDoc) that can be used by code genes to generate suitable types for them.
 
-```markdown
-Syntax highlighted code block
+## Type System
 
-# Header 1
-## Header 2
-### Header 3
+Iris type systems based on two type categories: ADTs and wrapping types. These types generalize GraphQL scalars, enums, inputObject, objects, unions, and interfaces and bring additional capabilities that are missing in theGQL type system.
 
-- Bulleted
-- List
+## Wrapping Types
 
-1. Numbered
-2. List
+### Maybe
 
-**Bold** and _Italic_ and `Code` text
+Unlike GQL in Iris type system, each type is required.
+To model optional types, we use the type `Maybe`, where the type `Maybe<t>` receives the type parameter `t` and returns the type `t | null`. The suffix `?` can be used as an abbreviation for the type `Maybe`.
 
-[Link](url) and ![Image](src)
+- required type: `Type`
+- optional type: `Type?`
+
+### Lists and Named Lists
+
+As an extension to the regular lists, Iris offers named lists. These named lists apply some specific constraints to their elements. common examples for named lists are `Set` and `NonEmpty`.
+
+```gql
+list Set
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+### ADTs (Algebraic Data Types)
 
-### Jekyll Themes
+The primary entities of the Iris Type System are ADTs (algebraic data types), where an algebraic type is a type with one or more alternatives, where one alternative may have no fields or multiple fields. ADTs in Iris have their roles, namely data (similar to GQL scalar) and resolver (similar to GQL type) roles.
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/nalchevanidze/iris/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+#### Types, variants and typeVariants
 
-### Support or Contact
+In the Iris we distinguish the following terms.
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+- **Type**: a type is an independent unit containing one or more variants. a type with a singe variant is called **VariantType**.
+- **Variant**: a variant is either a reference of VariantType or collection of fields with corresponding tag. this variant will exist inside the type and can't be referenced by another types.
+
+following schema represents the VariantType `God` which is referenced by Type `Deity`, where Deity has another Variant `Titan`. **Note!** `Titan` exists only inside `Deity`. the `__typename` of variant `Titan` is `Deity.Titan`
+
+```gql
+# VariantType
+<role> God = { name: String }
+
+# Type
+<role> Deity
+  = God # reference of VariantType
+  | Titan # Variant
+    {
+      name: String
+    }
+```
+
+#### \_\_typename
+
+every type variant has field \_\_typename.
+
+- Value `A {}` is equal to `{ __typename: "A" }` and can also be parsed (or serialized) as a string `"A"`.
+- server will always serialize `resolver` and `data` types as `{ __typename: "A" }`.
+- in each selection, field `__typename` will be always automatically selected.
+- on input values with multiple variants user must provide field `__typename`.
+
+### Data types
+
+Data types are typed JSON values. Although they have fields, they represent leaf nodes in the graph, which means that their fields cannot be selected and must not have arguments. That is, all fields of the data type are strictly evaluated and sent to the client. Fields of the data type cannot reference resolver types.
+
+Data types do not represent resolver functions, but the compiler will always guarantee the validity of their values for their type definitions. The GraphQL alternative to Data types are GQL scalars with type guarantee.
+
+#### GQL approximation of data types
+
+**data types** are generalization of enums, scalars and input types. Besides, they can also provide input unions and type-safe scalar values to the client.
+
+```gql
+# equivalent to GQL enum
+data City = Athens {} | Sparta {}
+
+# equivalent to GQL input object
+data Deity = { name: String }
+
+# equivalent to  scalar
+data Natural = Int
+```
+
+### Resolver types
+
+resolver type is always associated with a resolver function. Resolution fields can be selected and can have arguments. moreover, their fields can reference both resolver and data types.
+
+```gql
+data Url = {
+  path: String;
+  domain: String;
+}
+resolver Post = {
+   # resolver field can use data type as argument and result type.
+   sanitizeUrl(format: Url): Url
+   # resolver type can use resolver types
+   posts: [Post]
+}
+```
+
+for example type `Post` can use type `Url` however, type `Url` can't.
+
+#### ArgumentsDefinition
+
+iris allows default values only for ArgumentDefinitions.
+
+```gql
+resolver Type {
+  field(max: Int = 10): [String]
+}
+```
+
+#### Type guards
+
+Resolver type can specify a guard type that requires any variant of the type to provide fields that are compatible with its fields (similar to GraphQL interfaces).
+
+```gql
+data U | GuardType = A | B
+```
+
+#### GQL approximation of resolver types
+
+**resolver** types are generalization of GraphQL object , unions and interface types.
+
+```gql
+## GQL type
+resolver A = { a: Int? }
+
+## GQL Union
+resolver T
+  | A ## GQL interface
+  = B { a: Int }
+  | C { a: Int? , b: Float }
+```
+
+fragments on inline variants.
+
+```gql
+fragment X on T.C {
+  a
+}
+```
+
+### Schema
+
+Iris type system selects the resolvers `Query`, `Mutation` and `Subscription` as corresponding schema operations.
