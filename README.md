@@ -17,8 +17,8 @@ language is in experimental phase, so any feedback or proposal is welcome!
 ### Iris Schema
 
 ```gql
-data Lifespan 
-  = Immortal {} 
+data Lifespan
+  = Immortal {}
   | Limited { max: Int? }
 
 resolver God = {
@@ -28,7 +28,7 @@ resolver God = {
 
 resolver Deity
   = God
-  | Titan { name: String } # __typename = Deity.Titan 
+  | Titan { name: String } # __typename = Deity.Titan
 
 resolver Query = {
   deities(lifespan: Lifespan?): [Deity]
@@ -59,7 +59,7 @@ resolver Query = {
     "deities": [
       {
         "__typename": "God",
-        "lifespan":  "Immortal",
+        "lifespan": "Immortal",
         "name": "Zeus"
       },
       {
@@ -84,9 +84,9 @@ _Note: This is only a draft that has not yet been implemented._
 
 The iris app provides GQL introspection that converts the types defined above into the following GQL schema.
 
-- __resolver types__: the resolver type is decomposed into object and union types, where we define a new object type `Deity_Titan` for the inline variant `Deity.Titan`.
+- **resolver types**: the resolver type is decomposed into object and union types, where we define a new object type `Deity_Titan` for the inline variant `Deity.Titan`.
 
-- __data types__: in iris, the user can pass data values as input or retrieve json values in a query. Therefore, we have represented data type values as custom scalar values in the generated GQL schema. Since scalar values do not reveal the underlying data type, information about the Iris types is lost in this way. To compensate that, the scalar types we generate are provided with iris type definition annotations (in our example as JSDoc) in the description, which can be parsed by the `code-gens` to generate appropriate types for them.
+- **data types**: in iris, the user can pass data values as input or retrieve json values in a query. Therefore, we have represented data type values as custom scalar values in the generated GQL schema. Since scalar values do not reveal the underlying data type, information about the Iris types is lost in this way. To compensate that, the scalar types we generate are provided with iris type definition annotations (in our example as JSDoc) in the description, which can be parsed by the `code-gens` to generate appropriate types for them.
 
   Nevertheless, the approach also brings its limitations. The GQL language itself cannot guarantee type safety of the scalar input values. Therefore, each input value should be re-declared as a variable and passed as JSON by the host language, which uses generated types to check its validity (see variable `$lifespan` in query).
 
@@ -103,7 +103,8 @@ type God {
   lifespan: Lifespan!
 }
 
-type Deity_Titan { 
+# represents inline variant Deity.Titan
+type Deity_Titan {
   name: String!
 }
 
@@ -120,16 +121,41 @@ query
 
 ```gql
 query ($lifespan: Lifespan) {
-  deities (lifespan: $lifespan ) {
+  deities(lifespan: $lifespan) {
     ... on God {
       name
-      power
       lifespan
     }
-    # ... on Deity.Titan 
     ... on Deity_Titan {
       name
     }
+  }
+}
+```
+
+Another alternative is to use a Json schema. For example, for the introspection of the scalar type "Lifespan" the field "jsonSchema" (see example below) can be provided, which can be used by Code-Gens.
+
+```json
+{
+  "name": "Lifespan",
+  "kind": "SCALAR",
+  "jsonSchema": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Lifespan",
+    "oneOf": [
+      {
+        "enum": ["Immortal"]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "__typename": { "enum": ["Limited"] },
+          "max": {
+            "type": "integer"
+          }
+        }
+      }
+    ]
   }
 }
 ```
