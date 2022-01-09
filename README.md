@@ -108,11 +108,11 @@ type Deity_Titan {
   name: String!
 }
 
-type Deity
+union Deity
   = God
   | Deity_Titan
 
-resolver Query = {
+type Query {
   deities(lifespan: Lifespan): [Deity!]!
 }
 ```
