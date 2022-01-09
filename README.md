@@ -148,8 +148,6 @@ Iris is written and maintained by [_nalchevanidze_](https://github.com/nalchevan
 
 ## Roadmap
 
-- support GQL spec transformation
-- implement js parser
-- implement js client
-- implement js Playground
+- implement js (parser / server / client / playground)
 - implement ts code-gen plugin for iris
+- tuples and maps
