@@ -92,9 +92,8 @@ The iris app provides GQL introspection that converts the types defined above in
 
 ```gql
 """
-period of the life
 @typedef {{ __typename: "Lifespan.Limited", max: ?number }} Lifespan_Limited
-@typedef {("Immortal" | Lifespan_Limited) } Lifespan
+@type {("Immortal" | Lifespan_Limited)}
 """
 scalar Lifespan
 
@@ -197,7 +196,7 @@ Using GQL scalar descriptions for JSDoc type definitions.
 
 ```gql
 """
-@typedef{("Athens" | "Ithaca")} City
+@type{("Athens" | "Ithaca")}
 """
 scalar City
 ```
