@@ -1,4 +1,4 @@
-# Why GraphQL needs data types (Typed Scalars)
+# Why GraphQL needs Typed Scalars
 
 ## Problem
 
