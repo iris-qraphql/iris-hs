@@ -149,6 +149,8 @@ in best case, we should have typed scalars (which we have in `Iris` as `data` ty
 
 one attempt of solving this problem in GraphQL is to provide type annotations with `JSDoc` in scalar description. a type generator could parse annotations and generate corresponding types. in addition,  directive `@JSDoc` could parse types from the description and automatically validate scalar (inputs/outputs) values.
 
+graphql-schema
+
 ```graphql
 enum RichTextNodeType = {
   Label
@@ -161,8 +163,23 @@ enum RichTextNodeType = {
   type: RichTextNodeType,
   src: ?string,
   text: ?string,
-  children: ?[RichTextNode!]
+  children: ?RichTextNode[]
   }}
 """
 scalar @JSDoc RichTextNode
+```
+
+generated-code-typescript
+
+```ts
+// __generated__/globalTypes.ts
+
+export type RichTextNodeType = "Label" | "Paragraph" | "Image"
+
+export type RichTextNode = {
+  type: RichTextNodeType,
+  src: string | undefined,
+  text: string | undefined,
+  children: RichTextNode[] | undefined
+}
 ```
