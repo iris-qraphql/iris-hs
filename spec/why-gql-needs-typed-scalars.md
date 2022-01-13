@@ -1,10 +1,10 @@
 # Why GraphQL needs Typed Scalars
 
-## Problem
+## Motivation
 
-One of the fundamental ideas of GraphQL is that you have control over the fields and depth of structure you query. for example, if we have the type user that has users as friends. we can query these friends and friends and their ... Friends. The depth of this data structure can be determined with query without running into an infinite loop of Graph database.
+One of the fundamental strengths of GraphQL is that you have control over the depth of the structure by selecting fields in your query. For example, if we have the type user that has users as friends, we can query those friends, those friends' friends, etc. The query determines the depth of this data structure without getting into an infinite loop of the graph database.
 
-schema
+__schema__
 
 ```graphql
 type User {
@@ -17,7 +17,7 @@ type Query {
 }
 ```
 
-query
+__query__
 
 ```graphql
 {
@@ -33,15 +33,11 @@ query
 }
 ```
 
-This limitation makes GraphQL very attractive for graph databases and recursive data types that have their own independent resolvers, so you don't get caught in a loop.
+This limitation makes GraphQL very attractive for graph databases and recursive data types with independent resolvers, so you don't get run in a loop. Nevertheless, this design can hinder some cases; let's explore some of them.
 
-Still, this design can be a hindrance in some cases, let's explore some of them.
+### Introspection Type
 
-## Introspection Type
-
-The first example is the most common in the GraphQL universe. Every time you use the GQL playground (or client), your IDE presents readable documentation and validates queries for you based on introspection .
-
-The introspection is the query to the API itself about its own schema, where each type is represented with type `__Type`.
+The first example is the most common in the GraphQL universe. Every time you use the GQL playground (or client), your IDE presents readable documentation and validates queries for you based on introspection. The introspection is the query to the API itself about its schema, where each type is represented with type `__Type.`
 
 ```graphql
 type __Type {
@@ -65,8 +61,7 @@ type __Type {
 }
 ```
 
-
-the type `__Type` references itself with the field `ofType` to represent wrapped types like `Lists` and `NonNull`, which may be wrapped several times until we reach the named type. However, there is a problem: how do we know how many levels to select until we finally reach the NamedType? The answer is that we don't. However, we can speculate that the probability of someone defining the type reference with 9 levels of wrapping is close to zero. Therefore, popular GraphQL clients use this assumption and write their queries with 8 levels of nesting (see fragment `TypeRef`).
+The type `__Type` references itself with the field `ofType` to represent wrapped types like `Lists` and `NonNull,` which may be wrapped several times until we reach the named type. However, there is a problem: how do we know how many levels to select until we finally get the NamedType? The answer is that we don't. However, we can speculate that the probability of someone defining the type reference with nine levels of wrapping is close to zero. Therefore, popular GraphQL clients use this assumption and write their queries with eight levels of nesting (see fragment `TypeRef`).
 
 ```graphql
 fragment TypeRef on __Type {
@@ -103,11 +98,11 @@ fragment TypeRef on __Type {
 }
 ```
 
-hypothetically, however, I could create a schema with type `[[[[[User]!]!]!]!` where I could break clients. Since the use of this type is very unlikely, it has never been a big issue in the GraphQL world. However, we have other recursive type scenarios where this condition can be reached quite quickly.
+Hypothetically, however, I could create a schema with type `[[[[[User]!]!]!]!` where I could break clients. Since this scenario is doubtful, it was never a big issue in GraphQL. However, there are other recursive types where this issue can arise quickly.
 
-## Tree Types
+### Tree Types
 
-The most common case where the strength of GraphQL becomes a pain for the developer is when dealing with Tree Types.They can have hundreds or even thousands of nesting levels before we reach the leaf nodes, which sometimes makes them impossible to query. There are several types of tree types, but we will only consider the one instance of it the RichText. Let's assume the following case, we want to create RichText in our `WebApp` where we use GraphQL BFF.
+The most common case where the strength of GraphQL becomes a pain for the developer is when dealing with Tree Types. They can have hundreds or even thousands of nesting levels before reaching the leaf nodes, which sometimes makes them impossible to query. There are several tree types, but we will only consider one instance: the RichText. Let's assume the following case. We want to create RichText in our `WebApp` where we use GraphQL BFF.
 
 ```graphql
 enum RichTextNodeType = {
@@ -124,12 +119,11 @@ type RichTextNode {
 }
 ```
 
-For this kind of cases, the solution presented above (see TypeRef) is no longer applicable, as it can have hundreds of nesting levels depending on the content of the editor.
+For this kind of case, the solution presented above (see TypeRef) is no longer applicable, as it can have hundreds of nesting levels depending on the content.
 
 ## Solution in GraphQL
 
-the straightforward solution to this problem is to represent `RichText` by scalar with type `JSON`. However, the client knows nothing about the type and cannot statically check that the code dealing with the value is correct. To improve this, type generators (e.g. Apollo) provide type mapping where we can map scalar names to specific types. However, this only works well if we have internal knowledge of the application, or best if we have bff and application in the same Monorepo and use only one language to program the entire application. we can define the library "@types/richtext" with the appropriate types, use them in BFF and publish library them to clients.
-
+The straightforward solution to this problem is to represent `RichText` by scalar with `JSON.` However, the client knows nothing about the type and cannot statically check the correctness of the code. To improve this, type generators (e.g., Apollo) provide type mapping to map scalar names to specific types. However, this only works well if we have internal knowledge of the application or BFF and application in the same Monorepo and use only one language to program the entire application. If we deal with unknown clients, we can define the library "@types/rich-text" to use it in BFF and publish it on `npm` for clients.
 
 ```yaml
 // apollo.config.yaml
@@ -139,15 +133,17 @@ config:
     Node: import('@types/richtext').RichTextNode
 ```
 
-However, this approach has following problems:
+However, this approach has the following problems:
 
-- What if I want different target languages (Java, TS, Flow, Elm ... ), should I manually provide type definition library for each particular target language? then  i have to maintain each of them , If I want to introduce updates in the data types
-- am i sure as a client that published types library is not outdated?
-- validity of the values is not checked by the GraphQL automatically, but developer has to check it manually.
+- What if I want different target languages (Java, TS, Flow, Elm ... )? Should I manually provide a type definitions library for each particular target language? Even if I do that, I have to maintain each of them to introduce updates in the data types.
+- am I sure as a client that the published types library is not outdated?
+- Am I sure I have the correct version of the type definitions for the API?
+- The validity of the values is not checked by GraphQL automatically, but the developer has to check it manually.
+-Never the less, in Apollo Codegen, I have to map library types to scalar types by hand.
 
-in best case, we should have typed scalars (which we have in `Iris` as `data` types). typed scalar will represent just JSON value and will not get its dedicated resolver. GraphQL compiler would only check if value is matches to type definition and will not try to automatically resolve its fields. that way we would not run into infinite loop but still have type safety guaranteed by compiler.
+A general solution in GraphQL is typed scalars (which we have in `Iris` as `data` types). A typed scalar will represent just JSON value and not get its dedicated resolver. GraphQL compiler will only check if the value matches the type definition and will not automatically resolve its fields. That way, we would not run into an infinite loop but still have type safety guaranteed by the compiler.
 
-one attempt of solving this problem in GraphQL is to provide type annotations with `JSDoc` in scalar description. a type generator could parse annotations and generate corresponding types. in addition,  directive `@JSDoc` could parse types from the description and automatically validate scalar (inputs/outputs) values.
+One attempt of solving this problem in GraphQL is to provide type annotations with `JSDoc` in the scalar description, where a type generator could parse annotations and generate corresponding types. In addition, a server with the directive `@JSDoc` could use these annotations to validate scalar (inputs/outputs) values.
 
 graphql-schema
 
