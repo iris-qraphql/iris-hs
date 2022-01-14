@@ -130,7 +130,7 @@ The straightforward solution to this problem is to represent `RichText` by scala
 
 config:
   scalars:
-    Node: import('@types/rich-text').RichTextNode
+    RichTextNode: import('@types/rich-text').RichTextNode
 ```
 
 However, this approach has the following problems:
